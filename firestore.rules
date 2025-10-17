@@ -1,36 +1,36 @@
 /**
  * @file Firestore Security Rules for EcoScan Rewards
- * @version Prototyping
- *
- * @Core Philosophy:
- * This ruleset prioritizes strong authorization based on path-based ownership for user data and public read access for non-user-specific data. It focuses on rapid prototyping, so data validation is relaxed.
- *
- * @Data Structure:
- * - User profiles are stored under `/users/{userId}`, ensuring only the authenticated user can manage their own profile.
- * - User transactions are stored under `/users/{userId}/transactions/{transactionId}`, enabling scalable list operations and simple security rules that do not require complex `get()` calls.
- * - Recycling bins are stored in the top-level `/recycling_bins/{binId}` collection.
- * - Partner stores are stored in the top-level `/partner_stores/{storeId}` collection.
- *
- * @Key Security Decisions:
- * - User listing is disabled to prevent enumeration.
- * - Read operations on `/recycling_bins` and `/partner_stores` are public.
- * - Strict ownership is enforced for user profiles and transactions.
- *
- * @Denormalization for Authorization:
- * - The `Transaction` documents denormalize the `binId` from the `RecyclingBin` entity for authorization independence.
+ * @core_philosophy This ruleset enforces a strict user-ownership model for user profiles and transactions,
+ * with public read access for recycling bins and partner stores. It prioritizes security and performance
+ * by using path-based authorization and data denormalization to avoid costly `get()` calls.
+ * @data_structure The data is organized hierarchically:
+ *   - /users/{userId}: User profile information, owned by the user with matching UID.
+ *   - /users/{userId}/transactions/{transactionId}: Transaction history for each user, also owned by the user.
+ *   - /recycling_bins/{binId}: Information about recycling bins, publicly readable.
+ *   - /partner_stores/{storeId}: Information about partner stores, publicly readable.
+ * @key_security_decisions
+ *   - User profiles and transactions are strictly owned by the user, enforced through path-based authorization.
+ *   - Listing of all users is disallowed to protect user privacy.
+ *   - Recycling bins and partner stores are publicly readable, assuming this data is not sensitive.
+ *   - Data validation is limited to ownership and relational integrity checks to enable rapid prototyping.
+ * @denormalization The `Transaction` documents denormalize the `binId` from the `RecyclingBin` entity.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Enforces ownership for user profiles.
+     * @description Enforces access control for user profile documents.
      * @path /users/{userId}
-     * @allow (create) User with UID 'user_abc' can create their profile at /users/user_abc if request.auth.uid == 'user_abc'.
-     * @allow (get, update, delete) User with UID 'user_abc' can read/update/delete their profile at /users/user_abc if request.auth.uid == 'user_abc'.
-     * @deny (create) User with UID 'user_xyz' cannot create a profile at /users/user_abc.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot read/update/delete the profile at /users/user_abc.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) Authenticated user can create their own profile if the userId matches their auth.uid.
+     * @allow (get) Authenticated user can read their own profile.
+     * @allow (update) Authenticated user can update their own profile.
+     * @allow (delete) Authenticated user can delete their own profile.
+     * @deny (create) Authenticated user cannot create a profile for another user.
+     * @deny (get) Authenticated user cannot read another user's profile.
+     * @deny (update) Authenticated user cannot update another user's profile.
+     * @deny (delete) Authenticated user cannot delete another user's profile.
+     * @principle Enforces document ownership for all operations on user profiles.
      */
     match /users/{userId} {
       function isSignedIn() {
@@ -42,24 +42,29 @@ service cloud.firestore {
       }
 
       function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
+        return isOwner(userId) && resource.data != null;
       }
 
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false; // Prevent listing all users for privacy
+
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces ownership for user transactions within the user's profile.
+     * @description Enforces access control for transaction documents within a user's profile.
      * @path /users/{userId}/transactions/{transactionId}
-     * @allow (create) User with UID 'user_abc' can create a transaction at /users/user_abc/transactions/tx_123 if request.auth.uid == 'user_abc'.
-     * @allow (get, update, delete) User with UID 'user_abc' can read/update/delete their transaction at /users/user_abc/transactions/tx_123 if request.auth.uid == 'user_abc'.
-     * @deny (create) User with UID 'user_xyz' cannot create a transaction at /users/user_abc/transactions/tx_123.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot read/update/delete transaction at /users/user_abc/transactions/tx_123.
-     * @principle Enforces document ownership for all operations within a user's data tree.
+     * @allow (create) Authenticated user can create a transaction for themselves.
+     * @allow (get) Authenticated user can read their own transactions.
+     * @allow (update) Authenticated user can update their own transactions.
+     * @allow (delete) Authenticated user can delete their own transactions.
+     * @deny (create) Authenticated user cannot create a transaction for another user.
+     * @deny (get) Authenticated user cannot read another user's transactions.
+     * @deny (update) Authenticated user cannot update another user's transactions.
+     * @deny (delete) Authenticated user cannot delete another user's transactions.
+     * @principle Enforces document ownership for all operations on user transactions.
      */
     match /users/{userId}/transactions/{transactionId} {
       function isSignedIn() {
@@ -70,43 +75,38 @@ service cloud.firestore {
         return request.auth.uid == userId;
       }
 
-      function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
+        function isExistingOwner(userId) {
+        return isOwner(userId) && resource.data != null;
       }
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+
       allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Allows public read access to recycling bin information, but restricts write access.
+     * @description Allows public read access to recycling bin information. Write access is denied.
      * @path /recycling_bins/{binId}
-     * @allow (get, list) Any user can read recycling bin information.
-     * @deny (create, update, delete) No user can create, update, or delete recycling bin information.
-     * @principle Public read access with restricted write access.
+     * @allow (get, list) Any user can read recycling bin data.
+     * @deny (create, update, delete) No user can create, update, or delete recycling bin data.
+     * @principle Grants public read access while restricting write access.
      */
     match /recycling_bins/{binId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
     }
 
     /**
-     * @description Allows public read access to partner store information, but restricts write access.
+     * @description Allows public read access to partner store information. Write access is denied.
      * @path /partner_stores/{storeId}
-     * @allow (get, list) Any user can read partner store information.
-     * @deny (create, update, delete) No user can create, update, or delete partner store information.
-     * @principle Public read access with restricted write access.
+     * @allow (get, list) Any user can read partner store data.
+     * @deny (create, update, delete) No user can create, update, or delete partner store data.
+     * @principle Grants public read access while restricting write access.
      */
     match /partner_stores/{storeId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
     }
   }
 }
