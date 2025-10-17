@@ -73,7 +73,7 @@ export function AppContainer() {
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
     [firestore, user]
   );
-  const { data: userProfile } = useDoc(userProfileRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
   useEffect(() => {
     if (step === 'camera') {
@@ -111,13 +111,13 @@ export function AppContainer() {
   }, [step, toast]);
   
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
     }
   }, [isUserLoading, user, auth]);
   
   useEffect(() => {
-    if (user && !userProfile && !isUserLoading) {
+    if (user && !isProfileLoading && !userProfile && userProfileRef) {
       const newProfile = {
         email: user.email || '',
         firstName: user.displayName?.split(' ')[0] || '',
@@ -125,11 +125,9 @@ export function AppContainer() {
         totalPoints: 0,
         createdAt: serverTimestamp(),
       };
-      if (userProfileRef) {
-        setDocumentNonBlocking(userProfileRef, newProfile, { merge: true });
-      }
+      setDocumentNonBlocking(userProfileRef, newProfile, { merge: false });
     }
-  }, [user, userProfile, isUserLoading, userProfileRef]);
+  }, [user, userProfile, isProfileLoading, userProfileRef]);
 
   const userPoints = userProfile?.totalPoints ?? 0;
 
@@ -227,8 +225,8 @@ export function AppContainer() {
     setStep('disposed');
     setAnimatePoints(true);
     
-    if (userProfileRef) {
-      const newPoints = (userProfile?.totalPoints ?? 0) + 10;
+    if (userProfileRef && userProfile) {
+      const newPoints = userProfile.totalPoints + 10;
       updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
     }
 
@@ -238,7 +236,7 @@ export function AppContainer() {
   };
   
   const renderContent = () => {
-    if (isUserLoading) {
+    if (isUserLoading || isProfileLoading) {
         return (
             <div className="flex flex-col items-center justify-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -438,7 +436,7 @@ export function AppContainer() {
     <div className="flex min-h-screen flex-col">
       <Header points={userPoints} />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        <div className={cn('w-full max-w-2xl transition-all duration-300', (isLoading || isUserLoading) && 'opacity-50 pointer-events-none')}>
+        <div className={cn('w-full max-w-2xl transition-all duration-300', (isLoading || isUserLoading || isProfileLoading) && 'opacity-50 pointer-events-none')}>
           {renderContent()}
         </div>
         

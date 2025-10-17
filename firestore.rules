@@ -1,40 +1,36 @@
 /**
- * @file Overview
- * This ruleset enforces a strict user-ownership model for user profiles and transactions,
- * and allows public read access to recycling bins and partner stores.
+ * @file Firestore Security Rules for EcoScan Rewards
+ * @version Prototyping
  *
- * @data-structure
- * - /users/{userId}: Stores user profile information.
- * - /users/{userId}/transactions/{transactionId}: Stores transaction history for each user.
- * - /recycling_bins/{binId}: Stores information about recycling bin locations.
- * - /partner_stores/{storeId}: Stores information about partner stores.
+ * @Core Philosophy:
+ * This ruleset prioritizes strong authorization based on path-based ownership for user data and public read access for non-user-specific data. It focuses on rapid prototyping, so data validation is relaxed.
  *
- * @key-security-decisions
- * - Users can only read and write their own profile data.
- * - Users can only manage their own transactions.
- * - Listing of users is disallowed.
- * - Recycling bins and partner stores are publicly readable but not writable by end-users.
+ * @Data Structure:
+ * - User profiles are stored under `/users/{userId}`, ensuring only the authenticated user can manage their own profile.
+ * - User transactions are stored under `/users/{userId}/transactions/{transactionId}`, enabling scalable list operations and simple security rules that do not require complex `get()` calls.
+ * - Recycling bins are stored in the top-level `/recycling_bins/{binId}` collection.
+ * - Partner stores are stored in the top-level `/partner_stores/{storeId}` collection.
  *
- * @denormalization-for-authorization
- * - Transactions include a denormalized 'binId' from RecyclingBin for authorization independence.
+ * @Key Security Decisions:
+ * - User listing is disabled to prevent enumeration.
+ * - Read operations on `/recycling_bins` and `/partner_stores` are public.
+ * - Strict ownership is enforced for user profiles and transactions.
  *
- * @structural-segregation
- * - User-specific data (profiles, transactions) is stored under /users/{userId} to leverage path-based ownership.
- * - Publicly accessible data (recycling bins, partner stores) is stored in top-level collections.
+ * @Denormalization for Authorization:
+ * - The `Transaction` documents denormalize the `binId` from the `RecyclingBin` entity for authorization independence.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile documents.
+     * @description Enforces ownership for user profiles.
      * @path /users/{userId}
-     * @allow (create) User with ID 'user123' can create their profile.
-     * @allow (get) User with ID 'user123' can read their profile.
-     * @allow (update) User with ID 'user123' can update their profile.
-     * @allow (delete) User with ID 'user123' can delete their profile.
-     * @deny (create) User with ID 'user123' cannot create a profile for 'user456'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with UID 'user_abc' can create their profile at /users/user_abc if request.auth.uid == 'user_abc'.
+     * @allow (get, update, delete) User with UID 'user_abc' can read/update/delete their profile at /users/user_abc if request.auth.uid == 'user_abc'.
+     * @deny (create) User with UID 'user_xyz' cannot create a profile at /users/user_abc.
+     * @deny (get, update, delete) User with UID 'user_xyz' cannot read/update/delete the profile at /users/user_abc.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
       function isSignedIn() {
@@ -42,30 +38,28 @@ service cloud.firestore {
       }
 
       function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
 
       function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+        return isOwner(userId) && exists(resource);
       }
 
       allow get: if isOwner(userId);
-      allow list: if false; // Listing all users is not permitted.
-
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; // Enforce immutability of the userId.
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to transaction documents under a user's profile.
+     * @description Enforces ownership for user transactions within the user's profile.
      * @path /users/{userId}/transactions/{transactionId}
-     * @allow (create) User 'user123' can create a transaction under their profile.
-     * @allow (get) User 'user123' can read a transaction under their profile.
-     * @allow (update) User 'user123' can update a transaction under their profile.
-     * @allow (delete) User 'user123' can delete a transaction under their profile.
-     * @deny (create) User 'user123' cannot create a transaction under 'user456' profile.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with UID 'user_abc' can create a transaction at /users/user_abc/transactions/tx_123 if request.auth.uid == 'user_abc'.
+     * @allow (get, update, delete) User with UID 'user_abc' can read/update/delete their transaction at /users/user_abc/transactions/tx_123 if request.auth.uid == 'user_abc'.
+     * @deny (create) User with UID 'user_xyz' cannot create a transaction at /users/user_abc/transactions/tx_123.
+     * @deny (get, update, delete) User with UID 'user_xyz' cannot read/update/delete transaction at /users/user_abc/transactions/tx_123.
+     * @principle Enforces document ownership for all operations within a user's data tree.
      */
     match /users/{userId}/transactions/{transactionId} {
       function isSignedIn() {
@@ -73,53 +67,43 @@ service cloud.firestore {
       }
 
       function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
 
-       function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+      function isExistingOwner(userId) {
+        return isOwner(userId) && exists(resource);
       }
-
 
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; //Enforce immutability of userId
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to recycling bin documents.
+     * @description Allows public read access to recycling bin information, but restricts write access.
      * @path /recycling_bins/{binId}
-     * @allow (get) Any user can read recycling bin information.
-     * @allow (list) Any user can list recycling bins.
-     * @deny (create) No users can create recycling bins (admin only).
-     * @deny (update) No users can update recycling bins (admin only).
-     * @deny (delete) No users can delete recycling bins (admin only).
-     * @principle Public read access with restricted writes.
+     * @allow (get, list) Any user can read recycling bin information.
+     * @deny (create, update, delete) No user can create, update, or delete recycling bin information.
+     * @principle Public read access with restricted write access.
      */
     match /recycling_bins/{binId} {
-      allow get: if true;
-      allow list: if true;
+      allow get, list: if true;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Controls access to partner store documents.
+     * @description Allows public read access to partner store information, but restricts write access.
      * @path /partner_stores/{storeId}
-     * @allow (get) Any user can read partner store information.
-     * @allow (list) Any user can list partner stores.
-     * @deny (create) No users can create partner stores (admin only).
-     * @deny (update) No users can update partner stores (admin only).
-     * @deny (delete) No users can delete partner stores (admin only).
-     * @principle Public read access with restricted writes.
+     * @allow (get, list) Any user can read partner store information.
+     * @deny (create, update, delete) No user can create, update, or delete partner store information.
+     * @principle Public read access with restricted write access.
      */
     match /partner_stores/{storeId} {
-      allow get: if true;
-      allow list: if true;
+      allow get, list: if true;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
