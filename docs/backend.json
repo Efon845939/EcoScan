@@ -1,0 +1,214 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile in the EcoScan Rewards system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user profile."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "User's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "User's last name."
+        },
+        "totalPoints": {
+          "type": "number",
+          "description": "The total number of points the user has accumulated."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "totalPoints"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a transaction of points either earned or redeemed by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the transaction."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Transaction)"
+        },
+        "transactionDate": {
+          "type": "string",
+          "description": "Date and time of the transaction.",
+          "format": "date-time"
+        },
+        "pointsChange": {
+          "type": "number",
+          "description": "The number of points added or subtracted in this transaction. Negative values represent point redemption."
+        },
+        "transactionType": {
+          "type": "string",
+          "description": "The type of transaction (e.g., 'recycling', 'redemption')."
+        },
+        "binId": {
+          "type": "string",
+          "description": "Reference to RecyclingBin. (Relationship: RecyclingBin 1:N Transaction)"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "transactionDate",
+        "pointsChange",
+        "transactionType"
+      ]
+    },
+    "RecyclingBin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RecyclingBin",
+      "type": "object",
+      "description": "Represents a recycling bin location.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the recycling bin."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Latitude of the recycling bin location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Longitude of the recycling bin location."
+        },
+        "materialType": {
+          "type": "string",
+          "description": "The type of material accepted by this bin (e.g., 'plastic', 'glass', 'metal')."
+        }
+      },
+      "required": [
+        "id",
+        "latitude",
+        "longitude",
+        "materialType"
+      ]
+    },
+    "PartnerStore": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PartnerStore",
+      "type": "object",
+      "description": "Represents a partner store where users can redeem points.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the partner store."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the partner store."
+        },
+        "discountRate": {
+          "type": "number",
+          "description": "The discount rate offered by this store for point redemptions."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "discountRate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information.  Path-based ownership enforced by {userId}.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores transaction history for each user. Path-based ownership with {userId}. Includes denormalized 'binId' from RecyclingBin for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who initiated the transaction."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique identifier for the transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/recycling_bins/{binId}",
+        "definition": {
+          "entityName": "RecyclingBin",
+          "schema": {
+            "$ref": "#/backend/entities/RecyclingBin"
+          },
+          "description": "Stores information about recycling bin locations and accepted materials.",
+          "params": [
+            {
+              "name": "binId",
+              "description": "The unique identifier for the recycling bin."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/partner_stores/{storeId}",
+        "definition": {
+          "entityName": "PartnerStore",
+          "schema": {
+            "$ref": "#/backend/entities/PartnerStore"
+          },
+          "description": "Stores information about partner stores where users can redeem points.",
+          "params": [
+            {
+              "name": "storeId",
+              "description": "The unique identifier for the partner store."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability for the EcoScan Rewards application. It leverages path-based ownership for user profiles and transactions, and structural segregation to manage access control effectively.  User profiles are stored in `/users/{userId}`, enabling straightforward ownership-based rules. User transaction data is located in a subcollection `users/{userId}/transactions/{transactionId}`, enabling scalable list operations and simple security rules that do not require complex `get()` calls. Recycling bins and partner stores are stored in top-level collections (`/recycling_bins` and `/partner_stores` respectively) as they are not user-owned and have potentially different access requirements (e.g., admin create/update, user read). To support QAPs (Rules are not Filters) and maintain Authorization Independence the `Transaction` documents denormalize the `binId` from the `RecyclingBin` entity. This also means that all documents in a given collection share the same security requirements."
+  }
+}

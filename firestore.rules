@@ -1,0 +1,118 @@
+/**
+ * @fileoverview Firestore Security Rules for EcoScan Rewards.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user profiles and transactions,
+ * while allowing public read access to recycling bins and partner stores.
+ *
+ * Data Structure:
+ * - User profiles are stored in `/users/{userId}`.
+ * - User transactions are stored in `/users/{userId}/transactions/{transactionId}`.
+ * - Recycling bins are stored in `/recycling_bins/{binId}`.
+ * - Partner stores are stored in `/partner_stores/{storeId}`.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed to protect user privacy.
+ * - Recycling bins and partner stores are publicly readable but not writable.
+ * - Data validation is relaxed in this prototyping phase, focusing only on
+ *   ownership and relational integrity.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Enforces access control for user profile documents. Only the authenticated user can read or write their own profile.
+     * @path /users/{userId}
+     * @allow (create) User with UID 'user_abc' can create their profile at /users/user_abc if the document's 'id' field matches the UID.
+     * @allow (get) User with UID 'user_abc' can read their profile at /users/user_abc.
+     * @allow (update) User with UID 'user_abc' can update their profile at /users/user_abc.
+     * @allow (delete) User with UID 'user_abc' can delete their profile at /users/user_abc.
+     * @deny (create) User with UID 'user_xyz' cannot create a profile at /users/user_abc.
+     * @deny (get) User with UID 'user_xyz' cannot read the profile at /users/user_abc.
+     * @deny (update) User with UID 'user_xyz' cannot update the profile at /users/user_abc.
+     * @deny (delete) User with UID 'user_xyz' cannot delete the profile at /users/user_abc.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false; // User listing is disallowed.
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && resource.data.id == userId; // Enforce immutability of the userId field.
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for user transaction documents. Only the authenticated user can read or write their own transactions.
+     * @path /users/{userId}/transactions/{transactionId}
+     * @allow (create) User with UID 'user_abc' can create a transaction at /users/user_abc/transactions/tx_123 if the transaction's 'userId' field matches the UID.
+     * @allow (get) User with UID 'user_abc' can read their transaction at /users/user_abc/transactions/tx_123.
+     * @allow (update) User with UID 'user_abc' can update their transaction at /users/user_abc/transactions/tx_123.
+     * @allow (delete) User with UID 'user_abc' can delete their transaction at /users/user_abc/transactions/tx_123.
+     * @deny (create) User with UID 'user_xyz' cannot create a transaction at /users/user_abc/transactions/tx_123.
+     * @deny (get) User with UID 'user_xyz' cannot read the transaction at /users/user_abc/transactions/tx_123.
+     * @deny (update) User with UID 'user_xyz' cannot update the transaction at /users/user_abc/transactions/tx_123.
+     * @deny (delete) User with UID 'user_xyz' cannot delete the transaction at /users/user_abc/transactions/tx_123.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/transactions/{transactionId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isOwner(userId) && resource != null && resource.data.userId == userId; // Ensure document exists and enforce immutability of the userId field.
+      allow delete: if isOwner(userId) && resource != null; // Ensure document exists before deleting.
+    }
+
+    /**
+     * @description Allows public read access to recycling bin information, but restricts write access.
+     * @path /recycling_bins/{binId}
+     * @allow (get) Any user can read recycling bin information at /recycling_bins/bin_123.
+     * @allow (list) Any user can list recycling bins.
+     * @deny (create) No user can create recycling bin information at /recycling_bins/bin_123.
+     * @deny (update) No user can update recycling bin information at /recycling_bins/bin_123.
+     * @deny (delete) No user can delete recycling bin information at /recycling_bins/bin_123.
+     * @principle Allows public read access while restricting write access.
+     */
+    match /recycling_bins/{binId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Allows public read access to partner store information, but restricts write access.
+     * @path /partner_stores/{storeId}
+     * @allow (get) Any user can read partner store information at /partner_stores/store_456.
+     * @allow (list) Any user can list partner stores.
+     * @deny (create) No user can create partner store information at /partner_stores/store_456.
+     * @deny (update) No user can update partner store information at /partner_stores/store_456.
+     * @deny (delete) No user can delete partner store information at /partner_stores/store_456.
+     * @principle Allows public read access while restricting write access.
+     */
+    match /partner_stores/{storeId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
