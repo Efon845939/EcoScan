@@ -9,6 +9,8 @@ import {
   MapPin,
   Sparkles,
   Award,
+  Video,
+  CircleDot,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -33,6 +35,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { MaterialIcon } from './material-icon';
@@ -43,12 +46,11 @@ import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlockin
 import { doc, serverTimestamp } from 'firebase/firestore';
 
 
-type Step = 'scan' | 'confirm' | 'map' | 'disposed' | 'rewards';
+type Step = 'scan' | 'camera' | 'confirm' | 'map' | 'disposed' | 'rewards';
 
 export function AppContainer() {
   const [step, setStep] = useState<Step>('scan');
   const [scannedImage, setScannedImage] = useState<string | null>(null);
-  const [scannedImageFile, setScannedImageFile] = useState<File | null>(null);
   const [productDescription, setProductDescription] = useState('');
   const [identifiedMaterial, setIdentifiedMaterial] =
     useState<MaterialIdentificationOutput | null>(null);
@@ -56,7 +58,12 @@ export function AppContainer() {
   const [isPending, startTransition] = useTransition();
   const [showLowConfidenceModal, setShowLowConfidenceModal] = useState(false);
   const [animatePoints, setAnimatePoints] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(
+    null
+  );
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
@@ -69,6 +76,41 @@ export function AppContainer() {
   const { data: userProfile } = useDoc(userProfileRef);
 
   useEffect(() => {
+    if (step === 'camera') {
+      const getCameraPermission = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' },
+          });
+          setHasCameraPermission(true);
+
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description:
+              'Please enable camera permissions in your browser settings.',
+          });
+        }
+      };
+
+      getCameraPermission();
+
+      return () => {
+        if (videoRef.current && videoRef.current.srcObject) {
+          const stream = videoRef.current.srcObject as MediaStream;
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      };
+    }
+  }, [step, toast]);
+  
+  useEffect(() => {
     if (!isUserLoading && !user) {
       initiateAnonymousSignIn(auth);
     }
@@ -80,7 +122,7 @@ export function AppContainer() {
         email: user.email || '',
         firstName: user.displayName?.split(' ')[0] || '',
         lastName: user.displayName?.split(' ')[1] || '',
-        totalPoints: 100,
+        totalPoints: 0,
         createdAt: serverTimestamp(),
       };
       if (userProfileRef) {
@@ -96,42 +138,60 @@ export function AppContainer() {
   const resetState = () => {
     setStep('scan');
     setScannedImage(null);
-    setScannedImageFile(null);
     setProductDescription('');
     setIdentifiedMaterial(null);
     setIsLoading(false);
+    setHasCameraPermission(null);
+  };
+  
+  const processImage = (dataUri: string) => {
+    setIsLoading(true);
+    setScannedImage(dataUri);
+    startTransition(() => {
+      identifyMaterialSimple({ photoDataUri: dataUri, productDescription: '' })
+        .then((result) => {
+          if (result.confidence < 0.5) {
+            setShowLowConfidenceModal(true);
+          } else {
+            setIdentifiedMaterial(result);
+            setStep('confirm');
+          }
+        })
+        .catch((error) => {
+          console.error('AI Error:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Identification Failed',
+            description: 'Could not identify the material. Please try again.',
+          });
+          resetState();
+        })
+        .finally(() => setIsLoading(false));
+    });
+  };
+
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        const dataUri = canvas.toDataURL('image/jpeg');
+        processImage(dataUri);
+      }
+    }
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setIsLoading(true);
-      setScannedImageFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUri = e.target?.result as string;
-        setScannedImage(dataUri);
-        startTransition(() => {
-          identifyMaterialSimple({ photoDataUri: dataUri, productDescription: '' })
-            .then((result) => {
-              if (result.confidence < 0.5) {
-                setShowLowConfidenceModal(true);
-              } else {
-                setIdentifiedMaterial(result);
-                setStep('confirm');
-              }
-            })
-            .catch((error) => {
-              console.error('AI Error:', error);
-              toast({
-                variant: 'destructive',
-                title: 'Identification Failed',
-                description: 'Could not identify the material. Please try again.',
-              });
-              resetState();
-            })
-            .finally(() => setIsLoading(false));
-        });
+        processImage(dataUri);
       };
       reader.readAsDataURL(file);
     }
@@ -197,7 +257,7 @@ export function AppContainer() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button size="lg" onClick={() => fileInputRef.current?.click()}>
+              <Button size="lg" onClick={() => setStep('camera')}>
                 <Camera className="mr-2" />
                 Scan Product Packaging
               </Button>
@@ -207,6 +267,70 @@ export function AppContainer() {
               <Button variant="outline" onClick={() => setStep('rewards')}>
                 <Award className="mr-2" />
                 View My Rewards
+              </Button>
+            </CardFooter>
+          </Card>
+        );
+      case 'camera':
+        return (
+          <Card>
+            <CardHeader>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-4 left-4"
+                onClick={() => setStep('scan')}
+              >
+                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+              </Button>
+              <CardTitle className="font-headline pt-8 text-center text-2xl">
+                Scan Your Item
+              </CardTitle>
+              <CardDescription className="text-center">
+                Position the item's packaging in the frame.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center gap-4">
+              <div className="relative w-full aspect-video bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+                <video
+                  ref={videoRef}
+                  className={cn(
+                    'w-full h-full object-cover',
+                    hasCameraPermission === false && 'hidden'
+                  )}
+                  autoPlay
+                  muted
+                  playsInline
+                />
+                {hasCameraPermission === false && (
+                  <Alert variant="destructive" className="w-auto">
+                    <Video className="h-4 w-4" />
+                    <AlertTitle>Camera Not Found</AlertTitle>
+                    <AlertDescription>
+                      Could not access camera. Please check permissions or upload a file.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {hasCameraPermission === null && (
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                )}
+              </div>
+              <canvas ref={canvasRef} className="hidden" />
+            </CardContent>
+            <CardFooter className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Button
+                size="lg"
+                onClick={handleCapture}
+                disabled={hasCameraPermission !== true}
+              >
+                <CircleDot className="mr-2" /> Capture
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Upload File
               </Button>
             </CardFooter>
           </Card>
@@ -331,6 +455,7 @@ export function AppContainer() {
           onChange={handleFileChange}
           className="hidden"
           accept="image/*"
+          capture="environment"
         />
 
         <Dialog open={showLowConfidenceModal} onOpenChange={setShowLowConfidenceModal}>
