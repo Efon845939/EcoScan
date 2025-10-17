@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, ChangeEvent, useTransition } from 'react';
+import { useState, useRef, ChangeEvent, useTransition, useEffect } from 'react';
 import Image from 'next/image';
 import {
   Camera,
@@ -39,6 +39,9 @@ import { MaterialIcon } from './material-icon';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { RewardsSection } from './rewards-section';
 import { cn } from '@/lib/utils';
+import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
+import { doc, serverTimestamp } from 'firebase/firestore';
+
 
 type Step = 'scan' | 'confirm' | 'map' | 'disposed' | 'rewards';
 
@@ -51,12 +54,42 @@ export function AppContainer() {
     useState<MaterialIdentificationOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [userPoints, setUserPoints] = useState(100);
   const [showLowConfidenceModal, setShowLowConfidenceModal] = useState(false);
   const [animatePoints, setAnimatePoints] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { auth, firestore } = useFirebase();
+  const { user, isUserLoading } = useUser();
+
+  const userProfileRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: userProfile } = useDoc(userProfileRef);
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [isUserLoading, user, auth]);
+  
+  useEffect(() => {
+    if (user && !userProfile && !isUserLoading) {
+      const newProfile = {
+        email: user.email || '',
+        firstName: user.displayName?.split(' ')[0] || '',
+        lastName: user.displayName?.split(' ')[1] || '',
+        totalPoints: 100,
+        createdAt: serverTimestamp(),
+      };
+      if (userProfileRef) {
+        setDocumentNonBlocking(userProfileRef, newProfile, { merge: true });
+      }
+    }
+  }, [user, userProfile, isUserLoading, userProfileRef]);
+
+  const userPoints = userProfile?.totalPoints ?? 0;
 
   const mapImage = PlaceHolderImages.find((img) => img.id === 'map');
 
@@ -133,13 +166,26 @@ export function AppContainer() {
   const handleDispose = () => {
     setStep('disposed');
     setAnimatePoints(true);
-    setUserPoints((prev) => prev + 10);
+    
+    if (userProfileRef) {
+      const newPoints = (userProfile?.totalPoints ?? 0) + 10;
+      updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
+    }
+
     setTimeout(() => {
       setAnimatePoints(false);
     }, 1500);
   };
   
   const renderContent = () => {
+    if (isUserLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="mt-4 text-lg font-semibold">Loading your profile...</p>
+            </div>
+        )
+    }
     switch (step) {
       case 'scan':
         return (
@@ -268,7 +314,7 @@ export function AppContainer() {
     <div className="flex min-h-screen flex-col">
       <Header points={userPoints} />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        <div className={cn('w-full max-w-2xl transition-all duration-300', isLoading && 'opacity-50 pointer-events-none')}>
+        <div className={cn('w-full max-w-2xl transition-all duration-300', (isLoading || isUserLoading) && 'opacity-50 pointer-events-none')}>
           {renderContent()}
         </div>
         
