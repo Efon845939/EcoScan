@@ -1,37 +1,18 @@
-/**
- * @fileoverview Firestore Security Rules for EcoScan Rewards.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user profiles and transactions,
- * while allowing public read access to recycling bins and partner stores.
- *
- * Data Structure:
- * - User profiles are stored in `/users/{userId}`.
- * - User transactions are stored in `/users/{userId}/transactions/{transactionId}`.
- * - Recycling bins are stored in `/recycling_bins/{binId}`.
- * - Partner stores are stored in `/partner_stores/{storeId}`.
- *
- * Key Security Decisions:
- * - User listing is disallowed to protect user privacy.
- * - Recycling bins and partner stores are publicly readable but not writable.
- * - Data validation is relaxed in this prototyping phase, focusing only on
- *   ownership and relational integrity.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Enforces access control for user profile documents. Only the authenticated user can read or write their own profile.
-     * @path /users/{userId}
-     * @allow (create) User with UID 'user_abc' can create their profile at /users/user_abc if the document's 'id' field matches the UID.
-     * @allow (get) User with UID 'user_abc' can read their profile at /users/user_abc.
-     * @allow (update) User with UID 'user_abc' can update their profile at /users/user_abc.
-     * @allow (delete) User with UID 'user_abc' can delete their profile at /users/user_abc.
-     * @deny (create) User with UID 'user_xyz' cannot create a profile at /users/user_abc.
-     * @deny (get) User with UID 'user_xyz' cannot read the profile at /users/user_abc.
-     * @deny (update) User with UID 'user_xyz' cannot update the profile at /users/user_abc.
-     * @deny (delete) User with UID 'user_xyz' cannot delete the profile at /users/user_abc.
+     * @description Controls access to user profile documents.
+     * @path /databases/{database}/documents/users/{userId}
+     * @allow (create) User with UID 's8gA4HUdEBSdep9H4YAQ4zaiTJi2' can create their own profile with matching ID.
+     * @allow (get) User with UID 's8gA4HUdEBSdep9H4YAQ4zaiTJi2' can read their own profile.
+     * @allow (update) User with UID 's8gA4HUdEBSdep9H4YAQ4zaiTJi2' can update their own profile.
+     * @allow (delete) User with UID 's8gA4HUdEBSdep9H4YAQ4zaiTJi2' can delete their own profile.
+     * @deny (create) User with UID 'otherUserId' cannot create a profile for 's8gA4HUdEBSdep9H4YAQ4zaiTJi2'.
+     * @deny (get) User with UID 'otherUserId' cannot read the profile of 's8gA4HUdEBSdep9H4YAQ4zaiTJi2'.
+     * @deny (update) User with UID 'otherUserId' cannot update the profile of 's8gA4HUdEBSdep9H4YAQ4zaiTJi2'.
+     * @deny (delete) User with UID 'otherUserId' cannot delete the profile of 's8gA4HUdEBSdep9H4YAQ4zaiTJi2'.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
@@ -43,76 +24,84 @@ service cloud.firestore {
         return request.auth.uid == userId;
       }
 
+      function isExistingOwner(userId) {
+          return isOwner(userId) && exists(resource);
+      }
+
       allow get: if isOwner(userId);
-      allow list: if false; // User listing is disallowed.
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && resource.data.id == userId; // Enforce immutability of the userId field.
-      allow delete: if isOwner(userId);
+      allow list: if false; // Do not allow listing of all users.
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces access control for user transaction documents. Only the authenticated user can read or write their own transactions.
-     * @path /users/{userId}/transactions/{transactionId}
-     * @allow (create) User with UID 'user_abc' can create a transaction at /users/user_abc/transactions/tx_123 if the transaction's 'userId' field matches the UID.
-     * @allow (get) User with UID 'user_abc' can read their transaction at /users/user_abc/transactions/tx_123.
-     * @allow (update) User with UID 'user_abc' can update their transaction at /users/user_abc/transactions/tx_123.
-     * @allow (delete) User with UID 'user_abc' can delete their transaction at /users/user_abc/transactions/tx_123.
-     * @deny (create) User with UID 'user_xyz' cannot create a transaction at /users/user_abc/transactions/tx_123.
-     * @deny (get) User with UID 'user_xyz' cannot read the transaction at /users/user_abc/transactions/tx_123.
-     * @deny (update) User with UID 'user_xyz' cannot update the transaction at /users/user_abc/transactions/tx_123.
-     * @deny (delete) User with UID 'user_xyz' cannot delete the transaction at /users/user_abc/transactions/tx_123.
+     * @description Controls access to user transaction documents.
+     * @path /databases/{database}/documents/users/{userId}/transactions/{transactionId}
+     * @allow (create) User with UID 's8gA4HUdEBSdep9H4YAQ4zaiTJi2' can create a transaction under their profile.
+     * @allow (get) User with UID 's8gA4HUdEBSdep9H4YAQ4zaiTJi2' can read a transaction under their profile.
+     * @allow (update) User with UID 's8gA4HUdEBSdep9H4YAQ4zaiTJi2' can update a transaction under their profile.
+     * @allow (delete) User with UID 's8gA4HUdEBSdep9H4YAQ4zaiTJi2' can delete a transaction under their profile.
+     * @deny (create) User with UID 'otherUserId' cannot create a transaction for user 's8gA4HUdEBSdep9H4YAQ4zaiTJi2'.
+     * @deny (get) User with UID 'otherUserId' cannot read a transaction for user 's8gA4HUdEBSdep9H4YAQ4zaiTJi2'.
+     * @deny (update) User with UID 'otherUserId' cannot update a transaction for user 's8gA4HUdEBSdep9H4YAQ4zaiTJi2'.
+     * @deny (delete) User with UID 'otherUserId' cannot delete a transaction for user 's8gA4HUdEBSdep9H4YAQ4zaiTJi2'.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/transactions/{transactionId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
+        function isSignedIn() {
+          return request.auth != null;
+        }
 
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
+        function isOwner(userId) {
+          return request.auth.uid == userId;
+        }
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isOwner(userId) && resource != null && resource.data.userId == userId; // Ensure document exists and enforce immutability of the userId field.
-      allow delete: if isOwner(userId) && resource != null; // Ensure document exists before deleting.
+        function isExistingOwner(userId) {
+            return isOwner(userId) && exists(resource);
+        }
+
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId);
+        allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows public read access to recycling bin information, but restricts write access.
-     * @path /recycling_bins/{binId}
-     * @allow (get) Any user can read recycling bin information at /recycling_bins/bin_123.
+     * @description Allows public read access to recycling bin information. Write access is currently open.
+     * @path /databases/{database}/documents/recycling_bins/{binId}
+     * @allow (get) Any user can read recycling bin information.
      * @allow (list) Any user can list recycling bins.
-     * @deny (create) No user can create recycling bin information at /recycling_bins/bin_123.
-     * @deny (update) No user can update recycling bin information at /recycling_bins/bin_123.
-     * @deny (delete) No user can delete recycling bin information at /recycling_bins/bin_123.
-     * @principle Allows public read access while restricting write access.
+     * @deny (create) No user can create recycling bins without authorization. // TODO: Add role-based authorization
+     * @deny (update) No user can update recycling bins without authorization. // TODO: Add role-based authorization
+     * @deny (delete) No user can delete recycling bins without authorization. // TODO: Add role-based authorization
+     * @principle Allows public read access with restricted write access.
      */
     match /recycling_bins/{binId} {
       allow get: if true;
       allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if false; // TODO: Add role-based authorization
+      allow update: if false; // TODO: Add role-based authorization
+      allow delete: if false; // TODO: Add role-based authorization
     }
 
     /**
-     * @description Allows public read access to partner store information, but restricts write access.
-     * @path /partner_stores/{storeId}
-     * @allow (get) Any user can read partner store information at /partner_stores/store_456.
+     * @description Allows public read access to partner store information. Write access is currently open.
+     * @path /databases/{database}/documents/partner_stores/{storeId}
+     * @allow (get) Any user can read partner store information.
      * @allow (list) Any user can list partner stores.
-     * @deny (create) No user can create partner store information at /partner_stores/store_456.
-     * @deny (update) No user can update partner store information at /partner_stores/store_456.
-     * @deny (delete) No user can delete partner store information at /partner_stores/store_456.
-     * @principle Allows public read access while restricting write access.
+     * @deny (create) No user can create partner stores without authorization. // TODO: Add role-based authorization
+     * @deny (update) No user can update partner stores without authorization. // TODO: Add role-based authorization
+     * @deny (delete) No user can delete partner stores without authorization. // TODO: Add role-based authorization
+     * @principle Allows public read access with restricted write access.
      */
     match /partner_stores/{storeId} {
       allow get: if true;
       allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if false; // TODO: Add role-based authorization
+      allow update: if false; // TODO: Add role-based authorization
+      allow delete: if false; // TODO: Add role-based authorization
     }
   }
 }
