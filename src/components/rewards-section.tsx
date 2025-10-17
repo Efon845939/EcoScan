@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Ticket, ChevronLeft } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 const rewards = [
   {
@@ -31,13 +32,31 @@ const rewards = [
 
 export function RewardsSection({ onBack }: { onBack: () => void }) {
   const { toast } = useToast();
+  const [redeemed, setRedeemed] = useState(false);
 
   const handleRedeem = (title: string) => {
     toast({
       title: 'Reward Redeemed!',
       description: `You've successfully redeemed "${title}".`,
     });
+    setRedeemed(true);
   };
+
+  if (redeemed) {
+    return (
+        <Card className="w-full">
+            <CardHeader>
+                <CardTitle className="font-headline pt-8 text-center text-2xl">Thank You!</CardTitle>
+                <CardDescription className="text-center">
+                    Enjoy your reward!
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+                <Button onClick={onBack}>Back to Lobby</Button>
+            </CardContent>
+        </Card>
+    )
+  }
 
   return (
     <Card className="w-full">
