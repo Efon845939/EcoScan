@@ -375,12 +375,14 @@ export function AppContainer() {
         return (
           <Card>
             <CardHeader>
-              <Button variant="ghost" size="sm" className="absolute top-4 left-4" onClick={() => setStep('confirm')}>
-                <ChevronLeft className="mr-2 h-4 w-4" /> Back
-              </Button>
-              <CardTitle className="font-headline pt-8 text-center text-2xl">
-                Nearest Bins for {identifiedMaterial?.material}
-              </CardTitle>
+              <div className="relative flex items-center justify-center">
+                <Button variant="ghost" size="sm" className="absolute left-0" onClick={() => setStep('confirm')}>
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <CardTitle className="font-headline text-center text-2xl">
+                  Nearest Bins for {identifiedMaterial?.material}
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               {mapImage && (

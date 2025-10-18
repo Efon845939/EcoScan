@@ -90,17 +90,20 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
   return (
     <Card className="w-full">
       <CardHeader>
-        <Button variant="ghost" size="sm" className="absolute top-4 left-4" onClick={onBack}>
-          <ChevronLeft className="mr-2 h-4 w-4" /> Back to Scan
-        </Button>
-        <CardTitle className="font-headline pt-8 text-center text-2xl">Redeem Your Points</CardTitle>
-        <CardDescription className="text-center">
+        <div className="relative flex items-center justify-center">
+            <Button variant="ghost" size="sm" className="absolute left-0" onClick={onBack}>
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back
+            </Button>
+            <CardTitle className="font-headline text-2xl">Redeem Your Points</CardTitle>
+        </div>
+        <CardDescription className="text-center pt-2">
           Use your points to get discounts at our partner stores.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {rewards.map((reward) => {
           const partnerImage = PlaceHolderImages.find((p) => p.id === reward.imageId);
+          const canRedeem = userPoints >= reward.points;
           return (
             <div
               key={reward.id}
@@ -122,7 +125,7 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
                   <p className="text-sm text-muted-foreground">{reward.partner}</p>
                 </div>
               </div>
-              <Button onClick={() => handleRedeem(reward)}>
+              <Button onClick={() => handleRedeem(reward)} disabled={!canRedeem}>
                 <Ticket className="mr-2 h-4 w-4" />
                 {reward.points} pts
               </Button>
