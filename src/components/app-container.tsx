@@ -273,18 +273,20 @@ export function AppContainer() {
         return (
           <Card>
             <CardHeader>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute top-4 left-4"
-                onClick={() => setStep('scan')}
-              >
-                <ChevronLeft className="mr-2 h-4 w-4" /> Back
-              </Button>
-              <CardTitle className="font-headline pt-8 text-center text-2xl">
-                Scan Your Item
-              </CardTitle>
-              <CardDescription className="text-center">
+              <div className="relative flex items-center justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute left-0"
+                  onClick={() => setStep('scan')}
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <CardTitle className="font-headline text-2xl">
+                  Scan Your Item
+                </CardTitle>
+              </div>
+              <CardDescription className="text-center pt-2">
                 Position the item's packaging in the frame.
               </CardDescription>
             </CardHeader>
