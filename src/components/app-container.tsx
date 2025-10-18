@@ -453,7 +453,6 @@ export function AppContainer() {
           onChange={handleFileChange}
           className="hidden"
           accept="image/*"
-          capture="environment"
         />
 
         <Dialog open={showLowConfidenceModal} onOpenChange={setShowLowConfidenceModal}>
