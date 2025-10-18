@@ -5,6 +5,9 @@ import { Ticket, ChevronLeft } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { useFirebase, useUser, updateDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+
 
 const rewards = [
   {
@@ -30,16 +33,42 @@ const rewards = [
   },
 ];
 
-export function RewardsSection({ onBack }: { onBack: () => void }) {
+type RewardsSectionProps = {
+  userPoints: number;
+  onBack: () => void;
+};
+
+export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
   const { toast } = useToast();
   const [redeemed, setRedeemed] = useState(false);
+  const { firestore } = useFirebase();
+  const { user } = useUser();
 
-  const handleRedeem = (title: string) => {
-    toast({
-      title: 'Reward Redeemed!',
-      description: `You've successfully redeemed "${title}".`,
-    });
-    setRedeemed(true);
+  const userProfileRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+
+
+  const handleRedeem = (reward: (typeof rewards)[0]) => {
+    if (userPoints < reward.points) {
+      toast({
+        variant: 'destructive',
+        title: 'Not enough points',
+        description: `You need ${reward.points} points to redeem this reward.`,
+      });
+      return;
+    }
+
+    if (userProfileRef) {
+      const newPoints = userPoints - reward.points;
+      updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
+      toast({
+        title: 'Reward Redeemed!',
+        description: `You've successfully redeemed "${reward.title}".`,
+      });
+      setRedeemed(true);
+    }
   };
 
   if (redeemed) {
@@ -93,7 +122,7 @@ export function RewardsSection({ onBack }: { onBack: () => void }) {
                   <p className="text-sm text-muted-foreground">{reward.partner}</p>
                 </div>
               </div>
-              <Button onClick={() => handleRedeem(reward.title)}>
+              <Button onClick={() => handleRedeem(reward)}>
                 <Ticket className="mr-2 h-4 w-4" />
                 {reward.points} pts
               </Button>

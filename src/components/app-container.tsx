@@ -428,7 +428,7 @@ export function AppContainer() {
           </Card>
         );
       case 'rewards':
-        return <RewardsSection onBack={() => setStep('scan')} />;
+        return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       default:
         return null;
     }
