@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Gift, Recycle, Footprints, ShieldCheck, BookCopy, Camera, MapPin, Receipt, QrCode } from 'lucide-react';
+import { ChevronLeft, Gift, Recycle, Footprints, ShieldCheck, BookCopy, Camera, QrCode, Receipt } from 'lucide-react';
 import { materialPoints } from '@/lib/points';
 import { rewards } from './rewards-section';
 
@@ -152,7 +152,7 @@ export function GuideSection({ onBack }: GuideSectionProps) {
               </p>
               <ul className="list-disc list-inside space-y-2 rounded-md border p-4 text-sm">
                 <li>All submissions must be genuine and represent your own actions.</li>
-                <li>Do not submit fake scans, old receipts, or manipulated images.</li>
+                <li>Do not submit fake scans, old receipts, or manipulated images from your gallery.</li>
                 <li>Each recycling act and daily survey should only be logged once. Our system has checks for duplicate submissions.</li>
                 <li>Attempting to manipulate the points system may result in a temporary or permanent account suspension.</li>
               </ul>
@@ -171,9 +171,9 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                 <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
                   <li>From the main menu, tap <span className="inline-flex items-center gap-1 font-semibold text-foreground"><Camera size={14} /> Scan Product Packaging</span>.</li>
                   <li>Use your camera to scan the item's packaging. Our AI will identify the material.</li>
-                  <li>Tap <span className="inline-flex items-center gap-1 font-semibold text-foreground"><MapPin size={14} /> Find Nearest Recycling Bin</span> to see where to dispose of it.</li>
-                  <li>At the bin, tap <span className="inline-flex items-center gap-1 font-semibold text-foreground"><QrCode size={14}/> Confirm Disposal at Bin</span> and scan the QR code on the bin to verify your location.</li>
-                  <li>Points are awarded instantly for your eco-friendly action!</li>
+                  <li>Tap <span className="inline-flex items-center gap-1 font-semibold text-foreground"><QrCode size={14} /> Confirm Disposal at Bin</span>. This will open your camera.</li>
+                  <li>At the bin, scan the QR code on the bin to verify your location and confirm the disposal.</li>
+                  <li>Your submission will be sent for verification. Points are awarded instantly upon approval!</li>
                 </ol>
               </div>
               <div>

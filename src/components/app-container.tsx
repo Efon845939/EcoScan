@@ -14,6 +14,7 @@ import {
   Footprints,
   Receipt,
   BookCopy,
+  QrCode,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -98,7 +99,7 @@ export function AppContainer() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
   useEffect(() => {
-    if (step === 'camera' || step === 'receipt') {
+    if (step === 'camera' || step === 'receipt' || step === 'map') {
       const getCameraPermission = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
@@ -207,6 +208,11 @@ export function AppContainer() {
       processReceiptImage(dataUri);
       return;
     }
+
+    if (step === 'map') {
+      handleDispose(dataUri);
+      return;
+    }
     
     setIsLoading(true);
     setLoadingMessage('Identifying material...');
@@ -312,12 +318,21 @@ export function AppContainer() {
     });
   };
 
-  const handleDispose = () => {
+  const handleDispose = (binScanImage: string) => {
     if (!identifiedMaterial) return;
+    // In a real app, you'd send the binScanImage and item info to the backend.
+    // The backend would verify the QR code and award points transactionally.
+    console.log("Scanned bin image data URI:", binScanImage.substring(0, 50) + "...");
+    toast({
+        title: "Verification Submitted",
+        description: "Your disposal is being verified by our servers. Points will be awarded shortly."
+    });
+
+    // Simulate provisional points for now, or just show a message.
     const pointsAwarded = getPointsForMaterial(identifiedMaterial.material);
     
     setStep('disposed');
-    setAnimatePoints(`+${pointsAwarded} Points`);
+    setAnimatePoints(`+${pointsAwarded} (Pending)`);
     
     if (userProfileRef && userProfile) {
       const newPoints = (userProfile.totalPoints || 0) + pointsAwarded;
@@ -329,37 +344,9 @@ export function AppContainer() {
     }, 1500);
   };
 
-  const handleFindBins = () => {
-    if (navigator.geolocation) {
-      setIsLoading(true);
-      setLoadingMessage("Finding nearby recycling bins...");
-      navigator.geolocation.getCurrentPosition((position) => {
-        setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-        setStep('map');
-        setIsLoading(false);
-      }, (error) => {
-        console.error("Geolocation error:", error);
-        toast({
-          variant: "destructive",
-          title: "Location Access Denied",
-          description: "Please enable location services to find recycling bins.",
-        });
-        setIsLoading(false);
-        // Still go to the map step to show the placeholder
-        setStep('map');
-      });
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Geolocation Not Supported",
-        description: "Your browser does not support location services.",
-      });
-      // Still go to the map step to show the placeholder
-      setStep('map');
-    }
+  const handleConfirmDisposal = () => {
+    // This function now just moves to the camera step for QR code scanning
+    setStep('map'); 
   };
   
   const handleSurveyComplete = (pointsChanged: number) => {
@@ -413,8 +400,24 @@ export function AppContainer() {
         );
       case 'camera':
       case 'receipt':
+      case 'map':
         const isReceipt = step === 'receipt';
-        const backStep = isReceipt ? 'carbonFootprint' : 'scan';
+        const isMap = step === 'map';
+        let backStep: Step = 'scan';
+        if (isReceipt) backStep = 'carbonFootprint';
+        if (isMap) backStep = 'confirm';
+        
+        let title = 'Scan Your Item';
+        let description = "Position the item's packaging in the frame.";
+        if (isReceipt) {
+            title = 'Scan Your Receipt';
+            description = 'Position the entire receipt in the frame.';
+        }
+        if (isMap) {
+            title = 'Scan Bin QR Code';
+            description = 'Position the QR code on the recycling bin inside the frame to confirm disposal.';
+        }
+
         return (
           <Card>
             <CardHeader>
@@ -428,11 +431,11 @@ export function AppContainer() {
                   <ChevronLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
                 <CardTitle className="font-headline text-2xl">
-                  {isReceipt ? 'Scan Your Receipt' : 'Scan Your Item'}
+                  {title}
                 </CardTitle>
               </div>
               <CardDescription className="text-center pt-2">
-                {isReceipt ? 'Position the entire receipt in the frame.' : "Position the item's packaging in the frame."}
+                {description}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
@@ -474,6 +477,7 @@ export function AppContainer() {
                 size="lg"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={isMap} // Disable file upload for bin scanning
               >
                 Upload File
               </Button>
@@ -490,7 +494,7 @@ export function AppContainer() {
                 Material Identified: {identifiedMaterial.material}
               </CardTitle>
               <CardDescription>
-                We've identified the primary material of your item.
+                We've identified the primary material of your item. Please dispose of it in the correct bin.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
@@ -506,49 +510,14 @@ export function AppContainer() {
               </p>
             </CardContent>
             <CardFooter className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <Button size="lg" onClick={handleFindBins}>
-                <MapPin className="mr-2" />
-                Find Nearest Recycling Bin
+              <Button size="lg" onClick={handleConfirmDisposal}>
+                <QrCode className="mr-2" />
+                Confirm Disposal at Bin
               </Button>
               <Button size="lg" variant="outline" onClick={resetState}>
                 Scan Another Item
               </Button>
             </CardFooter>
-          </Card>
-        );
-      case 'map':
-        return (
-          <Card>
-            <CardHeader>
-              <div className="relative flex items-center justify-center">
-                <Button variant="ghost" size="sm" className="absolute left-0" onClick={() => setStep('confirm')}>
-                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                </Button>
-                <CardTitle className="font-headline text-center text-2xl">
-                  Nearest Bins for {identifiedMaterial?.material}
-                </CardTitle>
-              </div>
-               {userLocation && (
-                <CardDescription className="text-center">
-                  Your location: {userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
-                </CardDescription>
-              )}
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
-              {mapImage && (
-                <Image
-                  src={mapImage.imageUrl}
-                  alt={mapImage.description}
-                  width={800}
-                  height={600}
-                  className="rounded-lg border"
-                  data-ai-hint={mapImage.imageHint}
-                />
-              )}
-              <Button size="lg" onClick={handleDispose}>
-                <Camera className="mr-2" /> Confirm Disposal at Bin
-              </Button>
-            </CardContent>
           </Card>
         );
       case 'disposed':
@@ -564,9 +533,9 @@ export function AppContainer() {
             )}
             <CardHeader>
               <Sparkles className="mx-auto h-12 w-12 text-yellow-400" />
-              <CardTitle className="font-headline text-3xl">Recycling Confirmed!</CardTitle>
+              <CardTitle className="font-headline text-3xl">Verification Submitted!</CardTitle>
               <CardDescription>
-                Thank you for helping the planet.
+                Thank you! Your submission is being processed. Points will be awarded upon approval.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -674,5 +643,3 @@ export function AppContainer() {
     </div>
   );
 }
-
-    
