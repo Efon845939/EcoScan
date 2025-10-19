@@ -23,8 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { formatISO } from 'date-fns';
+import { doc, serverTimestamp } from 'firebase/firestore';
 
 type SurveyStep = 'form' | 'loading' | 'results';
 
@@ -101,10 +100,9 @@ export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }:
 
           if (userProfileRef && userProfile) {
             const newPoints = userProfile.totalPoints + points;
-            const today = formatISO(new Date(), { representation: 'date' });
             updateDocumentNonBlocking(userProfileRef, {
               totalPoints: newPoints,
-              lastCarbonSurveyDate: today,
+              lastCarbonSurveyDate: serverTimestamp(),
             });
             onSurveyComplete(points);
           }
@@ -294,5 +292,3 @@ export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }:
     </Card>
   );
 }
-
-    

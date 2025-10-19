@@ -45,12 +45,21 @@ import { RewardsSection } from './rewards-section';
 import { CarbonFootprintSurvey } from './carbon-footprint-survey';
 import { cn } from '@/lib/utils';
 import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
-import { doc, serverTimestamp } from 'firebase/firestore';
-import { isSameDay } from 'date-fns';
+import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { differenceInMilliseconds, addHours } from 'date-fns';
 import { getPointsForMaterial } from '@/lib/points';
 
 
 type Step = 'scan' | 'camera' | 'confirm' | 'map' | 'disposed' | 'rewards' | 'carbonFootprint';
+
+function formatTimeLeft(milliseconds: number) {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
 
 export function AppContainer() {
   const [step, setStep] = useState<Step>('scan');
@@ -65,6 +74,7 @@ export function AppContainer() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(
     null
   );
+  const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -133,11 +143,34 @@ export function AppContainer() {
     }
   }, [user, userProfile, isProfileLoading, userProfileRef]);
 
+  const lastSurveyTimestamp = userProfile?.lastCarbonSurveyDate as Timestamp | undefined;
+
+  useEffect(() => {
+    if (!lastSurveyTimestamp) {
+      setCooldownTimeLeft(null);
+      return;
+    }
+
+    const lastSurveyDate = lastSurveyTimestamp.toDate();
+    const cooldownEndDate = addHours(lastSurveyDate, 24);
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const timeLeft = differenceInMilliseconds(cooldownEndDate, now);
+      if (timeLeft <= 0) {
+        setCooldownTimeLeft(null);
+        clearInterval(interval);
+      } else {
+        setCooldownTimeLeft(timeLeft);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [lastSurveyTimestamp]);
+
+
   const userPoints = userProfile?.totalPoints ?? 0;
-  const lastSurveyDate = userProfile?.lastCarbonSurveyDate;
-  const surveyTakenToday = lastSurveyDate ? isSameDay(new Date(lastSurveyDate), new Date()) : false;
-
-
+  
   const mapImage = PlaceHolderImages.find((img) => img.id === 'map');
 
   const resetState = () => {
@@ -277,9 +310,13 @@ export function AppContainer() {
                 <Camera className="mr-2" />
                 Scan Product Packaging
               </Button>
-              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')} disabled={surveyTakenToday} title={surveyTakenToday ? "You can only take the survey once a day." : ""}>
+              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')}>
                 <Footprints className="mr-2" />
-                See Your Carbon Footprint
+                {cooldownTimeLeft ? (
+                  `Next survey in: ${formatTimeLeft(cooldownTimeLeft)}`
+                ) : (
+                  'See Your Carbon Footprint'
+                )}
               </Button>
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
