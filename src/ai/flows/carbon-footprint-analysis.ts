@@ -32,6 +32,9 @@ const CarbonFootprintOutputSchema = z.object({
   recommendations: z
     .array(z.string())
     .describe('A list of 2-3 actionable recommendations to reduce the carbon footprint.'),
+  extraTips: z
+    .array(z.string())
+    .describe('A list of 2-3 extra, general tips for keeping carbon footprint low today.'),
 });
 export type CarbonFootprintOutput = z.infer<typeof CarbonFootprintOutputSchema>;
 
@@ -56,6 +59,7 @@ Based on this, provide:
 1. A rough, illustrative estimate of their carbon footprint in kg of CO2 equivalent for the day. This is not for scientific accuracy, but for motivation.
 2. A short, positive, and encouraging analysis of their day.
 3. A list of 2-3 simple, actionable recommendations for how they could reduce their footprint tomorrow. Tailor the recommendations to their provided activities. For example, if they drove a car, suggest biking or public transport. If they ate meat, suggest a plant-based meal.
+4. A list of 2-3 additional, general tips for what the user can do today to keep their footprint low (e.g., 'unplug unused chargers', 'air dry clothes').
 
 Keep the tone light, positive, and empowering. The goal is to encourage small changes, not to make the user feel guilty.
 `,

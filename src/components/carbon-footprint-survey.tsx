@@ -27,6 +27,7 @@ import {
   CarbonFootprintOutput,
 } from '@/ai/flows/carbon-footprint-analysis';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from './ui/separator';
 
 type SurveyStep = 'form' | 'loading' | 'results';
 
@@ -103,13 +104,24 @@ export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
             <AlertDescription>{results.analysis}</AlertDescription>
           </Alert>
 
-          <div>
-            <h3 className="font-semibold mb-2">How to improve:</h3>
-            <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-              {results.recommendations.map((rec, i) => (
-                <li key={i}>{rec}</li>
-              ))}
-            </ul>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">How to improve tomorrow:</h3>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                {results.recommendations.map((rec, i) => (
+                  <li key={i}>{rec}</li>
+                ))}
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <h3 className="font-semibold mb-2">What you can do today:</h3>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                {results.extraTips.map((rec, i) => (
+                  <li key={i}>{rec}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         </CardContent>
         <CardFooter>
