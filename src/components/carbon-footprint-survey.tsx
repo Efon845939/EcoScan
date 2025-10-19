@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ChevronLeft, Loader2, Leaf, ThumbsUp, Sparkles, AlertTriangle, Receipt } from 'lucide-react';
+import { ChevronLeft, Loader2, Leaf, ThumbsUp, Sparkles, AlertTriangle, Receipt, Camera } from 'lucide-react';
 import {
   analyzeCarbonFootprint,
   CarbonFootprintInput,
@@ -44,10 +44,11 @@ type CarbonFootprintSurveyProps = {
   onBack: () => void;
   onScanReceipt: () => void;
   userProfile: any;
-  onSurveyComplete: (points: number) => void;
+  onSurveyComplete: (points: number, recommendations: string[]) => void;
+  onSecondChance: () => void;
 };
 
-export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete }: CarbonFootprintSurveyProps) {
+export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance }: CarbonFootprintSurveyProps) {
   const [step, setStep] = useState<SurveyStep>('form');
   const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState<CarbonFootprintInput>({
@@ -106,7 +107,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
               totalPoints: newPoints,
               lastCarbonSurveyDate: serverTimestamp(),
             });
-            onSurveyComplete(points);
+            onSurveyComplete(points, [...analysisResults.recommendations, ...analysisResults.extraTips]);
           }
 
           setStep('results');
@@ -165,9 +166,9 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           {pointsChanged < 0 ? (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Points Deducted</AlertTitle>
+              <AlertTitle>High Footprint Penalty</AlertTitle>
               <AlertDescription>
-                  Your daily footprint was high, so {pointsChanged} points have been deducted.
+                  Your daily footprint was high, so {pointsChanged} points have been deducted. You can reverse this by taking one of the actions below and verifying with a photo.
               </AlertDescription>
             </Alert>
           ) : (
@@ -175,7 +176,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
               <Sparkles className="h-4 w-4 text-yellow-500" />
               <AlertTitle className="text-yellow-600 dark:text-yellow-400">Provisional Points Awarded!</AlertTitle>
               <AlertDescription>
-                  You earned a provisional {pointsChanged} points. Scan a receipt from your day to verify your footprint and get a 5x point bonus!
+                  You earned a provisional {pointsChanged} points. Scan a receipt from your day to verify your footprint and get a 500% point bonus!
               </AlertDescription>
             </Alert>
           )}
@@ -207,9 +208,15 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button size="lg" className="w-full" onClick={onScanReceipt}>
-            <Receipt className="mr-2" /> Scan Receipt to Verify & Get Bonus
-          </Button>
+          {pointsChanged < 0 ? (
+            <Button size="lg" className="w-full" onClick={onSecondChance}>
+              <Camera className="mr-2" /> Take Action to Reverse Penalty
+            </Button>
+          ) : (
+            <Button size="lg" className="w-full" onClick={onScanReceipt}>
+              <Receipt className="mr-2" /> Scan Receipt to Verify & Get Bonus
+            </Button>
+          )}
           <Button size="lg" variant="outline" className="w-full" onClick={onBack}>
             Back to Main Menu
           </Button>
@@ -228,7 +235,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           <CardTitle className="font-headline text-2xl">Your Daily Footprint</CardTitle>
         </div>
         <CardDescription className="text-center pt-2">
-          Answer a few questions to get an estimate of your carbon footprint for today.
+          Answer a few questions to get an estimate of your carbon footprint for today. Don't forget your receipt after your meal to confirm your carbon footprint.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

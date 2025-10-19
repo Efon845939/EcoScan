@@ -21,6 +21,7 @@ import {
 import { identifyMaterialWithBarcode } from '@/ai/flows/confidence-based-assistance';
 import { processReceipt, ReceiptOutput } from '@/ai/flows/receipt-ocr-flow';
 import { verifyDisposalAction, VerifyDisposalActionOutput } from '@/ai/flows/verify-disposal-action';
+import { verifySustainabilityAction, VerifySustainabilityActionOutput, VerifySustainabilityActionInput } from '@/ai/flows/verify-sustainability-action';
 
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
@@ -54,7 +55,7 @@ import { differenceInMilliseconds, addHours } from 'date-fns';
 import { getPointsForMaterial } from '@/lib/points';
 
 
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'carbonFootprint' | 'receipt' | 'guide';
+export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'carbonFootprint' | 'receipt' | 'guide' | 'verifySustainability';
 
 function formatTimeLeft(milliseconds: number) {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -72,6 +73,7 @@ export function AppContainer() {
   const [identifiedMaterial, setIdentifiedMaterial] =
     useState<MaterialIdentificationOutput | null>(null);
   const [receiptResult, setReceiptResult] = useState<ReceiptOutput | null>(null);
+  const [sustainabilityRecommendations, setSustainabilityRecommendations] = useState<string[]>([]);
   const [showReceiptResultModal, setShowReceiptResultModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Identifying material...');
@@ -97,7 +99,7 @@ export function AppContainer() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
   useEffect(() => {
-    if (step === 'camera' || step === 'receipt' || step === 'verifyDisposal') {
+    if (step === 'camera' || step === 'receipt' || step === 'verifyDisposal' || step === 'verifySustainability') {
       const getCameraPermission = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
@@ -203,6 +205,11 @@ export function AppContainer() {
 
     if (step === 'verifyDisposal') {
       handleDisposalVerification(dataUri);
+      return;
+    }
+
+    if (step === 'verifySustainability') {
+      handleSustainabilityVerification(dataUri);
       return;
     }
     
@@ -368,12 +375,60 @@ export function AppContainer() {
     });
   };
 
+  const handleSustainabilityVerification = (actionImage: string) => {
+    if (sustainabilityRecommendations.length === 0) return;
+
+    setIsLoading(true);
+    setLoadingMessage('Verifying your action...');
+
+    startTransition(() => {
+      verifySustainabilityAction({
+        recommendations: sustainabilityRecommendations,
+        photoOfActionUri: actionImage,
+      })
+      .then((result) => {
+        if (result.isValid) {
+          // Reverse -10 penalty and add +5 bonus = +15
+          const pointsAwarded = 15;
+          setAnimatePoints(`+${pointsAwarded}`);
+
+          if (userProfileRef && userProfile) {
+            const newPoints = (userProfile.totalPoints || 0) + pointsAwarded;
+            updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
+          }
+          toast({
+            title: 'Action Verified!',
+            description: `Penalty reversed! You've earned ${pointsAwarded} bonus points.`,
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Verification Failed',
+            description: result.reason,
+          });
+        }
+      })
+      .catch((err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Verification Error',
+          description: 'An error occurred during verification.',
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setStep('scan'); // Go back to main menu after attempt
+        setTimeout(() => setAnimatePoints(false), 2000);
+      });
+    });
+  };
 
   const handleConfirmDisposal = () => {
     setStep('verifyDisposal'); 
   };
   
-  const handleSurveyComplete = (pointsChanged: number) => {
+  const handleSurveyComplete = (pointsChanged: number, recommendations: string[]) => {
+    setSustainabilityRecommendations(recommendations);
     const pointString = pointsChanged > 0 ? `+${pointsChanged} Points` : `${pointsChanged} Points`;
     setAnimatePoints(pointString);
      setTimeout(() => {
@@ -425,22 +480,25 @@ export function AppContainer() {
       case 'camera':
       case 'receipt':
       case 'verifyDisposal':
-        const isReceipt = step === 'receipt';
-        const isVerify = step === 'verifyDisposal';
-        
+      case 'verifySustainability':
         let backStep: Step = 'scan';
-        if (isReceipt) backStep = 'carbonFootprint';
-        if (isVerify) backStep = 'confirm';
-        
         let title = 'Scan Your Item';
         let description = "Position the item's packaging in the frame.";
-        if (isReceipt) {
-            title = 'Scan Your Receipt';
-            description = 'Position the entire receipt in the frame.';
+
+        if (step === 'receipt') {
+          backStep = 'carbonFootprint';
+          title = 'Scan Your Receipt';
+          description = 'Position the entire receipt in the frame.';
         }
-        if (isVerify) {
-            title = 'Verify Your Disposal';
-            description = 'Take a photo of yourself placing the item in the correct recycling bin.';
+        if (step === 'verifyDisposal') {
+          backStep = 'confirm';
+          title = 'Verify Your Disposal';
+          description = 'Take a photo of yourself placing the item in the correct recycling bin.';
+        }
+        if (step === 'verifySustainability') {
+            backStep = 'carbonFootprint';
+            title = 'Verify Your Action';
+            description = 'Take a photo of yourself performing one of the recommended sustainable actions.';
         }
 
         return (
@@ -502,7 +560,7 @@ export function AppContainer() {
                 size="lg"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isVerify} // Disable file upload for verification
+                disabled={step === 'verifyDisposal' || step === 'verifySustainability'}
               >
                 Upload File
               </Button>
@@ -579,7 +637,7 @@ export function AppContainer() {
       case 'rewards':
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'carbonFootprint':
-        return <CarbonFootprintSurvey onBack={() => setStep('scan')} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} />;
+        return <CarbonFootprintSurvey onBack={() => setStep('scan')} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} />;
       case 'guide':
         return <GuideSection onBack={() => setStep('scan')} />;
       default:
@@ -638,7 +696,7 @@ export function AppContainer() {
             <DialogHeader>
               <DialogTitle className="font-headline">Receipt Scanned</DialogTitle>
               <DialogDescription>
-                Here is the data we extracted. The provisional points logic is coming soon!
+                Here is the data we extracted. Don't forget your receipt after your meal to confirm your carbon footprint.
               </DialogDescription>
             </DialogHeader>
             {receiptResult && (
