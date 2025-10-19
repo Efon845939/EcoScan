@@ -45,14 +45,16 @@ const prompt = ai.definePrompt({
   output: {schema: IdentifyMaterialWithBarcodeOutputSchema},
   prompt: `You are an expert in recycling and material identification using product data.
 
-  A user has scanned an item, but the initial visual identification was not confident. They have now provided the barcode number. Use the barcode number as the primary source of truth to identify the product's primary packaging material. Use the image as a secondary reference.
+  A user has scanned an item, but the initial visual identification was not confident. They have now provided the barcode number.
+
+  **CRITICAL INSTRUCTION:** You MUST use the barcode number as the absolute primary source of truth to identify the product's primary packaging material. The image should only be used as a secondary reference if the barcode yields no information. Do not let the visual appearance of the item in the photo override the data associated with the barcode.
 
   - Barcode (UPC/EAN): {{{barcodeNumber}}}
   - Photo of item: {{media url=photoDataUri}}
 
   Based on this, determine the most likely material for the item's packaging.
   Common materials are: Plastic, Glass, Metal, Aluminum, Paper, Cardboard, Battery.
-  Provide a confidence level. If the barcode is informative, the confidence should be high (e.g., > 0.9).
+  If the barcode is informative, your confidence should be high (e.g., > 0.9). If you are relying only on the photo, the confidence should be lower.
   `,
 });
 

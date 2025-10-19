@@ -26,7 +26,7 @@ This logic is located in `src/lib/points.ts`.
 
 ## 2. Carbon Footprint Survey Points
 
-Points from the daily carbon footprint survey are calculated based on a `sustainabilityScore` (from 1 to 10) and an `estimatedFootprintKg` provided by the AI analysis.
+Points from the daily carbon footprint survey are calculated based on a `sustainabilityScore` (from 1 to 10) and an `estimatedFootprintKg` provided by the AI analysis. The system is designed to provide a small provisional reward, with a large bonus for verifying with a receipt.
 
 This logic is located in `src/components/carbon-footprint-survey.tsx`.
 
@@ -35,18 +35,23 @@ This logic is located in `src/components/carbon-footprint-survey.tsx`.
 1.  **High Footprint Penalty:**
     *   If `estimatedFootprintKg` is **greater than 40 kg**, the user **loses 10 points**.
 
-2.  **Standard Reward:**
-    *   If the footprint is not over 40kg, points are awarded based on the `sustainabilityScore`.
-    *   **Formula:** `Points = sustainabilityScore * 2.5`
-    *   This results in a maximum of **25 points** for a perfect score of 10.
+2.  **Provisional Reward (No Receipt):**
+    *   If the footprint is not over 40kg, provisional points are awarded based on the `sustainabilityScore`.
+    *   **Formula:** `Provisional Points = sustainabilityScore * 0.5`
+    *   This results in a maximum of **5 points** for a perfect score of 10.
 
-| Sustainability Score | Points Awarded |
-|----------------------|----------------|
-| 10                   | 25             |
-| 9                    | 22.5 (rounded) |
-| 8                    | 20             |
-| ...                  | ...            |
-| 1                    | 2.5 (rounded)  |
+| Sustainability Score | Provisional Points |
+|----------------------|--------------------|
+| 10                   | 5                  |
+| 9                    | 4.5 (rounded)      |
+| 8                    | 4                  |
+| ...                  | ...                |
+| 1                    | 0.5 (rounded)      |
+
+
+3. **Receipt Verification Bonus:**
+    * If a user successfully scans a receipt to verify their daily activities, they receive a **500% bonus** on top of the base points (not the provisional points).
+    * **Example:** A score of 8 gives a base of `8 * 2.5 = 20` points. The bonus is `20 * 5 = 100` points. The provisional points are replaced.
 
 ---
 

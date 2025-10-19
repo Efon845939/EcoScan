@@ -95,7 +95,8 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           if (analysisResults.estimatedFootprintKg > 40) {
             points = -10;
           } else {
-            points = Math.round(analysisResults.sustainabilityScore * 2.5);
+            // Provisional points are based on score * 0.5 (max 5 points)
+            points = Math.round(analysisResults.sustainabilityScore * 0.5);
           }
           setPointsChanged(points);
 
@@ -166,7 +167,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Points Deducted</AlertTitle>
               <AlertDescription>
-                  Your daily footprint was high, so {pointsChanged} points have been deducted. Check out the tips below to improve!
+                  Your daily footprint was high, so {pointsChanged} points have been deducted.
               </AlertDescription>
             </Alert>
           ) : (
@@ -174,7 +175,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
               <Sparkles className="h-4 w-4 text-yellow-500" />
               <AlertTitle className="text-yellow-600 dark:text-yellow-400">Provisional Points Awarded!</AlertTitle>
               <AlertDescription>
-                  You earned a provisional {pointsChanged} points. Don't forget your receipt after your meal to confirm your carbon footprint and get a 100% bonus!
+                  You earned a provisional {pointsChanged} points. Scan a receipt from your day to verify your footprint and get a 5x point bonus!
               </AlertDescription>
             </Alert>
           )}

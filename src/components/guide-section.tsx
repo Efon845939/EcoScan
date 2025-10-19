@@ -80,8 +80,7 @@ export function GuideSection({ onBack }: GuideSectionProps) {
             </AccordionTrigger>
             <AccordionContent className="space-y-2 pt-2">
               <p>
-                Complete a daily survey about your activities to earn points.
-                The more sustainable your day, the more points you get.
+                Complete a daily survey to get provisional points. Verify with a receipt for a massive bonus!
               </p>
               <ul className="space-y-2 rounded-md border p-4 text-sm">
                 <li className="flex justify-between items-center">
@@ -93,21 +92,21 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                 </li>
                 <li className="flex justify-between items-center">
                   <span>
-                    Standard Reward <br />
+                    Provisional Reward <br />
                     <small>(Based on a 1-10 sustainability score)</small>
                   </span>
-                  <span className="font-bold text-primary">Up to 25 pts</span>
+                  <span className="font-bold text-primary">Up to 5 pts</span>
                 </li>
                  <li className="flex justify-between items-center">
                   <span>
                     Receipt Verification Bonus<br />
                     <small>(Scan a receipt to verify your day)</small>
                   </span>
-                  <span className="font-bold text-yellow-500">+100% Bonus</span>
+                  <span className="font-bold text-yellow-500">+500% Bonus</span>
                 </li>
               </ul>
               <p className="text-xs text-muted-foreground pt-2">
-                The formula is `sustainabilityScore * 2.5`. A higher score means a lower carbon footprint.
+                The formula is `sustainabilityScore * 0.5`. A higher score means a lower carbon footprint.
               </p>
             </AccordionContent>
           </AccordionItem>
@@ -182,7 +181,7 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                   <li>Receive your initial analysis and provisional points.</li>
                   <li>Tap <span className="inline-flex items-center gap-1 font-semibold text-foreground"><Receipt size={14} /> Scan Receipt to Verify</span> to open the camera.</li>
                   <li>Scan a receipt from today that reflects your daily activities (e.g., groceries, transport tickets).</li>
-                  <li>If the receipt is validated, your provisional points will be replaced with the full points plus a 100% bonus!</li>
+                  <li>If the receipt is validated, your provisional points will be replaced with the full points plus a 500% bonus!</li>
                 </ol>
               </div>
             </AccordionContent>
