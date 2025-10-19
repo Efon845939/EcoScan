@@ -79,6 +79,19 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     }
   }, [initialResults]);
 
+  const handleCheckboxChange = (field: 'transport' | 'diet', value: string) => {
+    setFormData((prev) => {
+      const newValues = prev[field].includes(value)
+        ? prev[field].filter((item) => item !== value)
+        : [...prev[field], value];
+      return { ...prev, [field]: newValues };
+    });
+  };
+
+  const handleEnergyChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, energy: value }));
+  };
+
   const handleSubmit = () => {
     setStep('loading');
     startTransition(() => {
@@ -301,5 +314,3 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     </Card>
   );
 }
-
-    
