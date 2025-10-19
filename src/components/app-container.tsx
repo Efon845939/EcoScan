@@ -13,6 +13,7 @@ import {
   CircleDot,
   Footprints,
   Receipt,
+  BookCopy,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -137,7 +138,23 @@ export function AppContainer() {
   }, [isUserLoading, user, auth]);
   
   useEffect(() => {
-    if (user && !isProfileLoading && !userProfile && userProfileRef) {
+    // This effect runs when the user's auth state or profile loading state changes.
+    // It handles creating a profile for a new user.
+  
+    // Exit if we're still waiting for auth or profile data, or if there's no user.
+    if (isUserLoading || isProfileLoading || !user) {
+      return;
+    }
+  
+    // If the user exists but their profile data is missing, they are a new user.
+    if (user && !userProfile) {
+      // Don't create a profile for an anonymous user immediately.
+      // This can be handled later if they perform an action that requires a profile.
+      if (user.isAnonymous) {
+        return;
+      }
+  
+      // For non-anonymous users (e.g., signed in with Email, Google), create their profile.
       const newProfile = {
         email: user.email || '',
         firstName: user.displayName?.split(' ')[0] || '',
@@ -145,9 +162,13 @@ export function AppContainer() {
         totalPoints: 0,
         createdAt: serverTimestamp(),
       };
-      setDocumentNonBlocking(userProfileRef, newProfile, { merge: false });
+  
+      // Use the non-blocking function to create the document.
+      if (userProfileRef) {
+        setDocumentNonBlocking(userProfileRef, newProfile, { merge: false });
+      }
     }
-  }, [user, userProfile, isProfileLoading, userProfileRef]);
+  }, [user, userProfile, isUserLoading, isProfileLoading, userProfileRef]);
 
   const lastSurveyTimestamp = userProfile?.lastCarbonSurveyDate as Timestamp | undefined;
 

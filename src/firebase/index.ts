@@ -136,21 +136,28 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
   /** Initiate anonymous sign-in (non-blocking). */
   export function initiateAnonymousSignIn(authInstance: Auth): void {
     // CRITICAL: Call signInAnonymously directly. Do NOT use 'await signInAnonymously(...)'.
-    signInAnonymously(authInstance);
+    signInAnonymously(authInstance).catch(error => {
+      console.error("Anonymous sign-in failed:", error);
+      // Optionally, you can emit a custom error event here if you have a global error handler for auth
+    });
     // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
   }
   
   /** Initiate email/password sign-up (non-blocking). */
   export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
     // CRITICAL: Call createUserWithEmailAndPassword directly. Do NOT use 'await createUserWithEmailAndPassword(...)'.
-    createUserWithEmailAndPassword(authInstance, email, password);
+    createUserWithEmailAndPassword(authInstance, email, password).catch(error => {
+        console.error("Email sign-up failed:", error);
+    });
     // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
   }
   
   /** Initiate email/password sign-in (non-blocking). */
   export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
     // CRITICAL: Call signInWithEmailAndPassword directly. Do NOT use 'await signInWithEmailAndPassword(...)'.
-    signInWithEmailAndPassword(authInstance, email, password);
+    signInWithEmailAndPassword(authInstance, email, password).catch(error => {
+        console.error("Email sign-in failed:", error);
+    });
     // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
   }
 
