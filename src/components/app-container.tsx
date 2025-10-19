@@ -82,6 +82,7 @@ export function AppContainer() {
     null
   );
   const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number | null>(null);
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -138,23 +139,15 @@ export function AppContainer() {
   }, [isUserLoading, user, auth]);
   
   useEffect(() => {
-    // This effect runs when the user's auth state or profile loading state changes.
-    // It handles creating a profile for a new user.
-  
-    // Exit if we're still waiting for auth or profile data, or if there's no user.
     if (isUserLoading || isProfileLoading || !user) {
       return;
     }
   
-    // If the user exists but their profile data is missing, they are a new user.
     if (user && !userProfile) {
-      // Don't create a profile for an anonymous user immediately.
-      // This can be handled later if they perform an action that requires a profile.
       if (user.isAnonymous) {
         return;
       }
   
-      // For non-anonymous users (e.g., signed in with Email, Google), create their profile.
       const newProfile = {
         email: user.email || '',
         firstName: user.displayName?.split(' ')[0] || '',
@@ -163,7 +156,6 @@ export function AppContainer() {
         createdAt: serverTimestamp(),
       };
   
-      // Use the non-blocking function to create the document.
       if (userProfileRef) {
         setDocumentNonBlocking(userProfileRef, newProfile, { merge: false });
       }
@@ -328,13 +320,46 @@ export function AppContainer() {
     setAnimatePoints(`+${pointsAwarded} Points`);
     
     if (userProfileRef && userProfile) {
-      const newPoints = userProfile.totalPoints + pointsAwarded;
+      const newPoints = (userProfile.totalPoints || 0) + pointsAwarded;
       updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
     }
 
     setTimeout(() => {
       setAnimatePoints(false);
     }, 1500);
+  };
+
+  const handleFindBins = () => {
+    if (navigator.geolocation) {
+      setIsLoading(true);
+      setLoadingMessage("Finding nearby recycling bins...");
+      navigator.geolocation.getCurrentPosition((position) => {
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+        setStep('map');
+        setIsLoading(false);
+      }, (error) => {
+        console.error("Geolocation error:", error);
+        toast({
+          variant: "destructive",
+          title: "Location Access Denied",
+          description: "Please enable location services to find recycling bins.",
+        });
+        setIsLoading(false);
+        // Still go to the map step to show the placeholder
+        setStep('map');
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Geolocation Not Supported",
+        description: "Your browser does not support location services.",
+      });
+      // Still go to the map step to show the placeholder
+      setStep('map');
+    }
   };
   
   const handleSurveyComplete = (pointsChanged: number) => {
@@ -364,15 +389,15 @@ export function AppContainer() {
                 Choose an action to earn points and track your impact.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4">
-               <Button size="lg" onClick={() => setStep('camera')}>
+            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+               <Button size="lg" onClick={() => setStep('camera')} className="h-20 text-base md:h-24">
                 <Camera className="mr-2" />
                 Scan Product Packaging
               </Button>
-              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')}>
+              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')} className="h-20 text-base md:h-24">
                 <Footprints className="mr-2" />
                 {cooldownTimeLeft ? (
-                  `Tomorrow's Carbon Footprint in: ${formatTimeLeft(cooldownTimeLeft)}`
+                  <span className="text-center">Tomorrow's Carbon Footprint in:<br />{formatTimeLeft(cooldownTimeLeft)}</span>
                 ) : (
                   'See Your Carbon Footprint'
                 )}
@@ -481,7 +506,7 @@ export function AppContainer() {
               </p>
             </CardContent>
             <CardFooter className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <Button size="lg" onClick={() => setStep('map')}>
+              <Button size="lg" onClick={handleFindBins}>
                 <MapPin className="mr-2" />
                 Find Nearest Recycling Bin
               </Button>
@@ -503,6 +528,11 @@ export function AppContainer() {
                   Nearest Bins for {identifiedMaterial?.material}
                 </CardTitle>
               </div>
+               {userLocation && (
+                <CardDescription className="text-center">
+                  Your location: {userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               {mapImage && (
@@ -644,3 +674,5 @@ export function AppContainer() {
     </div>
   );
 }
+
+    
