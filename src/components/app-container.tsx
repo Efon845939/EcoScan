@@ -94,6 +94,8 @@ export function AppContainer() {
   );
   const [showCameraAlert, setShowCameraAlert] = useState(false);
   const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number | null>(null);
+  const [region, setRegion] = useState('Dubai, UAE');
+  const [language, setLanguage] = useState('en');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -107,6 +109,36 @@ export function AppContainer() {
     [firestore, user]
   );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+
+  useEffect(() => {
+    const savedRegion = localStorage.getItem('app-region');
+    const savedLanguage = localStorage.getItem('app-language');
+    if (savedRegion) {
+      setRegion(savedRegion);
+    }
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  const handleRegionChange = (newRegion: string) => {
+    setRegion(newRegion);
+    localStorage.setItem('app-region', newRegion);
+    toast({
+      title: 'Region Updated',
+      description: `Your region has been set to ${newRegion}.`,
+    });
+  };
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    localStorage.setItem('app-language', newLanguage);
+    toast({
+      title: 'Language Updated',
+      description: `Language has been set. The app will update on the next refresh.`,
+    });
+  };
+
 
   useEffect(() => {
     if (step === 'camera' || step === 'receipt' || step === 'verifyDisposal' || step === 'verifySustainability') {
@@ -674,7 +706,7 @@ export function AppContainer() {
       case 'rewards':
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'carbonFootprint':
-        return <CarbonFootprintSurvey onBack={resetState} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} results={surveyResults} surveyPoints={surveyPoints} receiptResult={receiptResult}/>;
+        return <CarbonFootprintSurvey onBack={resetState} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} results={surveyResults} surveyPoints={surveyPoints} receiptResult={receiptResult} region={region}/>;
       case 'guide':
         return <GuideSection onBack={() => setStep('scan')} />;
       default:
@@ -746,15 +778,18 @@ export function AppContainer() {
                    <Globe />
                    Region
                 </Label>
-                <Select defaultValue="dubai">
+                <Select value={region} onValueChange={handleRegionChange}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a region" />
                   </SelectTrigger>
                   <SelectContent id="region">
-                    <SelectItem value="dubai">Dubai, UAE</SelectItem>
-                    <SelectItem value="kuwait">Kuwait</SelectItem>
-                    <SelectItem value="turkey">Turkey</SelectItem>
-                    <SelectItem value="usa">USA</SelectItem>
+                    <SelectItem value="Dubai, UAE">Dubai, UAE</SelectItem>
+                    <SelectItem value="Kuwait">Kuwait</SelectItem>
+                    <SelectItem value="Turkey">Turkey</SelectItem>
+                    <SelectItem value="Germany">Germany</SelectItem>
+                    <SelectItem value="USA">USA</SelectItem>
+                    <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                    <SelectItem value="Japan">Japan</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -763,7 +798,7 @@ export function AppContainer() {
                     <Languages />
                    Language
                 </Label>
-                <Select defaultValue="en">
+                <Select value={language} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a language" />
                   </SelectTrigger>
@@ -771,6 +806,9 @@ export function AppContainer() {
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="tr">Türkçe</SelectItem>
                     <SelectItem value="ar">العربية</SelectItem>
+                    <SelectItem value="de">Deutsch</SelectItem>
+                    <SelectItem value="es">Español</SelectItem>
+                    <SelectItem value="ja">日本語</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -817,3 +855,5 @@ export function AppContainer() {
     </div>
   );
 }
+
+    

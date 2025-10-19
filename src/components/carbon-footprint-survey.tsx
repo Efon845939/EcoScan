@@ -49,13 +49,14 @@ type CarbonFootprintSurveyProps = {
   results: CarbonFootprintOutput | null;
   surveyPoints: number;
   receiptResult: ReceiptOutput | null;
+  region: string;
 };
 
-export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance, results, surveyPoints, receiptResult }: CarbonFootprintSurveyProps) {
+export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance, results, surveyPoints, receiptResult, region }: CarbonFootprintSurveyProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState<CarbonFootprintInput>({
-    location: 'Dubai, UAE', // Hardcoded for now as per requirement
+    location: region,
     transport: [],
     diet: [],
     energy: '',
@@ -83,7 +84,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   };
 
   const handleVerifyWithReceipt = () => {
-    if (!results) return;
+    if (!results || !receiptResult) return;
 
     // Calculate base points from sustainability score (not provisional points)
     const basePoints = Math.round(results.sustainabilityScore * 2.5);
@@ -91,8 +92,6 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
 
      if (userProfileRef && userProfile) {
         // Add the bonus points to the user's total.
-        // We don't need to subtract the provisional points because they were a small, temporary addition.
-        // The bonus is the main reward.
         const currentPoints = userProfile.totalPoints || 0;
         const newPoints = Math.max(0, currentPoints + bonusPoints);
         updateDocumentNonBlocking(userProfileRef, {
@@ -104,7 +103,6 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
         description: `You've earned a massive ${bonusPoints} point bonus for verifying your footprint!`,
      });
 
-     // Potentially clear receiptResult to prevent re-applying bonus
   }
 
   useEffect(() => {
@@ -112,6 +110,11 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
         handleVerifyWithReceipt();
     }
   }, [receiptResult]);
+
+  // Update formData location when region prop changes
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, location: region }));
+  }, [region]);
 
 
   const handleSubmit = () => {
@@ -239,6 +242,8 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   }
 
   // Otherwise, show the results page.
+  const isPenalty = surveyPoints < 0;
+
   return (
     <Card>
       <CardHeader>
@@ -263,7 +268,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           </p>
         </div>
         
-        {surveyPoints < 0 ? (
+        {isPenalty ? (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>High Footprint Penalty</AlertTitle>
@@ -308,7 +313,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
-        {surveyPoints < 0 ? (
+        {isPenalty ? (
           <Button size="lg" className="w-full" onClick={onSecondChance}>
             <Camera className="mr-2" /> Take Action to Reverse Penalty
           </Button>
@@ -324,3 +329,5 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     </Card>
   );
 }
+
+    
