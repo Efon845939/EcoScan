@@ -26,6 +26,11 @@
         "totalPoints": {
           "type": "number",
           "description": "The total number of points the user has accumulated."
+        },
+        "lastCarbonSurveyDate": {
+          "type": "string",
+          "description": "The date the user last completed the carbon footprint survey.",
+          "format": "date"
         }
       },
       "required": [

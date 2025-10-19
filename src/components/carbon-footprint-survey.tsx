@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ChevronLeft, Loader2, Leaf, ThumbsUp } from 'lucide-react';
+import { ChevronLeft, Loader2, Leaf, ThumbsUp, Sparkles } from 'lucide-react';
 import {
   analyzeCarbonFootprint,
   CarbonFootprintInput,
@@ -22,6 +22,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
+import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { formatISO } from 'date-fns';
 
 type SurveyStep = 'form' | 'loading' | 'results';
 
@@ -38,7 +41,13 @@ const dietOptions = [
   'Vegan',
 ];
 
-export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
+type CarbonFootprintSurveyProps = {
+  onBack: () => void;
+  userProfile: any;
+  onSurveyComplete: (points: number) => void;
+};
+
+export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }: CarbonFootprintSurveyProps) {
   const [step, setStep] = useState<SurveyStep>('form');
   const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState<CarbonFootprintInput>({
@@ -47,7 +56,15 @@ export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
     energy: '',
   });
   const [results, setResults] = useState<CarbonFootprintOutput | null>(null);
+  const [pointsAwarded, setPointsAwarded] = useState(0);
   const { toast } = useToast();
+  const { firestore } = useFirebase();
+  const { user } = useUser();
+
+  const userProfileRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
 
   const handleCheckboxChange = (
     field: 'transport' | 'diet',
@@ -71,7 +88,24 @@ export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
     setStep('loading');
     startTransition(() => {
       analyzeCarbonFootprint(formData)
-        .then(setResults)
+        .then((analysisResults) => {
+          setResults(analysisResults);
+          
+          const awarded = Math.round(analysisResults.sustainabilityScore * 2);
+          setPointsAwarded(awarded);
+
+          if (userProfileRef && userProfile) {
+            const newPoints = userProfile.totalPoints + awarded;
+            const today = formatISO(new Date(), { representation: 'date' });
+            updateDocumentNonBlocking(userProfileRef, {
+              totalPoints: newPoints,
+              lastCarbonSurveyDate: today,
+            });
+            onSurveyComplete(awarded);
+          }
+
+          setStep('results');
+        })
         .catch((err) => {
           console.error(err);
           toast({
@@ -80,9 +114,6 @@ export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
             description: 'Could not analyze your carbon footprint. Please try again.',
           });
           setStep('form'); // Go back to form on error
-        })
-        .finally(() => {
-          setStep('results');
         });
     });
   };
@@ -125,6 +156,15 @@ export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
               That's about the same as {results.tangibleComparison.toLowerCase()}.
             </p>
           </div>
+          
+          <Alert variant="default" className="border-yellow-400/50 text-center bg-yellow-50/50 dark:bg-yellow-900/10">
+            <Sparkles className="h-4 w-4 text-yellow-500" />
+            <AlertTitle className="text-yellow-600 dark:text-yellow-400">Points Awarded!</AlertTitle>
+            <AlertDescription>
+                You earned {pointsAwarded} points for your sustainable choices today!
+            </AlertDescription>
+          </Alert>
+
           <Alert>
             <ThumbsUp className="h-4 w-4" />
             <AlertTitle>Analysis</AlertTitle>

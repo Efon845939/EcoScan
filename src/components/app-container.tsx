@@ -46,6 +46,7 @@ import { CarbonFootprintSurvey } from './carbon-footprint-survey';
 import { cn } from '@/lib/utils';
 import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
+import { isSameDay } from 'date-fns';
 
 
 type Step = 'scan' | 'camera' | 'confirm' | 'map' | 'disposed' | 'rewards' | 'carbonFootprint';
@@ -59,7 +60,7 @@ export function AppContainer() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [showLowConfidenceModal, setShowLowConfidenceModal] = useState(false);
-  const [animatePoints, setAnimatePoints] = useState(false);
+  const [animatePoints, setAnimatePoints] = useState<string | false>(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(
     null
   );
@@ -132,6 +133,9 @@ export function AppContainer() {
   }, [user, userProfile, isProfileLoading, userProfileRef]);
 
   const userPoints = userProfile?.totalPoints ?? 0;
+  const lastSurveyDate = userProfile?.lastCarbonSurveyDate;
+  const surveyTakenToday = lastSurveyDate ? isSameDay(new Date(lastSurveyDate), new Date()) : false;
+
 
   const mapImage = PlaceHolderImages.find((img) => img.id === 'map');
 
@@ -225,7 +229,7 @@ export function AppContainer() {
 
   const handleDispose = () => {
     setStep('disposed');
-    setAnimatePoints(true);
+    setAnimatePoints('+10 Points');
     
     if (userProfileRef && userProfile) {
       const newPoints = userProfile.totalPoints + 10;
@@ -237,6 +241,13 @@ export function AppContainer() {
     }, 1500);
   };
   
+  const handleSurveyComplete = (pointsAwarded: number) => {
+    setAnimatePoints(`+${pointsAwarded} Points`);
+     setTimeout(() => {
+      setAnimatePoints(false);
+    }, 1500);
+  }
+
   const renderContent = () => {
     if (isUserLoading || isProfileLoading) {
         return (
@@ -261,7 +272,7 @@ export function AppContainer() {
                 <Camera className="mr-2" />
                 Scan Product Packaging
               </Button>
-              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')}>
+              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')} disabled={surveyTakenToday} title={surveyTakenToday ? "You can only take the survey once a day." : ""}>
                 <Footprints className="mr-2" />
                 See Your Carbon Footprint
               </Button>
@@ -411,7 +422,7 @@ export function AppContainer() {
           <Card className="text-center relative overflow-hidden">
              {animatePoints && (
               <div className="animate-point-burst absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-primary">
-                +10 Points
+                {animatePoints}
               </div>
             )}
             <CardHeader>
@@ -437,7 +448,7 @@ export function AppContainer() {
       case 'rewards':
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'carbonFootprint':
-        return <CarbonFootprintSurvey onBack={() => setStep('scan')} />;
+        return <CarbonFootprintSurvey onBack={() => setStep('scan')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} />;
       default:
         return null;
     }
