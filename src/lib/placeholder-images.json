@@ -3,32 +3,44 @@
     {
       "id": "hero",
       "description": "A person placing a plastic bottle into a recycling bin, symbolizing eco-friendly actions.",
-      "imageUrl": "https://picsum.photos/seed/10/1200/800",
+      "imageUrl": "https://images.unsplash.com/photo-1706468808996-1c9841911d57?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxyZWN5Y2xpbmclMjBib3R0bGV8ZW58MHx8fHwxNzYwODk0NTU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "recycling bottle"
     },
     {
       "id": "map",
       "description": "A placeholder map view showing several pin locations for recycling centers.",
-      "imageUrl": "https://picsum.photos/seed/11/800/600",
+      "imageUrl": "https://images.unsplash.com/photo-1717700299581-c2fc3fad4ee8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjaXR5JTIwbWFwfGVufDB8fHx8MTc2MDg1OTQ0Nnww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "city map"
     },
     {
       "id": "reward-partner-1",
       "description": "Logo placeholder for a coffee shop partner.",
-      "imageUrl": "https://picsum.photos/seed/12/200/200",
+      "imageUrl": "https://images.unsplash.com/photo-1511920170033-f8396924c348?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjb2ZmZWUlMjBzaG9wfGVufDB8fHx8MTc2MDgzMTE4MXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "coffee shop"
     },
     {
       "id": "reward-partner-2",
       "description": "Logo placeholder for a grocery store partner.",
-      "imageUrl": "https://picsum.photos/seed/13/200/200",
+      "imageUrl": "https://images.unsplash.com/photo-1506617420156-8e4536971650?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxncm9jZXJ5JTIwc3RvcmV8ZW58MHx8fHwxNzYwODc1MjU3fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "grocery store"
     },
     {
       "id": "reward-partner-3",
       "description": "Logo placeholder for a clothing brand partner.",
-      "imageUrl": "https://picsum.photos/seed/14/200/200",
+      "imageUrl": "https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjbG90aGluZyUyMHN0b3JlfGVufDB8fHx8MTc2MDg0MDc3OHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "clothing store"
+    },
+    {
+      "id": "reward-partner-4",
+      "description": "Logo placeholder for a cinema partner.",
+      "imageUrl": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtb3ZpZSUyMHRoZWF0ZXJ8ZW58MHx8fHwxNzYwODU2MjEzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "movie theater"
+    },
+    {
+      "id": "reward-partner-5",
+      "description": "Logo placeholder for a shoe store partner.",
+      "imageUrl": "https://images.unsplash.com/photo-1637666522102-bdb1c9d84b5f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzaG9lJTIwc3RvcmV8ZW58MHx8fHwxNzYwODk0NTU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "shoe store"
     }
   ]
 }

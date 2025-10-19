@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Ticket, ChevronLeft } from 'lucide-react';
+import { Ticket, ChevronLeft, Film, Shirt, ShoppingBasket, Footprints as FootprintsIcon } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -14,22 +14,42 @@ const rewards = [
     id: 1,
     title: 'Free Coffee',
     partner: 'The Daily Grind',
-    points: 50,
+    points: 250,
     imageId: 'reward-partner-1',
+    icon: Ticket,
   },
   {
     id: 2,
-    title: '10% Off Groceries',
+    title: '$5 Off Groceries',
     partner: 'Green Grocer',
-    points: 150,
+    points: 600,
     imageId: 'reward-partner-2',
+    icon: ShoppingBasket,
   },
+
   {
     id: 3,
-    title: '$5 Off T-shirt',
+    title: '$10 Off Clothes',
     partner: 'Eco Threads',
-    points: 200,
+    points: 850,
     imageId: 'reward-partner-3',
+    icon: Shirt,
+  },
+  {
+    id: 4,
+    title: 'Free Movie Ticket',
+    partner: 'Cineplex Green',
+    points: 1200,
+    imageId: 'reward-partner-4',
+    icon: Film,
+  },
+  {
+    id: 5,
+    title: '$15 Off Shoes',
+    partner: 'Sustainable Soles',
+    points: 1500,
+    imageId: 'reward-partner-5',
+    icon: FootprintsIcon,
   },
 ];
 
