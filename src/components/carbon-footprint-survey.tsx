@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import {
   Card,
   CardContent,
@@ -26,8 +26,6 @@ import { Checkbox } from './ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
 
-type SurveyStep = 'form' | 'loading' | 'results';
-
 const transportOptions = [
   'Car (Gasoline)',
   'Electric Vehicle',
@@ -51,15 +49,14 @@ type CarbonFootprintSurveyProps = {
   surveyPoints: number;
 };
 
-export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance, results: initialResults, surveyPoints }: CarbonFootprintSurveyProps) {
-  const [step, setStep] = useState<SurveyStep>(initialResults ? 'results' : 'form');
+export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance, results, surveyPoints }: CarbonFootprintSurveyProps) {
+  const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState<CarbonFootprintInput>({
     transport: [],
     diet: [],
     energy: '',
   });
-  const [results, setResults] = useState<CarbonFootprintOutput | null>(initialResults);
   const { toast } = useToast();
   const { firestore } = useFirebase();
   const { user } = useUser();
@@ -69,16 +66,6 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     [firestore, user]
   );
   
-  useEffect(() => {
-    if(initialResults) {
-        setResults(initialResults);
-        setStep('results');
-    } else {
-        setStep('form');
-        setResults(null);
-    }
-  }, [initialResults]);
-
   const handleCheckboxChange = (field: 'transport' | 'diet', value: string) => {
     setFormData((prev) => {
       const newValues = prev[field].includes(value)
@@ -92,13 +79,12 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     setFormData((prev) => ({ ...prev, energy: value }));
   };
 
+
   const handleSubmit = () => {
-    setStep('loading');
+    setIsLoading(true);
     startTransition(() => {
       analyzeCarbonFootprint(formData)
         .then((analysisResults) => {
-          setResults(analysisResults);
-          
           let points = 0;
           if (analysisResults.estimatedFootprintKg > 30) {
             const penalty = -Math.min(10, Math.round((analysisResults.estimatedFootprintKg - 30) / 2));
@@ -114,10 +100,8 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
               totalPoints: newPoints,
               lastCarbonSurveyDate: serverTimestamp(),
             });
-            onSurveyComplete(points, analysisResults);
           }
-
-          setStep('results');
+          onSurveyComplete(points, analysisResults);
         })
         .catch((err) => {
           console.error(err);
@@ -126,7 +110,9 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
             title: 'Analysis Failed',
             description: 'Could not analyze your carbon footprint. Please try again.',
           });
-          setStep('form');
+        })
+        .finally(() => {
+            setIsLoading(false);
         });
     });
   };
@@ -136,7 +122,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     formData.diet.length === 0 ||
     !formData.energy;
 
-  if (step === 'loading' || isPending) {
+  if (isLoading || isPending) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center p-12 gap-4">
@@ -148,7 +134,8 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     );
   }
 
-  if (step === 'results' && results) {
+  // If we have results, show the results page. The parent (AppContainer) controls this.
+  if (results) {
     return (
       <Card>
         <CardHeader>
@@ -235,6 +222,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     );
   }
 
+  // Otherwise, show the form.
   return (
     <Card className="w-full">
       <CardHeader>
@@ -314,3 +302,5 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     </Card>
   );
 }
+
+    
