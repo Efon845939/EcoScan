@@ -14,6 +14,8 @@ import {
   Footprints,
   Receipt,
   BookCopy,
+  Languages,
+  Globe,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -45,6 +47,8 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { MaterialIcon } from './material-icon';
 import { RewardsSection } from './rewards-section';
@@ -79,6 +83,7 @@ export function AppContainer() {
   const [sustainabilityRecommendations, setSustainabilityRecommendations] = useState<string[]>([]);
   const [surveyPoints, setSurveyPoints] = useState(0);
   const [showReceiptResultModal, setShowReceiptResultModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Identifying material...');
   const [isPending, startTransition] = useTransition();
@@ -87,6 +92,7 @@ export function AppContainer() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(
     null
   );
+  const [showCameraAlert, setShowCameraAlert] = useState(false);
   const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -117,6 +123,8 @@ export function AppContainer() {
         } catch (error) {
           console.error('Error accessing camera:', error);
           setHasCameraPermission(false);
+          setShowCameraAlert(true);
+          setTimeout(() => setShowCameraAlert(false), 5000); // Auto-dismiss alert
           toast({
             variant: 'destructive',
             title: 'Camera Access Denied',
@@ -391,6 +399,11 @@ export function AppContainer() {
 
   const handleSustainabilityVerification = (actionImage: string) => {
     if (sustainabilityRecommendations.length === 0) return;
+    
+    // The number of points lost, but positive
+    const penaltyAmount = Math.abs(surveyPoints); 
+    // Bonus is proportional to penalty
+    const bonusPoints = Math.round(penaltyAmount * 1.5); 
 
     setIsLoading(true);
     setLoadingMessage('Verifying your action...');
@@ -403,17 +416,19 @@ export function AppContainer() {
       .then((result) => {
         if (result.isValid) {
           // Reverses penalty and adds a bonus
-          const pointsAwarded = Math.abs(surveyPoints) + 15;
-          setAnimatePoints(`+${pointsAwarded}`);
+          // Here we just add penaltyAmount (to reverse the deduction) and the bonus
+          const totalPointsAwarded = penaltyAmount + bonusPoints;
+          setAnimatePoints(`+${totalPointsAwarded}`);
 
           if (userProfileRef && userProfile) {
             const currentPoints = userProfile.totalPoints || 0;
-            const newPoints = Math.max(0, currentPoints + pointsAwarded);
+            // The penalty was already applied, so we add it back, plus the bonus
+            const newPoints = Math.max(0, currentPoints + totalPointsAwarded);
             updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
           }
           toast({
             title: 'Action Verified!',
-            description: `Penalty reversed! You've earned ${pointsAwarded} bonus points.`,
+            description: `Penalty reversed! You've earned ${totalPointsAwarded} total points.`,
           });
         } else {
           toast({
@@ -452,6 +467,10 @@ export function AppContainer() {
      setTimeout(() => {
       setAnimatePoints(false), 1500;
     });
+  }
+  
+  const handleOpenSettings = () => {
+    setShowSettingsModal(true);
   }
 
   const renderContent = () => {
@@ -551,7 +570,7 @@ export function AppContainer() {
                   muted
                   playsInline
                 />
-                {hasCameraPermission === false && (
+                {showCameraAlert && hasCameraPermission === false && (
                   <Alert variant="destructive" className="w-auto">
                     <Video className="h-4 w-4" />
                     <AlertTitle>Camera Not Found</AlertTitle>
@@ -665,7 +684,7 @@ export function AppContainer() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header points={userPoints} onNavigate={setStep} />
+      <Header points={userPoints} onNavigate={setStep} onShowSettings={handleOpenSettings} />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
         <div className={cn('w-full max-w-2xl transition-all duration-300', (isLoading || isUserLoading || isProfileLoading) && 'opacity-50 pointer-events-none')}>
           {renderContent()}
@@ -705,6 +724,59 @@ export function AppContainer() {
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Submit Barcode
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="font-headline">Settings</DialogTitle>
+              <DialogDescription>
+                Manage your application settings and preferences.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-6 py-4">
+               <Button variant="outline" className="justify-start" onClick={() => { setStep('guide'); setShowSettingsModal(false); }}>
+                  <BookCopy className="mr-2" />
+                  App Guide & Rules
+               </Button>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
+                   <Globe />
+                   Region
+                </Label>
+                <Select defaultValue="dubai">
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a region" />
+                  </SelectTrigger>
+                  <SelectContent id="region">
+                    <SelectItem value="dubai">Dubai, UAE</SelectItem>
+                    <SelectItem value="kuwait">Kuwait</SelectItem>
+                    <SelectItem value="turkey">Turkey</SelectItem>
+                    <SelectItem value="usa">USA</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                 <Label htmlFor="language" className="text-right flex items-center gap-2 justify-end">
+                    <Languages />
+                   Language
+                </Label>
+                <Select defaultValue="en">
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a language" />
+                  </SelectTrigger>
+                  <SelectContent id="language">
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="tr">Türkçe</SelectItem>
+                    <SelectItem value="ar">العربية</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setShowSettingsModal(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

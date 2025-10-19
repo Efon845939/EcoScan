@@ -1,13 +1,14 @@
-import { Recycle, Award, BookOpen } from 'lucide-react';
+import { Recycle, Award, BookOpen, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import type { Step } from './app-container';
 
 type HeaderProps = {
   points: number;
   onNavigate: (step: Step) => void;
+  onShowSettings: () => void;
 };
 
-export function Header({ points, onNavigate }: HeaderProps) {
+export function Header({ points, onNavigate, onShowSettings }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -25,9 +26,9 @@ export function Header({ points, onNavigate }: HeaderProps) {
             <span className="text-lg font-bold">{points}</span>
             <span className="text-sm text-muted-foreground hidden sm:inline-block">Points</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => onNavigate('guide')}>
-              <BookOpen className="mr-2" />
-              Guide
+          <Button variant="ghost" size="icon" onClick={onShowSettings}>
+              <Settings />
+              <span className="sr-only">Settings</span>
           </Button>
         </div>
       </div>
