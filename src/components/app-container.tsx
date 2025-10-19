@@ -21,7 +21,8 @@ import {
 import { identifyMaterialWithBarcode } from '@/ai/flows/confidence-based-assistance';
 import { processReceipt, ReceiptOutput } from '@/ai/flows/receipt-ocr-flow';
 import { verifyDisposalAction, VerifyDisposalActionOutput } from '@/ai/flows/verify-disposal-action';
-import { verifySustainabilityAction, VerifySustainabilityActionOutput, VerifySustainabilityActionInput } from '@/ai/flows/verify-sustainability-action';
+import { verifySustainabilityAction, VerifySustainabilityActionOutput } from '@/ai/flows/verify-sustainability-action';
+import { CarbonFootprintOutput } from '@/ai/flows/carbon-footprint-analysis';
 
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
@@ -73,7 +74,9 @@ export function AppContainer() {
   const [identifiedMaterial, setIdentifiedMaterial] =
     useState<MaterialIdentificationOutput | null>(null);
   const [receiptResult, setReceiptResult] = useState<ReceiptOutput | null>(null);
+  const [surveyResults, setSurveyResults] = useState<CarbonFootprintOutput | null>(null);
   const [sustainabilityRecommendations, setSustainabilityRecommendations] = useState<string[]>([]);
+  const [pointsPenalty, setPointsPenalty] = useState(0);
   const [showReceiptResultModal, setShowReceiptResultModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Identifying material...');
@@ -193,6 +196,7 @@ export function AppContainer() {
     setBarcodeNumber('');
     setIdentifiedMaterial(null);
     setReceiptResult(null);
+    setSurveyResults(null);
     setIsLoading(false);
     setHasCameraPermission(null);
   };
@@ -388,8 +392,10 @@ export function AppContainer() {
       })
       .then((result) => {
         if (result.isValid) {
-          // Reverse -10 penalty and add +5 bonus = +15
-          const pointsAwarded = 15;
+          // Base reversal is penalty + 5.
+          // e.g. -10 penalty -> +10 to reverse, +5 bonus = 15 total
+          // e.g. -5 penalty -> +5 to reverse, +5 bonus = 10 total
+          const pointsAwarded = Math.abs(pointsPenalty) + 5;
           setAnimatePoints(`+${pointsAwarded}`);
 
           if (userProfileRef && userProfile) {
@@ -417,7 +423,7 @@ export function AppContainer() {
       })
       .finally(() => {
         setIsLoading(false);
-        setStep('scan'); // Go back to main menu after attempt
+        setStep('carbonFootprint'); // Go back to survey results after attempt
         setTimeout(() => setAnimatePoints(false), 2000);
       });
     });
@@ -427,9 +433,12 @@ export function AppContainer() {
     setStep('verifyDisposal'); 
   };
   
-  const handleSurveyComplete = (pointsChanged: number, recommendations: string[]) => {
-    setSustainabilityRecommendations(recommendations);
-    const pointString = pointsChanged > 0 ? `+${pointsChanged} Points` : `${pointsChanged} Points`;
+  const handleSurveyComplete = (points: number, analysisResults: CarbonFootprintOutput) => {
+    setSurveyResults(analysisResults);
+    setSustainabilityRecommendations([...analysisResults.recommendations, ...analysisResults.extraTips]);
+    setPointsPenalty(points < 0 ? points : 0);
+
+    const pointString = points > 0 ? `+${points} Points` : `${points} Points`;
     setAnimatePoints(pointString);
      setTimeout(() => {
       setAnimatePoints(false), 1500;
@@ -637,7 +646,7 @@ export function AppContainer() {
       case 'rewards':
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'carbonFootprint':
-        return <CarbonFootprintSurvey onBack={() => setStep('scan')} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} />;
+        return <CarbonFootprintSurvey onBack={() => setStep('scan')} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} results={surveyResults} />;
       case 'guide':
         return <GuideSection onBack={() => setStep('scan')} />;
       default:
@@ -696,7 +705,7 @@ export function AppContainer() {
             <DialogHeader>
               <DialogTitle className="font-headline">Receipt Scanned</DialogTitle>
               <DialogDescription>
-                Here is the data we extracted. Don't forget your receipt after your meal to confirm your carbon footprint.
+                Here is the data we extracted. You can now close this and get your 500% point bonus!
               </DialogDescription>
             </DialogHeader>
             {receiptResult && (

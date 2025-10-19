@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -44,19 +44,20 @@ type CarbonFootprintSurveyProps = {
   onBack: () => void;
   onScanReceipt: () => void;
   userProfile: any;
-  onSurveyComplete: (points: number, recommendations: string[]) => void;
+  onSurveyComplete: (points: number, results: CarbonFootprintOutput) => void;
   onSecondChance: () => void;
+  results: CarbonFootprintOutput | null;
 };
 
-export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance }: CarbonFootprintSurveyProps) {
-  const [step, setStep] = useState<SurveyStep>('form');
+export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance, results: initialResults }: CarbonFootprintSurveyProps) {
+  const [step, setStep] = useState<SurveyStep>(initialResults ? 'results' : 'form');
   const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState<CarbonFootprintInput>({
     transport: [],
     diet: [],
     energy: '',
   });
-  const [results, setResults] = useState<CarbonFootprintOutput | null>(null);
+  const [results, setResults] = useState<CarbonFootprintOutput | null>(initialResults);
   const [pointsChanged, setPointsChanged] = useState(0);
   const { toast } = useToast();
   const { firestore } = useFirebase();
@@ -66,6 +67,13 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
     [firestore, user]
   );
+  
+  useEffect(() => {
+    if(initialResults) {
+        setResults(initialResults);
+        setStep('results');
+    }
+  }, [initialResults]);
 
   const handleCheckboxChange = (
     field: 'transport' | 'diet',
@@ -94,24 +102,21 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           
           let points = 0;
           if (analysisResults.estimatedFootprintKg > 30) {
-            // Penalty starts at -1 for >30kg and scales up to -10.
-            // Formula: Penalty = round( (footprint - 30) / 2 ), capped at 10.
-            // Example: 32kg -> -1pt, 40kg -> -5pts, 50kg+ -> -10pts.
             const penalty = -Math.min(10, Math.round((analysisResults.estimatedFootprintKg - 30) / 2));
             points = penalty;
           } else {
-            // Provisional points are based on score * 0.5 (max 5 points)
             points = Math.round(analysisResults.sustainabilityScore * 0.5);
           }
           setPointsChanged(points);
 
           if (userProfileRef && userProfile) {
-            const newPoints = userProfile.totalPoints + points;
+            const currentPoints = userProfile.totalPoints || 0;
+            const newPoints = Math.max(0, currentPoints + points);
             updateDocumentNonBlocking(userProfileRef, {
               totalPoints: newPoints,
               lastCarbonSurveyDate: serverTimestamp(),
             });
-            onSurveyComplete(points, [...analysisResults.recommendations, ...analysisResults.extraTips]);
+            onSurveyComplete(points, analysisResults);
           }
 
           setStep('results');
@@ -123,7 +128,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
             title: 'Analysis Failed',
             description: 'Could not analyze your carbon footprint. Please try again.',
           });
-          setStep('form'); // Go back to form on error
+          setStep('form');
         });
     });
   };
@@ -150,6 +155,9 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
       <Card>
         <CardHeader>
           <div className="relative flex items-center justify-center">
+             <Button variant="ghost" size="sm" className="absolute left-0" onClick={onBack}>
+                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+             </Button>
             <CardTitle className="font-headline text-center text-2xl flex items-center gap-2">
               <Leaf className="text-primary" /> Your Daily Footprint
             </CardTitle>
@@ -202,7 +210,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
             </div>
             <Separator />
             <div>
-              <h3 className="font-semibold mb-2">What you can do today:</h3>
+              <h3 className="font-semibold mb-2">Do one of the needs for today:</h3>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 {results.extraTips.map((rec, i) => (
                   <li key={i}>{rec}</li>
