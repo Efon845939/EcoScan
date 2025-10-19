@@ -13,10 +13,10 @@ import { z } from 'genkit';
 
 const CarbonFootprintInputSchema = z.object({
   transport: z
-    .string()
-    .describe('Mode of transportation used today (e.g., car, bus, bike, walk).'),
+    .array(z.string())
+    .describe('Modes of transportation used today (e.g., car, bus, bike, walk).'),
   diet: z
-    .string()
+    .array(z.string())
     .describe('Primary diet today (e.g., vegan, vegetarian, meat-eater).'),
   energy: z
     .string()
@@ -54,8 +54,8 @@ const prompt = ai.definePrompt({
   prompt: `You are a friendly and encouraging environmental expert. Analyze the user's daily activities to provide a simple, non-scientific, and motivational carbon footprint analysis.
 
 User's activities today:
-- Transportation: {{{transport}}}
-- Diet: {{{diet}}}
+- Transportation: {{#each transport}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+- Diet: {{#each diet}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 - Home Energy Use: {{{energy}}}
 
 Based on this, provide:

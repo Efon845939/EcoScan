@@ -11,13 +11,6 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ChevronLeft, Loader2, Leaf, ThumbsUp } from 'lucide-react';
@@ -28,22 +21,50 @@ import {
 } from '@/ai/flows/carbon-footprint-analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
+import { Checkbox } from './ui/checkbox';
 
 type SurveyStep = 'form' | 'loading' | 'results';
+
+const transportOptions = [
+  'Car (Gasoline)',
+  'Electric Vehicle',
+  'Bus or Train',
+  'Bike or Walk',
+];
+const dietOptions = [
+  'Heavy on red meat',
+  'Poultry/Fish, no red meat',
+  'Vegetarian',
+  'Vegan',
+];
 
 export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState<SurveyStep>('form');
   const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState<CarbonFootprintInput>({
-    transport: '',
-    diet: '',
+    transport: [],
+    diet: [],
     energy: '',
   });
   const [results, setResults] = useState<CarbonFootprintOutput | null>(null);
   const { toast } = useToast();
 
-  const handleInputChange = (field: keyof CarbonFootprintInput, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleCheckboxChange = (
+    field: 'transport' | 'diet',
+    value: string
+  ) => {
+    setFormData((prev) => {
+      const currentValues = prev[field];
+      if (currentValues.includes(value)) {
+        return { ...prev, [field]: currentValues.filter((v) => v !== value) };
+      } else {
+        return { ...prev, [field]: [...currentValues, value] };
+      }
+    });
+  };
+
+  const handleEnergyChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, energy: value }));
   };
 
   const handleSubmit = () => {
@@ -66,7 +87,10 @@ export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
     });
   };
 
-  const isFormInvalid = !formData.transport || !formData.diet || !formData.energy;
+  const isFormInvalid =
+    formData.transport.length === 0 ||
+    formData.diet.length === 0 ||
+    !formData.energy;
 
   if (step === 'loading' || isPending) {
     return (
@@ -149,37 +173,43 @@ export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
           Answer a few questions to get an estimate of your carbon footprint for today.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="transport">How did you get around today?</Label>
-          <Select
-            onValueChange={(value) => handleInputChange('transport', value)}
-            value={formData.transport}
-          >
-            <SelectTrigger id="transport">
-              <SelectValue placeholder="Select transport..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Car (Gasoline)">Car (Gasoline)</SelectItem>
-              <SelectItem value="Electric Vehicle">Electric Vehicle</SelectItem>
-              <SelectItem value="Bus or Train">Bus or Train</SelectItem>
-              <SelectItem value="Bike or Walk">Bike or Walk</SelectItem>
-            </SelectContent>
-          </Select>
+      <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <Label>How did you get around today?</Label>
+          <div className="space-y-2">
+            {transportOptions.map((option) => (
+              <div key={option} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`transport-${option}`}
+                  checked={formData.transport.includes(option)}
+                  onCheckedChange={() => handleCheckboxChange('transport', option)}
+                />
+                <Label
+                  htmlFor={`transport-${option}`}
+                  className="font-normal"
+                >
+                  {option}
+                </Label>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="diet">What was your diet like today?</Label>
-          <Select onValueChange={(value) => handleInputChange('diet', value)} value={formData.diet}>
-            <SelectTrigger id="diet">
-              <SelectValue placeholder="Select diet..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Heavy on red meat">Heavy on red meat</SelectItem>
-              <SelectItem value="Poultry/Fish, no red meat">Poultry/Fish, no red meat</SelectItem>
-              <SelectItem value="Vegetarian">Vegetarian</SelectItem>
-              <SelectItem value="Vegan">Vegan</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="space-y-3">
+          <Label>What was your diet like today?</Label>
+          <div className="space-y-2">
+            {dietOptions.map((option) => (
+              <div key={option} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`diet-${option}`}
+                  checked={formData.diet.includes(option)}
+                  onCheckedChange={() => handleCheckboxChange('diet', option)}
+                />
+                <Label htmlFor={`diet-${option}`} className="font-normal">
+                  {option}
+                </Label>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="energy">How was your energy use at home?</Label>
@@ -187,7 +217,7 @@ export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
             id="energy"
             placeholder="e.g., Used the AC, kept lights on..."
             value={formData.energy}
-            onChange={(e) => handleInputChange('energy', e.target.value)}
+            onChange={(e) => handleEnergyChange(e.target.value)}
           />
         </div>
       </CardContent>
