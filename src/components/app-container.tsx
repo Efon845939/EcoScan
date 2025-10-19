@@ -460,7 +460,7 @@ export function AppContainer() {
                 <Camera className="mr-2" />
                 Scan Product Packaging
               </Button>
-              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')} className="h-20 text-base md:h-24" disabled={!!cooldownTimeLeft}>
+              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')} className="h-20 text-base md:h-24">
                 <Footprints className="mr-2" />
                 {cooldownTimeLeft ? (
                   <span className="text-center text-sm leading-tight">Tomorrow's Carbon Footprint in:<br /><span className="font-mono text-base">{formatTimeLeft(cooldownTimeLeft)}</span></span>
