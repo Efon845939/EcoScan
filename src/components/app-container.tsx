@@ -313,7 +313,7 @@ export function AppContainer() {
               <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')}>
                 <Footprints className="mr-2" />
                 {cooldownTimeLeft ? (
-                  `Next survey available in: ${formatTimeLeft(cooldownTimeLeft)}`
+                  `Tomorrow's Carbon Footprint in: ${formatTimeLeft(cooldownTimeLeft)}`
                 ) : (
                   'See Your Carbon Footprint'
                 )}
