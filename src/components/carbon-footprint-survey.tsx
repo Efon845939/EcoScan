@@ -69,7 +69,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
     [firestore, user]
   );
-  
+
   const handleCheckboxChange = (field: 'transport' | 'diet', value: string) => {
     setFormData((prev) => {
       const newValues = prev[field].includes(value)
@@ -82,9 +82,9 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   const handleEnergyChange = (value: string) => {
     setFormData((prev) => ({ ...prev, energy: value }));
   };
-
+  
   const handleVerifyWithReceipt = () => {
-    if (!results || !receiptResult) return;
+    if (!results || !receiptResult || !receiptResult.isValidReceipt) return;
 
     // Calculate base points from sustainability score (not provisional points)
     const basePoints = Math.round(results.sustainabilityScore * 2.5);
@@ -102,7 +102,6 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
         title: 'Bonus Applied!',
         description: `You've earned a massive ${bonusPoints} point bonus for verifying your footprint!`,
      });
-
   }
 
   useEffect(() => {
@@ -329,5 +328,3 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     </Card>
   );
 }
-
-    

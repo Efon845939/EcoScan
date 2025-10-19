@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -59,15 +60,16 @@ const prompt = ai.definePrompt({
   output: { schema: CarbonFootprintOutputSchema },
   prompt: `You are a friendly and encouraging environmental expert. Your calculations must be deterministic, meaning the same input always produces the same output. Analyze the user's daily activities to provide a simple, non-scientific, and motivational carbon footprint analysis.
 
-IMPORTANT: You MUST adjust your carbon footprint estimate based on the user's location. Here are regional daily averages to use as a baseline:
+IMPORTANT: You MUST adjust your carbon footprint estimate based on the user's location. Here are regional daily averages to use as a baseline for your scaling. If a certain set of activities results in 15kg in Turkey, the same activities should result in a significantly higher footprint in Dubai (e.g., ~45-50kg) due to factors like grid carbon intensity, reliance on AC, etc.
+
 - Kuwait: 70 kg/day
 - Dubai, UAE: 55 kg/day
 - USA: 45 kg/day
-- Germany: 26 kg/day
+- Germany: 27 kg/day
 - Turkey: 24 kg/day
+- United Kingdom: 24 kg/day
+- Japan: 26 kg/day
 - General/Default: 25 kg/day
-
-If a user in Turkey has a footprint of 15kg for certain activities, a user in Dubai with the exact same activities should have a significantly higher footprint (e.g., ~45-50kg) due to factors like grid carbon intensity, reliance on AC, etc.
 
 User's location: {{{location}}}
 User's activities today:
@@ -76,7 +78,7 @@ User's activities today:
 - Home Energy Use: {{{energy}}}
 
 Based on this, provide:
-1. A deterministic, estimated carbon footprint in kg CO2 for the day, scaled to their region.
+1. A deterministic, estimated carbon footprint in kg CO2 for the day, scaled to their region. For the same inputs, you must always return the same output.
 2. A tangible, creative, and relatable comparison for that CO2 amount. Be creative and AVOID using "driving a car" as the comparison.
 3. A short, positive, and encouraging analysis of their day.
 4. A list of 2-3 simple, actionable recommendations for how they could reduce their footprint tomorrow, tailored to their activities.

@@ -24,7 +24,7 @@ import {
 import { identifyMaterialWithBarcode } from '@/ai/flows/confidence-based-assistance';
 import { processReceipt, ReceiptOutput } from '@/ai/flows/receipt-ocr-flow';
 import { verifyDisposalAction, VerifyDisposalActionOutput } from '@/ai/flows/verify-disposal-action';
-import { verifySustainabilityAction, VerifySustainabilityActionOutput } from '@/ai/flows/verify-sustainability-action';
+import { verifySustainabilityAction } from '@/ai/flows/verify-sustainability-action';
 import { CarbonFootprintOutput } from '@/ai/flows/carbon-footprint-analysis';
 
 import { Header } from '@/components/header';
@@ -529,7 +529,10 @@ export function AppContainer() {
                 <Camera className="mr-2" />
                 Scan Product Packaging
               </Button>
-              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')} className="h-20 text-base md:h-24">
+              <Button size="lg" variant="outline" onClick={() => {
+                setSurveyResults(null); // Reset results when starting a new survey
+                setStep('carbonFootprint');
+              }} className="h-20 text-base md:h-24">
                 <Footprints className="mr-2" />
                 {cooldownTimeLeft ? (
                   <span className="text-center text-sm leading-tight">Tomorrow's Carbon Footprint in:<br /><span className="font-mono text-base">{formatTimeLeft(cooldownTimeLeft)}</span></span>
@@ -855,5 +858,3 @@ export function AppContainer() {
     </div>
   );
 }
-
-    
