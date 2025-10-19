@@ -12,15 +12,15 @@ This logic is located in `src/lib/points.ts`.
 
 | Material      | Points Awarded | Rationale                                               |
 |---------------|----------------|---------------------------------------------------------|
-| **Battery**   | 50             | Prevents highly toxic materials from leaking into soil. |
-| **Plastic**   | 40             | Reduces long-term pollution and microplastic spread.    |
-| **Glass**     | 30             | Saves energy; never decomposes in landfills.            |
-| **Metal**     | 20             | Saves significant energy vs. producing from raw ore.    |
-| **Aluminum**  | 20             | Same as Metal.                                          |
-| **Paper**     | 10             | Saves trees and water.                                  |
-| **Cardboard** | 10             | Same as Paper.                                          |
-| **Unrecyclable**| 10             | Rewards correct sorting to prevent contamination.       |
-| *Other*       | 5              | A small reward for any other scannable item.            |
+| **Battery**   | 30             | Prevents highly toxic materials from leaking into soil. |
+| **Plastic**   | 18             | Reduces long-term pollution and microplastic spread.    |
+| **Glass**     | 14             | Saves energy; never decomposes in landfills.            |
+| **Metal**     | 12             | Saves significant energy vs. producing from raw ore.    |
+| **Aluminum**  | 12             | Same as Metal.                                          |
+| **Paper**     | 8              | Saves trees and water.                                  |
+| **Cardboard** | 8              | Same as Paper.                                          |
+| **Unrecyclable**| 4              | Rewards correct sorting to prevent contamination.       |
+| *Other*       | 3              | A small reward for any other scannable item.            |
 
 ---
 
@@ -37,16 +37,16 @@ This logic is located in `src/components/carbon-footprint-survey.tsx`.
 
 2.  **Standard Reward:**
     *   If the footprint is not over 40kg, points are awarded based on the `sustainabilityScore`.
-    *   **Formula:** `Points = sustainabilityScore * 3`
-    *   This results in a maximum of **30 points** for a perfect score of 10.
+    *   **Formula:** `Points = sustainabilityScore * 2.5`
+    *   This results in a maximum of **25 points** for a perfect score of 10.
 
 | Sustainability Score | Points Awarded |
 |----------------------|----------------|
-| 10                   | 30             |
-| 9                    | 27             |
-| 8                    | 24             |
+| 10                   | 25             |
+| 9                    | 22.5 (rounded) |
+| 8                    | 20             |
 | ...                  | ...            |
-| 1                    | 3              |
+| 1                    | 2.5 (rounded)  |
 
 ---
 

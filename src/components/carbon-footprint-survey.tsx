@@ -94,7 +94,7 @@ export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }:
           if (analysisResults.estimatedFootprintKg > 40) {
             points = -10;
           } else {
-            points = Math.round(analysisResults.sustainabilityScore * 3);
+            points = Math.round(analysisResults.sustainabilityScore * 2.5);
           }
           setPointsChanged(points);
 

@@ -1,12 +1,12 @@
 export const materialPoints: { [key: string]: number } = {
-  battery: 50,
-  plastic: 40,
-  glass: 30,
-  metal: 20,
-  aluminum: 20,
-  paper: 10,
-  cardboard: 10,
-  unrecyclable: 10,
+  battery: 30,
+  plastic: 18,
+  glass: 14,
+  metal: 12,
+  aluminum: 12,
+  paper: 8,
+  cardboard: 8,
+  unrecyclable: 4,
 };
 
 export function getPointsForMaterial(material: string): number {
@@ -20,5 +20,5 @@ export function getPointsForMaterial(material: string): number {
   }
 
   // Default points if no specific material is matched
-  return 5;
+  return 3;
 }
