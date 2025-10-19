@@ -79,24 +79,6 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     }
   }, [initialResults]);
 
-  const handleCheckboxChange = (
-    field: 'transport' | 'diet',
-    value: string
-  ) => {
-    setFormData((prev) => {
-      const currentValues = prev[field];
-      if (currentValues.includes(value)) {
-        return { ...prev, [field]: currentValues.filter((v) => v !== value) };
-      } else {
-        return { ...prev, [field]: [...currentValues, value] };
-      }
-    });
-  };
-
-  const handleEnergyChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, energy: value }));
-  };
-
   const handleSubmit = () => {
     setStep('loading');
     startTransition(() => {
@@ -154,7 +136,6 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   }
 
   if (step === 'results' && results) {
-    const pointsChanged = surveyPoints;
     return (
       <Card>
         <CardHeader>
@@ -179,12 +160,12 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
             </p>
           </div>
           
-          {pointsChanged < 0 ? (
+          {surveyPoints < 0 ? (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>High Footprint Penalty</AlertTitle>
               <AlertDescription>
-                  Your daily footprint was high, so {pointsChanged} points have been deducted. You can reverse this by taking one of the actions below and verifying with a photo.
+                  Your daily footprint was high, so {surveyPoints} points have been deducted. You can reverse this by taking one of the actions below and verifying with a photo.
               </AlertDescription>
             </Alert>
           ) : (
@@ -192,7 +173,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
               <Sparkles className="h-4 w-4 text-yellow-500" />
               <AlertTitle className="text-yellow-600 dark:text-yellow-400">Provisional Points Awarded!</AlertTitle>
               <AlertDescription>
-                  You earned a provisional {pointsChanged} points. Scan a receipt from your day to verify your footprint and get a 500% point bonus!
+                  You earned a provisional {surveyPoints} points. Scan a receipt from your day to verify your footprint and get a 500% point bonus!
               </AlertDescription>
             </Alert>
           )}
@@ -224,7 +205,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          {pointsChanged < 0 ? (
+          {surveyPoints < 0 ? (
             <Button size="lg" className="w-full" onClick={onSecondChance}>
               <Camera className="mr-2" /> Take Action to Reverse Penalty
             </Button>
@@ -320,3 +301,5 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     </Card>
   );
 }
+
+    
