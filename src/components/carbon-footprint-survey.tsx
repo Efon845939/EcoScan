@@ -91,11 +91,14 @@ export function CarbonFootprintSurvey({ onBack }: { onBack: () => void }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="text-center">
+          <div className="text-center p-4 bg-muted/50 rounded-lg">
             <p className="text-muted-foreground">Estimated Footprint:</p>
             <p className="text-5xl font-bold font-headline text-primary">
               {results.estimatedFootprintKg.toFixed(1)}
               <span className="text-xl"> kg CO₂</span>
+            </p>
+            <p className="text-muted-foreground mt-2 text-sm italic">
+              That's about the same as {results.tangibleComparison.toLowerCase()}.
             </p>
           </div>
           <Alert>
