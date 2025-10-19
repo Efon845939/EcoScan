@@ -95,13 +95,13 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
     return (
         <Card className="w-full">
             <CardHeader>
-                <CardTitle className="font-headline pt-8 text-center text-2xl">Thank You!</CardTitle>
+                <CardTitle className="font-headline pt-8 text-center text-2xl">Reward Claimed!</CardTitle>
                 <CardDescription className="text-center">
-                    Enjoy your reward!
+                    Enjoy your discount. Thank you for your contribution!
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
-                <Button onClick={onBack}>Back to Lobby</Button>
+                <Button onClick={onBack}>Back to Main Menu</Button>
             </CardContent>
         </Card>
     )

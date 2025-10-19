@@ -313,7 +313,7 @@ export function AppContainer() {
               <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')}>
                 <Footprints className="mr-2" />
                 {cooldownTimeLeft ? (
-                  `lets see the footprint tomorrow: ${formatTimeLeft(cooldownTimeLeft)}`
+                  `Next survey available in: ${formatTimeLeft(cooldownTimeLeft)}`
                 ) : (
                   'See Your Carbon Footprint'
                 )}
@@ -454,7 +454,7 @@ export function AppContainer() {
                 />
               )}
               <Button size="lg" onClick={handleDispose}>
-                <Camera className="mr-2" /> I'm here, Scan Bin & Dispose
+                <Camera className="mr-2" /> Confirm Disposal at Bin
               </Button>
             </CardContent>
           </Card>
@@ -547,5 +547,3 @@ export function AppContainer() {
     </div>
   );
 }
-
-    
