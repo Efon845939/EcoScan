@@ -9,7 +9,7 @@ import { useFirebase, useUser, updateDocumentNonBlocking, useMemoFirebase } from
 import { doc } from 'firebase/firestore';
 
 
-const rewards = [
+export const rewards = [
   {
     id: 1,
     title: 'Free Coffee',

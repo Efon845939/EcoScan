@@ -13,6 +13,7 @@ import {
   CircleDot,
   Footprints,
   Receipt,
+  BookOpen,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -45,6 +46,7 @@ import { MaterialIcon } from './material-icon';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { RewardsSection } from './rewards-section';
 import { CarbonFootprintSurvey } from './carbon-footprint-survey';
+import { GuideSection } from './guide-section';
 import { cn } from '@/lib/utils';
 import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
 import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
@@ -52,7 +54,7 @@ import { differenceInMilliseconds, addHours } from 'date-fns';
 import { getPointsForMaterial } from '@/lib/points';
 
 
-type Step = 'scan' | 'camera' | 'confirm' | 'map' | 'disposed' | 'rewards' | 'carbonFootprint' | 'receipt';
+type Step = 'scan' | 'camera' | 'confirm' | 'map' | 'disposed' | 'rewards' | 'carbonFootprint' | 'receipt' | 'guide';
 
 function formatTimeLeft(milliseconds: number) {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -355,6 +357,10 @@ export function AppContainer() {
                   'See Your Carbon Footprint'
                 )}
               </Button>
+               <Button size="lg" variant="secondary" onClick={() => setStep('guide')}>
+                <BookOpen className="mr-2" />
+                App Guide & Rules
+              </Button>
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
               <Button variant="link" onClick={() => setStep('rewards')}>
@@ -534,6 +540,8 @@ export function AppContainer() {
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'carbonFootprint':
         return <CarbonFootprintSurvey onBack={() => setStep('scan')} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} />;
+      case 'guide':
+        return <GuideSection onBack={() => setStep('scan')} />;
       default:
         return null;
     }
@@ -620,5 +628,3 @@ export function AppContainer() {
     </div>
   );
 }
-
-    
