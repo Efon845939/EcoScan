@@ -48,9 +48,10 @@ type CarbonFootprintSurveyProps = {
   onSurveyComplete: (points: number, results: CarbonFootprintOutput) => void;
   onSecondChance: () => void;
   results: CarbonFootprintOutput | null;
+  surveyPoints: number;
 };
 
-export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance, results: initialResults }: CarbonFootprintSurveyProps) {
+export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance, results: initialResults, surveyPoints }: CarbonFootprintSurveyProps) {
   const [step, setStep] = useState<SurveyStep>(initialResults ? 'results' : 'form');
   const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState<CarbonFootprintInput>({
@@ -59,7 +60,6 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     energy: '',
   });
   const [results, setResults] = useState<CarbonFootprintOutput | null>(initialResults);
-  const [pointsChanged, setPointsChanged] = useState(0);
   const { toast } = useToast();
   const { firestore } = useFirebase();
   const { user } = useUser();
@@ -73,6 +73,9 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     if(initialResults) {
         setResults(initialResults);
         setStep('results');
+    } else {
+        setStep('form');
+        setResults(null);
     }
   }, [initialResults]);
 
@@ -108,7 +111,6 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           } else {
             points = Math.round(analysisResults.sustainabilityScore * 0.5);
           }
-          setPointsChanged(points);
 
           if (userProfileRef && userProfile) {
             const currentPoints = userProfile.totalPoints || 0;
@@ -152,6 +154,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   }
 
   if (step === 'results' && results) {
+    const pointsChanged = surveyPoints;
     return (
       <Card>
         <CardHeader>

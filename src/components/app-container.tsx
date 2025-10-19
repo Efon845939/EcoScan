@@ -77,7 +77,7 @@ export function AppContainer() {
   const [receiptResult, setReceiptResult] = useState<ReceiptOutput | null>(null);
   const [surveyResults, setSurveyResults] = useState<CarbonFootprintOutput | null>(null);
   const [sustainabilityRecommendations, setSustainabilityRecommendations] = useState<string[]>([]);
-  const [pointsPenalty, setPointsPenalty] = useState(0);
+  const [surveyPoints, setSurveyPoints] = useState(0);
   const [showReceiptResultModal, setShowReceiptResultModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Identifying material...');
@@ -200,6 +200,7 @@ export function AppContainer() {
     setSurveyResults(null);
     setIsLoading(false);
     setHasCameraPermission(null);
+    setSurveyPoints(0);
   };
   
   const processImage = (dataUri: string) => {
@@ -394,11 +395,12 @@ export function AppContainer() {
       .then((result) => {
         if (result.isValid) {
           // Reverses penalty and adds a bonus
-          const pointsAwarded = Math.abs(pointsPenalty) + 15;
+          const pointsAwarded = Math.abs(surveyPoints) + 15;
           setAnimatePoints(`+${pointsAwarded}`);
 
           if (userProfileRef && userProfile) {
-            const newPoints = (userProfile.totalPoints || 0) + pointsAwarded;
+            const currentPoints = userProfile.totalPoints || 0;
+            const newPoints = Math.max(0, currentPoints + pointsAwarded);
             updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
           }
           toast({
@@ -435,9 +437,9 @@ export function AppContainer() {
   const handleSurveyComplete = (points: number, analysisResults: CarbonFootprintOutput) => {
     setSurveyResults(analysisResults);
     setSustainabilityRecommendations([...analysisResults.recommendations, ...analysisResults.extraTips]);
-    setPointsPenalty(points < 0 ? points : 0);
+    setSurveyPoints(points);
 
-    const pointString = points > 0 ? `+${points} Points` : `${points} Points`;
+    const pointString = points >= 0 ? `+${points} Points` : `${points} Points`;
     setAnimatePoints(pointString);
      setTimeout(() => {
       setAnimatePoints(false), 1500;
@@ -645,7 +647,7 @@ export function AppContainer() {
       case 'rewards':
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'carbonFootprint':
-        return <CarbonFootprintSurvey onBack={() => setStep('scan')} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} results={surveyResults} />;
+        return <CarbonFootprintSurvey onBack={resetState} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} results={surveyResults} surveyPoints={surveyPoints} />;
       case 'guide':
         return <GuideSection onBack={() => setStep('scan')} />;
       default:
