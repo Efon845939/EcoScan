@@ -32,11 +32,14 @@ This logic is located in `src/components/carbon-footprint-survey.tsx`.
 
 ### Point Calculation Rules:
 
-1.  **High Footprint Penalty:**
-    *   If `estimatedFootprintKg` is **greater than 40 kg**, the user **loses 10 points**.
+1.  **High Footprint Penalty (Sliding Scale):**
+    *   If `estimatedFootprintKg` is **greater than 30 kg**, the user starts losing points.
+    *   **Formula:** `Penalty = -round((estimatedFootprintKg - 30) / 2)`
+    *   The penalty is capped at a maximum of **-10 points** (which occurs at 50kg or more).
+    *   *Example: 34kg -> -2 points. 40kg -> -5 points. 50kg -> -10 points.*
 
 2.  **Provisional Reward (No Receipt):**
-    *   If the footprint is not over 40kg, provisional points are awarded based on the `sustainabilityScore`.
+    *   If the footprint is not over 30kg, provisional points are awarded based on the `sustainabilityScore`.
     *   **Formula:** `Provisional Points = sustainabilityScore * 0.5`
     *   This results in a maximum of **5 points** for a perfect score of 10.
 
@@ -52,6 +55,10 @@ This logic is located in `src/components/carbon-footprint-survey.tsx`.
 3. **Receipt Verification Bonus:**
     * If a user successfully scans a receipt to verify their daily activities, they receive a **500% bonus** on top of the base points (not the provisional points).
     * **Example:** A score of 8 gives a base of `8 * 2.5 = 20` points. The bonus is `20 * 5 = 100` points. The provisional points are replaced.
+    
+4. **Second Chance Bonus:**
+    * If a user receives a penalty, they can perform one of the AI-recommended actions and submit photo proof.
+    * If the action is verified, the penalty is reversed, and they are awarded an additional **+15 points**.
 
 ---
 

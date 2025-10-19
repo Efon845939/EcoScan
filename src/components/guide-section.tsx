@@ -86,9 +86,9 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                 <li className="flex justify-between items-center">
                   <span>
                     High Footprint Penalty <br />
-                    <small>(If footprint &gt; 40kg CO₂)</small>
+                    <small>(If footprint &gt; 30kg CO₂)</small>
                   </span>
-                  <span className="font-bold text-destructive">-10 pts</span>
+                  <span className="font-bold text-destructive">-1 to -10 pts</span>
                 </li>
                 <li className="flex justify-between items-center">
                   <span>
@@ -104,9 +104,16 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                   </span>
                   <span className="font-bold text-yellow-500">+500% Bonus</span>
                 </li>
+                 <li className="flex justify-between items-center">
+                  <span>
+                    Second Chance Bonus<br />
+                    <small>(Reverse a penalty by taking action)</small>
+                  </span>
+                  <span className="font-bold text-primary">+15 pts</span>
+                </li>
               </ul>
               <p className="text-xs text-muted-foreground pt-2">
-                The formula is `sustainabilityScore * 0.5`. A higher score means a lower carbon footprint.
+                The provisional reward formula is `sustainabilityScore * 0.5`. The penalty is a sliding scale based on how much your footprint exceeds 30kg.
               </p>
             </AccordionContent>
           </AccordionItem>

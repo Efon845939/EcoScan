@@ -93,8 +93,12 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           setResults(analysisResults);
           
           let points = 0;
-          if (analysisResults.estimatedFootprintKg > 40) {
-            points = -10;
+          if (analysisResults.estimatedFootprintKg > 30) {
+            // Penalty starts at -1 for >30kg and scales up to -10.
+            // Formula: Penalty = round( (footprint - 30) / 2 ), capped at 10.
+            // Example: 32kg -> -1pt, 40kg -> -5pts, 50kg+ -> -10pts.
+            const penalty = -Math.min(10, Math.round((analysisResults.estimatedFootprintKg - 30) / 2));
+            points = penalty;
           } else {
             // Provisional points are based on score * 0.5 (max 5 points)
             points = Math.round(analysisResults.sustainabilityScore * 0.5);
