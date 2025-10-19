@@ -11,7 +11,11 @@ export function Header({ points, onNavigate }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <div className="mr-4 flex items-center">
+        <div
+          className="mr-4 flex cursor-pointer items-center transition-opacity hover:opacity-80"
+          onClick={() => onNavigate('scan')}
+          aria-label="Back to home"
+        >
           <Recycle className="h-8 w-8 text-primary" />
           <span className="ml-3 text-xl font-bold font-headline">EcoScan Rewards</span>
         </div>
