@@ -174,7 +174,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
               <Sparkles className="h-4 w-4 text-yellow-500" />
               <AlertTitle className="text-yellow-600 dark:text-yellow-400">Provisional Points Awarded!</AlertTitle>
               <AlertDescription>
-                  You earned a provisional {pointsChanged} points. Scan a receipt from today to verify your activities and get a 100% bonus!
+                  You earned a provisional {pointsChanged} points. Don't forget your receipt after your meal to confirm your carbon footprint and get a 100% bonus!
               </AlertDescription>
             </Alert>
           )}

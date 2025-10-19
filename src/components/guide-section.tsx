@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Gift, Recycle, Footprints, ShieldCheck, BookCopy, Camera, QrCode, Receipt } from 'lucide-react';
+import { ChevronLeft, Gift, Recycle, Footprints, ShieldCheck, BookCopy, Camera, Receipt } from 'lucide-react';
 import { materialPoints } from '@/lib/points';
 import { rewards } from './rewards-section';
 
@@ -58,9 +58,8 @@ export function GuideSection({ onBack }: GuideSectionProps) {
             </AccordionTrigger>
             <AccordionContent className="space-y-2 pt-2">
               <p>
-                Earn points by scanning and correctly disposing of items. Points
-                are awarded based on the environmental harm prevented by
-                recycling the material.
+                Earn points by scanning an item and verifying your disposal with a photo. Points
+                are awarded based on the environmental impact of the material.
               </p>
               <ul className="space-y-1 rounded-md border p-4 text-sm">
                 {sortedMaterials.map(([material, points]) => (
@@ -151,10 +150,10 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                 To keep the community fair and the rewards meaningful, please follow these rules.
               </p>
               <ul className="list-disc list-inside space-y-2 rounded-md border p-4 text-sm">
-                <li>All submissions must be genuine and represent your own actions.</li>
-                <li>Do not submit fake scans, old receipts, or manipulated images from your gallery.</li>
+                <li>All submissions must be genuine and represent your own actions, taken in real-time.</li>
+                <li>Do not submit photos from your gallery, screenshots, or AI-generated images.</li>
                 <li>Each recycling act and daily survey should only be logged once. Our system has checks for duplicate submissions.</li>
-                <li>Attempting to manipulate the points system may result in a temporary or permanent account suspension.</li>
+                <li>Attempting to manipulate the points system by submitting fraudulent images will result in a **-50 point penalty** and may lead to account suspension.</li>
               </ul>
             </AccordionContent>
           </AccordionItem>
@@ -171,9 +170,9 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                 <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
                   <li>From the main menu, tap <span className="inline-flex items-center gap-1 font-semibold text-foreground"><Camera size={14} /> Scan Product Packaging</span>.</li>
                   <li>Use your camera to scan the item's packaging. Our AI will identify the material.</li>
-                  <li>Tap <span className="inline-flex items-center gap-1 font-semibold text-foreground"><QrCode size={14} /> Confirm Disposal at Bin</span>. This will open your camera.</li>
-                  <li>At the bin, scan the QR code on the bin to verify your location and confirm the disposal.</li>
-                  <li>Your submission will be sent for verification. Points are awarded instantly upon approval!</li>
+                  <li>Tap <span className="inline-flex items-center gap-1 font-semibold text-foreground"><Camera size={14} /> Verify Disposal</span>. This will open your camera again.</li>
+                  <li>Take a clear photo of yourself (or your hand) placing the item into a recycling bin.</li>
+                  <li>Our AI will verify your action. Points are awarded instantly upon successful verification!</li>
                 </ol>
               </div>
               <div>

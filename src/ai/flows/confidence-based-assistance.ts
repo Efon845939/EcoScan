@@ -1,29 +1,29 @@
 'use server';
 
 /**
- * @fileOverview An AI agent that uses product description to increase confidence in identifying the material of the product.
+ * @fileOverview An AI agent that uses a product's barcode to increase confidence in identifying its material.
  *
- * - identifyMaterial - A function that handles the material identification process with confidence boosting.
- * - IdentifyMaterialInput - The input type for the identifyMaterial function.
- * - IdentifyMaterialOutput - The return type for the identifyMaterial function.
+ * - identifyMaterialWithBarcode - A function that handles the material identification process.
+ * - IdentifyMaterialWithBarcodeInput - The input type for the function.
+ * - IdentifyMaterialWithBarcodeOutput - The return type for the function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const IdentifyMaterialInputSchema = z.object({
+const IdentifyMaterialWithBarcodeInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
       "A photo of a product, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  productDescription: z
+  barcodeNumber: z
     .string()
-    .describe('The description of the product from its packaging.'),
+    .describe('The barcode number (UPC, EAN, etc.) from the product packaging.'),
 });
-export type IdentifyMaterialInput = z.infer<typeof IdentifyMaterialInputSchema>;
+export type IdentifyMaterialWithBarcodeInput = z.infer<typeof IdentifyMaterialWithBarcodeInputSchema>;
 
-const IdentifyMaterialOutputSchema = z.object({
+const IdentifyMaterialWithBarcodeOutputSchema = z.object({
   material: z
     .string()
     .describe('The identified material of the product (glass, plastic, metal, etc.).'),
@@ -31,35 +31,36 @@ const IdentifyMaterialOutputSchema = z.object({
     .number()
     .describe('The confidence level (0-1) of the material identification.'),
 });
-export type IdentifyMaterialOutput = z.infer<typeof IdentifyMaterialOutputSchema>;
+export type IdentifyMaterialWithBarcodeOutput = z.infer<typeof IdentifyMaterialWithBarcodeOutputSchema>;
 
-export async function identifyMaterial(
-  input: IdentifyMaterialInput
-): Promise<IdentifyMaterialOutput> {
-  return identifyMaterialFlow(input);
+export async function identifyMaterialWithBarcode(
+  input: IdentifyMaterialWithBarcodeInput
+): Promise<IdentifyMaterialWithBarcodeOutput> {
+  return identifyMaterialWithBarcodeFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'identifyMaterialPrompt',
-  input: {schema: IdentifyMaterialInputSchema},
-  output: {schema: IdentifyMaterialOutputSchema},
-  prompt: `You are an expert in recycling and material identification.
+  name: 'identifyMaterialWithBarcodePrompt',
+  input: {schema: IdentifyMaterialWithBarcodeInputSchema},
+  output: {schema: IdentifyMaterialWithBarcodeOutputSchema},
+  prompt: `You are an expert in recycling and material identification using product data.
 
-  Based on the provided photo and product description, identify the material of the product and provide a confidence level.
+  A user has scanned an item, but the initial visual identification was not confident. They have now provided the barcode number. Use the barcode number as the primary source of truth to identify the product's primary packaging material. Use the image as a secondary reference.
 
-  Photo: {{media url=photoDataUri}}
-  Product Description: {{{productDescription}}}
+  - Barcode (UPC/EAN): {{{barcodeNumber}}}
+  - Photo of item: {{media url=photoDataUri}}
 
-  Material: {{$value: material}}
-  Confidence Level: {{$value: confidenceLevel}}
+  Based on this, determine the most likely material for the item's packaging.
+  Common materials are: Plastic, Glass, Metal, Aluminum, Paper, Cardboard, Battery.
+  Provide a confidence level. If the barcode is informative, the confidence should be high (e.g., > 0.9).
   `,
 });
 
-const identifyMaterialFlow = ai.defineFlow(
+const identifyMaterialWithBarcodeFlow = ai.defineFlow(
   {
-    name: 'identifyMaterialFlow',
-    inputSchema: IdentifyMaterialInputSchema,
-    outputSchema: IdentifyMaterialOutputSchema,
+    name: 'identifyMaterialWithBarcodeFlow',
+    inputSchema: IdentifyMaterialWithBarcodeInputSchema,
+    outputSchema: IdentifyMaterialWithBarcodeOutputSchema,
   },
   async input => {
     const {output} = await prompt(input);
