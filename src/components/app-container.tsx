@@ -252,8 +252,16 @@ export function AppContainer() {
     startTransition(() => {
       processReceipt({ receiptImageUri: dataUri })
         .then((result) => {
-          setReceiptResult(result);
-          setShowReceiptResultModal(true);
+          if (result.isValidReceipt) {
+             setReceiptResult(result);
+             setShowReceiptResultModal(true);
+          } else {
+            toast({
+              variant: 'destructive',
+              title: 'Invalid Receipt',
+              description: 'This does not appear to be a valid receipt. Please try again with a clear photo.',
+            });
+          }
           setStep('carbonFootprint');
         })
         .catch((error) => {
@@ -647,7 +655,7 @@ export function AppContainer() {
       case 'rewards':
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'carbonFootprint':
-        return <CarbonFootprintSurvey onBack={resetState} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} results={surveyResults} surveyPoints={surveyPoints} />;
+        return <CarbonFootprintSurvey onBack={resetState} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} results={surveyResults} surveyPoints={surveyPoints} receiptResult={receiptResult}/>;
       case 'guide':
         return <GuideSection onBack={() => setStep('scan')} />;
       default:
@@ -713,7 +721,7 @@ export function AppContainer() {
                 <div className="text-sm space-y-2">
                     <p><strong>Merchant:</strong> {receiptResult.merchantName}</p>
                     <p><strong>Total:</strong> {receiptResult.totalAmount} {receiptResult.currency}</p>
-                    <p><strong>Date:</strong> {new Date(receiptResult.receiptDatetime).toLocaleString()}</p>
+                    <p><strong>Date:</strong> {new Date(receiptResult.receiptDatetime!).toLocaleString()}</p>
                     {receiptResult.lineItems && receiptResult.lineItems.length > 0 && (
                         <div>
                             <strong>Items:</strong>

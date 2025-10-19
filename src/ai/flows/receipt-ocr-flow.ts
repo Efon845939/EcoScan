@@ -21,14 +21,17 @@ const ReceiptInputSchema = z.object({
 export type ReceiptInput = z.infer<typeof ReceiptInputSchema>;
 
 const ReceiptOutputSchema = z.object({
-  merchantName: z.string().describe('The name of the merchant or store.'),
-  totalAmount: z.number().describe('The total amount of the transaction.'),
+  isValidReceipt: z.boolean().describe("True if the image is a valid, legible receipt. False if it's a blank image, a person, a landscape, etc."),
+  merchantName: z.string().optional().describe('The name of the merchant or store. Null if not found or invalid.'),
+  totalAmount: z.number().optional().describe('The total amount of the transaction. Null if not found or invalid.'),
   currency: z
     .string()
-    .describe('The currency code (e.g., TRY, USD, EUR).'),
+    .optional()
+    .describe('The currency code (e.g., TRY, USD, EUR). Null if not found or invalid.'),
   receiptDatetime: z
     .string()
-    .describe('The date and time of the transaction in ISO 8601 format.'),
+    .optional()
+    .describe('The date and time of the transaction in ISO 8601 format. Null if not found or invalid.'),
   lineItems: z
     .array(
       z.object({
@@ -40,7 +43,7 @@ const ReceiptOutputSchema = z.object({
     )
     .optional()
     .describe('A list of items purchased. Optional.'),
-  rawTextHash: z.string().describe("A SHA256 hash of the extracted raw text from the receipt for deduplication purposes."),
+  rawTextHash: z.string().optional().describe("A SHA256 hash of the extracted raw text from the receipt for deduplication purposes. Null if image is not a valid receipt."),
 });
 export type ReceiptOutput = z.infer<typeof ReceiptOutputSchema>;
 
@@ -53,17 +56,21 @@ const prompt = ai.definePrompt({
   input: { schema: ReceiptInputSchema },
   output: { schema: ReceiptOutputSchema },
   prompt: `You are an expert OCR system specializing in extracting structured data from receipts.
-Analyze the provided receipt image. Extract the following fields with the highest possible accuracy:
-- merchantName
-- totalAmount
-- currency
-- receiptDatetime (must be in ISO 8601 format)
-- lineItems (if available)
-- Generate a SHA256 hash of the entire raw text extracted from the receipt.
+
+Your first and most important task is to determine if the image provided is a real receipt. If it is not a receipt (e.g., a photo of a computer, a person, a landscape, a blank image), you MUST set 'isValidReceipt' to 'false' and all other fields to null.
+
+If and only if the image is a valid receipt, perform the following extraction tasks:
+- Set 'isValidReceipt' to 'true'.
+- Extract the 'merchantName'.
+- Extract the 'totalAmount'.
+- Extract the 'currency' (e.g., AED, USD, EUR).
+- Extract the 'receiptDatetime' and convert it to strict ISO 8601 format.
+- If line items are clearly visible, extract them.
+- Finally, generate a SHA256 hash of the ENTIRE raw text content you extracted from the receipt. This is critical for preventing duplicates.
 
 Receipt Image: {{media url=receiptImageUri}}
 
-Return the data in the specified JSON format.
+Return the data in the specified JSON format. Be strict about the 'isValidReceipt' flag.
 `,
 });
 
