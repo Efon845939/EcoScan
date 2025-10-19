@@ -12,12 +12,14 @@ import {
   Video,
   CircleDot,
   Footprints,
+  Receipt,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
   MaterialIdentificationOutput,
 } from '@/ai/flows/material-identification-from-scan';
 import { identifyMaterial as identifyMaterialWithConfidence } from '@/ai/flows/confidence-based-assistance';
+import { processReceipt, ReceiptOutput } from '@/ai/flows/receipt-ocr-flow';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,7 +52,7 @@ import { differenceInMilliseconds, addHours } from 'date-fns';
 import { getPointsForMaterial } from '@/lib/points';
 
 
-type Step = 'scan' | 'camera' | 'confirm' | 'map' | 'disposed' | 'rewards' | 'carbonFootprint';
+type Step = 'scan' | 'camera' | 'confirm' | 'map' | 'disposed' | 'rewards' | 'carbonFootprint' | 'receipt';
 
 function formatTimeLeft(milliseconds: number) {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -67,7 +69,10 @@ export function AppContainer() {
   const [productDescription, setProductDescription] = useState('');
   const [identifiedMaterial, setIdentifiedMaterial] =
     useState<MaterialIdentificationOutput | null>(null);
+  const [receiptResult, setReceiptResult] = useState<ReceiptOutput | null>(null);
+  const [showReceiptResultModal, setShowReceiptResultModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Identifying material...');
   const [isPending, startTransition] = useTransition();
   const [showLowConfidenceModal, setShowLowConfidenceModal] = useState(false);
   const [animatePoints, setAnimatePoints] = useState<string | false>(false);
@@ -90,7 +95,7 @@ export function AppContainer() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
   useEffect(() => {
-    if (step === 'camera') {
+    if (step === 'camera' || step === 'receipt') {
       const getCameraPermission = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
@@ -178,12 +183,19 @@ export function AppContainer() {
     setScannedImage(null);
     setProductDescription('');
     setIdentifiedMaterial(null);
+    setReceiptResult(null);
     setIsLoading(false);
     setHasCameraPermission(null);
   };
   
   const processImage = (dataUri: string) => {
+    if (step === 'receipt') {
+      processReceiptImage(dataUri);
+      return;
+    }
+    
     setIsLoading(true);
+    setLoadingMessage('Identifying material...');
     setScannedImage(dataUri);
     startTransition(() => {
       identifyMaterialSimple({ photoDataUri: dataUri, productDescription: '' })
@@ -201,6 +213,30 @@ export function AppContainer() {
             variant: 'destructive',
             title: 'Identification Failed',
             description: 'Could not identify the material. Please try again.',
+          });
+          resetState();
+        })
+        .finally(() => setIsLoading(false));
+    });
+  };
+
+  const processReceiptImage = (dataUri: string) => {
+    setIsLoading(true);
+    setLoadingMessage('Processing receipt...');
+    setScannedImage(dataUri);
+    startTransition(() => {
+      processReceipt({ receiptImageUri: dataUri })
+        .then((result) => {
+          setReceiptResult(result);
+          setShowReceiptResultModal(true);
+          setStep('scan');
+        })
+        .catch((error) => {
+          console.error('AI Error:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Receipt Processing Failed',
+            description: 'Could not read the receipt. Please try again with a clearer image.',
           });
           resetState();
         })
@@ -239,6 +275,7 @@ export function AppContainer() {
     if (!scannedImage || !productDescription) return;
     setShowLowConfidenceModal(false);
     setIsLoading(true);
+    setLoadingMessage('Identifying material...');
     startTransition(() => {
       identifyMaterialWithConfidence({
         photoDataUri: scannedImage,
@@ -300,9 +337,9 @@ export function AppContainer() {
         return (
           <Card className="text-center">
             <CardHeader>
-              <CardTitle className="font-headline text-3xl">Ready to Recycle?</CardTitle>
+              <CardTitle className="font-headline text-3xl">Ready to Go Green?</CardTitle>
               <CardDescription>
-                Scan product packaging to identify its material and find the nearest recycling bin.
+                Choose an action to earn points and track your impact.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -310,7 +347,11 @@ export function AppContainer() {
                 <Camera className="mr-2" />
                 Scan Product Packaging
               </Button>
-              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')}>
+              <Button size="lg" onClick={() => setStep('receipt')}>
+                <Receipt className="mr-2" />
+                Scan a Receipt for Bonus
+              </Button>
+              <Button size="lg" variant="outline" className="md:col-span-2" onClick={() => setStep('carbonFootprint')}>
                 <Footprints className="mr-2" />
                 {cooldownTimeLeft ? (
                   `Tomorrow's Carbon Footprint in: ${formatTimeLeft(cooldownTimeLeft)}`
@@ -328,6 +369,8 @@ export function AppContainer() {
           </Card>
         );
       case 'camera':
+      case 'receipt':
+        const isReceipt = step === 'receipt';
         return (
           <Card>
             <CardHeader>
@@ -341,11 +384,11 @@ export function AppContainer() {
                   <ChevronLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
                 <CardTitle className="font-headline text-2xl">
-                  Scan Your Item
+                  {isReceipt ? 'Scan Your Receipt' : 'Scan Your Item'}
                 </CardTitle>
               </div>
               <CardDescription className="text-center pt-2">
-                Position the item's packaging in the frame.
+                {isReceipt ? 'Position the entire receipt in the frame.' : "Position the item's packaging in the frame."}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
@@ -510,7 +553,7 @@ export function AppContainer() {
         {isLoading && (
           <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="mt-4 text-lg font-semibold">Identifying material...</p>
+            <p className="mt-4 text-lg font-semibold">{loadingMessage}</p>
           </div>
         )}
 
@@ -543,7 +586,42 @@ export function AppContainer() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={showReceiptResultModal} onOpenChange={setShowReceiptResultModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="font-headline">Receipt Scanned</DialogTitle>
+              <DialogDescription>
+                Here is the data we extracted. The provisional points logic is coming soon!
+              </DialogDescription>
+            </DialogHeader>
+            {receiptResult && (
+                <div className="text-sm space-y-2">
+                    <p><strong>Merchant:</strong> {receiptResult.merchantName}</p>
+                    <p><strong>Total:</strong> {receiptResult.totalAmount} {receiptResult.currency}</p>
+                    <p><strong>Date:</strong> {new Date(receiptResult.receiptDatetime).toLocaleString()}</p>
+                    {receiptResult.lineItems && receiptResult.lineItems.length > 0 && (
+                        <div>
+                            <strong>Items:</strong>
+                            <ul className="list-disc pl-5">
+                                {receiptResult.lineItems.map((item, index) => (
+                                    <li key={index}>{item.name} - {item.amount}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            )}
+            <DialogFooter>
+              <Button onClick={() => setShowReceiptResultModal(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
 }
+
+    

@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const ReceiptInputSchema = z.object({
+const ReceiptInputSchema = z.object({
   receiptImageUri: z
     .string()
     .describe(
@@ -20,7 +20,7 @@ export const ReceiptInputSchema = z.object({
 });
 export type ReceiptInput = z.infer<typeof ReceiptInputSchema>;
 
-export const ReceiptOutputSchema = z.object({
+const ReceiptOutputSchema = z.object({
   merchantName: z.string().describe('The name of the merchant or store.'),
   totalAmount: z.number().describe('The total amount of the transaction.'),
   currency: z
