@@ -47,6 +47,7 @@ import { cn } from '@/lib/utils';
 import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { isSameDay } from 'date-fns';
+import { getPointsForMaterial } from '@/lib/points';
 
 
 type Step = 'scan' | 'camera' | 'confirm' | 'map' | 'disposed' | 'rewards' | 'carbonFootprint';
@@ -228,11 +229,14 @@ export function AppContainer() {
   };
 
   const handleDispose = () => {
+    if (!identifiedMaterial) return;
+    const pointsAwarded = getPointsForMaterial(identifiedMaterial.material);
+    
     setStep('disposed');
-    setAnimatePoints('+10 Points');
+    setAnimatePoints(`+${pointsAwarded} Points`);
     
     if (userProfileRef && userProfile) {
-      const newPoints = userProfile.totalPoints + 10;
+      const newPoints = userProfile.totalPoints + pointsAwarded;
       updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
     }
 
@@ -241,8 +245,9 @@ export function AppContainer() {
     }, 1500);
   };
   
-  const handleSurveyComplete = (pointsAwarded: number) => {
-    setAnimatePoints(`+${pointsAwarded} Points`);
+  const handleSurveyComplete = (pointsChanged: number) => {
+    const pointString = pointsChanged > 0 ? `+${pointsChanged} Points` : `${pointsChanged} Points`;
+    setAnimatePoints(pointString);
      setTimeout(() => {
       setAnimatePoints(false);
     }, 1500);
@@ -421,7 +426,10 @@ export function AppContainer() {
         return (
           <Card className="text-center relative overflow-hidden">
              {animatePoints && (
-              <div className="animate-point-burst absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-primary">
+              <div className={cn(
+                "animate-point-burst absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold",
+                animatePoints.includes('-') ? 'text-destructive' : 'text-primary'
+                )}>
                 {animatePoints}
               </div>
             )}
@@ -429,7 +437,7 @@ export function AppContainer() {
               <Sparkles className="mx-auto h-12 w-12 text-yellow-400" />
               <CardTitle className="font-headline text-3xl">Recycling Confirmed!</CardTitle>
               <CardDescription>
-                Thank you for helping the planet. You've earned 10 points.
+                Thank you for helping the planet.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -502,3 +510,5 @@ export function AppContainer() {
     </div>
   );
 }
+
+    

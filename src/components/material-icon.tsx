@@ -1,4 +1,4 @@
-import { GlassWater, Trash2, Factory, FileText, HelpCircle } from 'lucide-react';
+import { GlassWater, Trash2, Factory, FileText, HelpCircle, Battery, Ban } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 
 type MaterialIconProps = {
@@ -22,6 +22,14 @@ export function MaterialIcon({ material, ...props }: MaterialIconProps) {
   if (lowerMaterial.includes('paper') || lowerMaterial.includes('cardboard')) {
     return <FileText {...props} />;
   }
+  if (lowerMaterial.includes('battery')) {
+    return <Battery {...props} />;
+  }
+  if (lowerMaterial.includes('unrecyclable')) {
+    return <Ban {...props} />;
+  }
   
   return <HelpCircle {...props} />;
 }
+
+    

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ChevronLeft, Loader2, Leaf, ThumbsUp, Sparkles } from 'lucide-react';
+import { ChevronLeft, Loader2, Leaf, ThumbsUp, Sparkles, AlertTriangle } from 'lucide-react';
 import {
   analyzeCarbonFootprint,
   CarbonFootprintInput,
@@ -56,7 +56,7 @@ export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }:
     energy: '',
   });
   const [results, setResults] = useState<CarbonFootprintOutput | null>(null);
-  const [pointsAwarded, setPointsAwarded] = useState(0);
+  const [pointsChanged, setPointsChanged] = useState(0);
   const { toast } = useToast();
   const { firestore } = useFirebase();
   const { user } = useUser();
@@ -91,17 +91,22 @@ export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }:
         .then((analysisResults) => {
           setResults(analysisResults);
           
-          const awarded = Math.round(analysisResults.sustainabilityScore * 2);
-          setPointsAwarded(awarded);
+          let points = 0;
+          if (analysisResults.estimatedFootprintKg > 40) {
+            points = -10;
+          } else {
+            points = Math.round(analysisResults.sustainabilityScore * 3);
+          }
+          setPointsChanged(points);
 
           if (userProfileRef && userProfile) {
-            const newPoints = userProfile.totalPoints + awarded;
+            const newPoints = userProfile.totalPoints + points;
             const today = formatISO(new Date(), { representation: 'date' });
             updateDocumentNonBlocking(userProfileRef, {
               totalPoints: newPoints,
               lastCarbonSurveyDate: today,
             });
-            onSurveyComplete(awarded);
+            onSurveyComplete(points);
           }
 
           setStep('results');
@@ -157,13 +162,23 @@ export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }:
             </p>
           </div>
           
-          <Alert variant="default" className="border-yellow-400/50 text-center bg-yellow-50/50 dark:bg-yellow-900/10">
-            <Sparkles className="h-4 w-4 text-yellow-500" />
-            <AlertTitle className="text-yellow-600 dark:text-yellow-400">Points Awarded!</AlertTitle>
-            <AlertDescription>
-                You earned {pointsAwarded} points for your sustainable choices today!
-            </AlertDescription>
-          </Alert>
+          {pointsChanged < 0 ? (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Points Deducted</AlertTitle>
+              <AlertDescription>
+                  Your daily footprint was high, so {pointsChanged} points have been deducted. Check out the tips below to improve!
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert variant="default" className="border-yellow-400/50 text-center bg-yellow-50/50 dark:bg-yellow-900/10">
+              <Sparkles className="h-4 w-4 text-yellow-500" />
+              <AlertTitle className="text-yellow-600 dark:text-yellow-400">Points Awarded!</AlertTitle>
+              <AlertDescription>
+                  You earned {pointsChanged} points for your sustainable choices today!
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Alert>
             <ThumbsUp className="h-4 w-4" />
@@ -279,3 +294,5 @@ export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }:
     </Card>
   );
 }
+
+    
