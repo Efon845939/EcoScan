@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ChevronLeft, Loader2, Leaf, ThumbsUp, Sparkles, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Loader2, Leaf, ThumbsUp, Sparkles, AlertTriangle, Receipt } from 'lucide-react';
 import {
   analyzeCarbonFootprint,
   CarbonFootprintInput,
@@ -42,11 +42,12 @@ const dietOptions = [
 
 type CarbonFootprintSurveyProps = {
   onBack: () => void;
+  onScanReceipt: () => void;
   userProfile: any;
   onSurveyComplete: (points: number) => void;
 };
 
-export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }: CarbonFootprintSurveyProps) {
+export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete }: CarbonFootprintSurveyProps) {
   const [step, setStep] = useState<SurveyStep>('form');
   const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState<CarbonFootprintInput>({
@@ -171,9 +172,9 @@ export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }:
           ) : (
             <Alert variant="default" className="border-yellow-400/50 text-center bg-yellow-50/50 dark:bg-yellow-900/10">
               <Sparkles className="h-4 w-4 text-yellow-500" />
-              <AlertTitle className="text-yellow-600 dark:text-yellow-400">Points Awarded!</AlertTitle>
+              <AlertTitle className="text-yellow-600 dark:text-yellow-400">Provisional Points Awarded!</AlertTitle>
               <AlertDescription>
-                  You earned {pointsChanged} points for your sustainable choices today!
+                  You earned a provisional {pointsChanged} points. Scan a receipt from today to verify your activities and get a 100% bonus!
               </AlertDescription>
             </Alert>
           )}
@@ -204,8 +205,11 @@ export function CarbonFootprintSurvey({ onBack, userProfile, onSurveyComplete }:
             </div>
           </div>
         </CardContent>
-        <CardFooter>
-          <Button size="lg" className="w-full" onClick={onBack}>
+        <CardFooter className="flex flex-col gap-4">
+          <Button size="lg" className="w-full" onClick={onScanReceipt}>
+            <Receipt className="mr-2" /> Scan Receipt to Verify & Get Bonus
+          </Button>
+          <Button size="lg" variant="outline" className="w-full" onClick={onBack}>
             Back to Main Menu
           </Button>
         </CardFooter>

@@ -229,7 +229,7 @@ export function AppContainer() {
         .then((result) => {
           setReceiptResult(result);
           setShowReceiptResultModal(true);
-          setStep('scan');
+          setStep('carbonFootprint');
         })
         .catch((error) => {
           console.error('AI Error:', error);
@@ -238,7 +238,7 @@ export function AppContainer() {
             title: 'Receipt Processing Failed',
             description: 'Could not read the receipt. Please try again with a clearer image.',
           });
-          resetState();
+          setStep('carbonFootprint');
         })
         .finally(() => setIsLoading(false));
     });
@@ -342,16 +342,12 @@ export function AppContainer() {
                 Choose an action to earn points and track your impact.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Button size="lg" onClick={() => setStep('camera')}>
+            <CardContent className="grid grid-cols-1 gap-4">
+               <Button size="lg" onClick={() => setStep('camera')}>
                 <Camera className="mr-2" />
                 Scan Product Packaging
               </Button>
-              <Button size="lg" onClick={() => setStep('receipt')}>
-                <Receipt className="mr-2" />
-                Scan a Receipt for Bonus
-              </Button>
-              <Button size="lg" variant="outline" className="md:col-span-2" onClick={() => setStep('carbonFootprint')}>
+              <Button size="lg" variant="outline" onClick={() => setStep('carbonFootprint')}>
                 <Footprints className="mr-2" />
                 {cooldownTimeLeft ? (
                   `Tomorrow's Carbon Footprint in: ${formatTimeLeft(cooldownTimeLeft)}`
@@ -371,6 +367,7 @@ export function AppContainer() {
       case 'camera':
       case 'receipt':
         const isReceipt = step === 'receipt';
+        const backStep = isReceipt ? 'carbonFootprint' : 'scan';
         return (
           <Card>
             <CardHeader>
@@ -379,7 +376,7 @@ export function AppContainer() {
                   variant="ghost"
                   size="sm"
                   className="absolute left-0"
-                  onClick={() => setStep('scan')}
+                  onClick={() => setStep(backStep)}
                 >
                   <ChevronLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
@@ -536,7 +533,7 @@ export function AppContainer() {
       case 'rewards':
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'carbonFootprint':
-        return <CarbonFootprintSurvey onBack={() => setStep('scan')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} />;
+        return <CarbonFootprintSurvey onBack={() => setStep('scan')} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} />;
       default:
         return null;
     }
