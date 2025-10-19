@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, ChangeEvent, useTransition, useEffect } from 'react';
@@ -392,10 +393,8 @@ export function AppContainer() {
       })
       .then((result) => {
         if (result.isValid) {
-          // Base reversal is penalty + 5.
-          // e.g. -10 penalty -> +10 to reverse, +5 bonus = 15 total
-          // e.g. -5 penalty -> +5 to reverse, +5 bonus = 10 total
-          const pointsAwarded = Math.abs(pointsPenalty) + 5;
+          // Reverses penalty and adds a bonus
+          const pointsAwarded = Math.abs(pointsPenalty) + 15;
           setAnimatePoints(`+${pointsAwarded}`);
 
           if (userProfileRef && userProfile) {
