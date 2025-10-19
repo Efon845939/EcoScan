@@ -13,7 +13,6 @@ import {
   CircleDot,
   Footprints,
   Receipt,
-  BookOpen,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -54,7 +53,7 @@ import { differenceInMilliseconds, addHours } from 'date-fns';
 import { getPointsForMaterial } from '@/lib/points';
 
 
-type Step = 'scan' | 'camera' | 'confirm' | 'map' | 'disposed' | 'rewards' | 'carbonFootprint' | 'receipt' | 'guide';
+export type Step = 'scan' | 'camera' | 'confirm' | 'map' | 'disposed' | 'rewards' | 'carbonFootprint' | 'receipt' | 'guide';
 
 function formatTimeLeft(milliseconds: number) {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -357,10 +356,6 @@ export function AppContainer() {
                   'See Your Carbon Footprint'
                 )}
               </Button>
-               <Button size="lg" variant="secondary" onClick={() => setStep('guide')}>
-                <BookOpen className="mr-2" />
-                App Guide & Rules
-              </Button>
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
               <Button variant="link" onClick={() => setStep('rewards')}>
@@ -549,7 +544,7 @@ export function AppContainer() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header points={userPoints} />
+      <Header points={userPoints} onNavigate={setStep} />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
         <div className={cn('w-full max-w-2xl transition-all duration-300', (isLoading || isUserLoading || isProfileLoading) && 'opacity-50 pointer-events-none')}>
           {renderContent()}
