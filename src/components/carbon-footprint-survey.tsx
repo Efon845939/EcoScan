@@ -116,7 +116,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           
           if (userProfileRef && userProfile) {
             const currentPoints = userProfile.totalPoints || 0;
-            const newPoints = Math.max(0, currentPoints + points);
+            const newPoints = currentPoints + points;
             updateDocumentNonBlocking(userProfileRef, {
               totalPoints: newPoints,
               lastCarbonSurveyDate: serverTimestamp(),

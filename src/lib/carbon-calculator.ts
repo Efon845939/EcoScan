@@ -71,18 +71,7 @@ export function computeCarbonKgDeterministic(
   const scale = avg / neutralAvg;
 
   let kg = base * scale;
-
-  // If user selected "worst-case" (car_gasoline + red_meat + high),
-  // push to >= 90% of regional max to avoid implausible lows.
-  const worst =
-    transport === 'car_gasoline' &&
-    diet === 'red_meat' &&
-    energy === 'high';
-
-  if (worst) {
-    kg = Math.max(kg, max * 0.9);
-  }
-
+  
   // Final clamp and rounding to 0.1 kg
   kg = Math.max(min, Math.min(kg, max));
   return Number(kg.toFixed(1));
@@ -91,19 +80,22 @@ export function computeCarbonKgDeterministic(
 export function computePointsFromKgRegionAware(kg: number, region: RegionKey): number {
     const regionData = REGIONS[region] || REGIONS['default'];
     const { min, avg, max } = regionData;
+    const penaltyThreshold = max;
 
-    if (kg > max * 1.1) return -10; // Penalty for being significantly over max
-    if (kg > max) return -5; // Penalty for being over max
-    if (kg <= min) return 30; // Max points for being at or below min
-
-    // Linear segments for scoring
-    if (kg <= avg) {
-        // min...avg maps from 30 down to 15 points
-        const t = (kg - min) / (avg - min);
-        return Math.round(30 - 15 * t);
-    } else {
-        // avg...max maps from 15 down to 0 points
-        const t = (kg - avg) / (max - avg);
-        return Math.round(15 - 15 * t);
+    // 1. High Footprint Penalty
+    if (kg > penaltyThreshold) {
+        const penalty = -Math.round((kg - penaltyThreshold) / 2);
+        return Math.max(-10, penalty); // Cap penalty at -10
     }
+    
+    // 2. Provisional reward (based on a sustainability score proxy)
+    // This is a simplified proxy. A real implementation might use a more complex score.
+    // We'll simulate a score based on how close the user is to the minimum.
+    const range = max - min;
+    if (range <= 0) return 5; // Avoid division by zero, give neutral points
+    
+    const scoreFraction = 1 - ((kg - min) / range); // 1.0 for min, 0.0 for max
+    const sustainabilityScore = Math.max(1, Math.min(10, scoreFraction * 10));
+
+    return Math.round(sustainabilityScore * 0.5);
 }
