@@ -19,7 +19,6 @@ export default function SurveyButton({ cooldownEndsAt }: { cooldownEndsAt?: numb
     <button
       type="button"
       onClick={handleClick}
-      disabled={inCooldown}
       className={cn(
         "h-20 text-base md:h-24 w-full rounded-md px-4 py-3 font-semibold transition flex flex-col items-center justify-center select-none",
         inCooldown
