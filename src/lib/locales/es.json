@@ -74,7 +74,8 @@
   "survey_penalty_title": "Penalización por huella alta",
   "survey_penalty_description": "Su huella diaria fue alta, por lo que se han deducido {points} puntos. Puede revertir esto realizando una de las acciones a continuación y verificando con una foto.",
   "survey_provisional_title": "¡Puntos provisionales otorgados!",
-  "survey_provisional_description": "Ha ganado {points} puntos provisionales. ¡Escanee un recibo de su día para verificar su huella y obtener un bono de puntos del 500%!",
+  "survey_provisional_description": "Ha ganado {points} puntos provisionales. ¡Escanee un recibo de su día para verificar su huella y obtener un bono de puntos del 5x!",
+  "survey_base_points_hint": "Su puntaje base es de {base} puntos. El bono se calcula a partir de este puntaje.",
   "survey_analysis_title": "Análisis",
   "survey_recommendations_title": "Cómo mejorar mañana:",
   "survey_extra_tips_title": "Haga una de las necesidades de hoy:",
@@ -164,3 +165,5 @@
   "toast_reward_redeemed_title": "¡Recompensa canjeada!",
   "toast_reward_redeemed_description": "Ha canjeado con éxito \"{title}\"."
 }
+
+    

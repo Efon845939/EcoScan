@@ -74,7 +74,8 @@
   "survey_penalty_title": "Yüksek Ayak İzi Cezası",
   "survey_penalty_description": "Günlük ayak iziniz yüksekti, bu yüzden {points} puan düşüldü. Aşağıdaki eylemlerden birini yaparak ve bir fotoğrafla doğrulayarak bunu geri alabilirsiniz.",
   "survey_provisional_title": "Geçici Puanlar Verildi!",
-  "survey_provisional_description": "{points} geçici puan kazandınız. Günlük ayak izinizi doğrulamak ve %500 puan bonusu kazanmak için gün içinden bir fiş tarayın!",
+  "survey_provisional_description": "{points} geçici puan kazandınız. Günlük ayak izinizi doğrulamak ve 5 kat puan bonusu kazanmak için gün içinden bir fiş tarayın!",
+  "survey_base_points_hint": "Temel puanınız {base} puandır. Bonus bu puandan hesaplanır.",
   "survey_analysis_title": "Analiz",
   "survey_recommendations_title": "Yarını iyileştirmek için:",
   "survey_extra_tips_title": "Bugün yapılacak ihtiyaçlardan birini yapın:",
@@ -164,3 +165,5 @@
   "toast_reward_redeemed_title": "Ödül Kullanıldı!",
   "toast_reward_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız."
 }
+
+    

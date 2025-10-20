@@ -74,7 +74,8 @@
   "survey_penalty_title": "高いフットプリントのペナルティ",
   "survey_penalty_description": "毎日のフットプリントが高かったため、{points}ポイントが差し引かれました。以下のアクションの1つを実行し、写真で確認することで、これを取り消すことができます。",
   "survey_provisional_title": "仮ポイントが付与されました！",
-  "survey_provisional_description": "{points}ポイントの仮ポイントを獲得しました。その日のレシートをスキャンしてフットプリントを確認し、500％のポイントボーナスを獲得してください！",
+  "survey_provisional_description": "{points}ポイントの仮ポイントを獲得しました。その日のレシートをスキャンしてフットプリントを確認し、5倍のポイントボーナスを獲得してください！",
+  "survey_base_points_hint": "あなたのベーススコアは{base}ポイントです。ボーナスはこのスコアから計算されます。",
   "survey_analysis_title": "分析",
   "survey_recommendations_title": "明日を改善する方法：",
   "survey_extra_tips_title": "今日のニーズの1つを実行してください：",
@@ -164,3 +165,5 @@
   "toast_reward_redeemed_title": "リワードを利用しました！",
   "toast_reward_redeemed_description": "「{title}」を正常に利用しました。"
 }
+
+    

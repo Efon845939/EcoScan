@@ -74,7 +74,8 @@
   "survey_penalty_title": "عقوبة البصمة العالية",
   "survey_penalty_description": "كانت بصمتك اليومية عالية, لذلك تم خصم {points} نقطة. يمكنك عكس ذلك عن طريق اتخاذ أحد الإجراءات أدناه والتحقق بصورة.",
   "survey_provisional_title": "تم منح نقاط مؤقتة!",
-  "survey_provisional_description": "لقد ربحت {points} نقطة مؤقتة. امسح إيصالًا من يومك للتحقق من بصمتك والحصول على مكافأة نقاط بنسبة 500٪!",
+  "survey_provisional_description": "لقد ربحت {points} نقطة مؤقتة. امسح إيصالًا من يومك للتحقق من بصمتك والحصول على مكافأة نقاط بنسبة 5x!",
+  "survey_base_points_hint": "درجة الأساس الخاصة بك هي {base} نقطة. يتم احتساب المكافأة من هذه الدرجة.",
   "survey_analysis_title": "تحليل",
   "survey_recommendations_title": "كيف تتحسن غدًا:",
   "survey_extra_tips_title": "قم بأحد الاحتياجات اليوم:",
@@ -164,3 +165,5 @@
   "toast_reward_redeemed_title": "تم استبدال المكافأة!",
   "toast_reward_redeemed_description": "لقد نجحت في استبدال \"{title}\"."
 }
+
+    

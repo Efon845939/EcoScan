@@ -74,7 +74,8 @@
   "survey_penalty_title": "Strafe für hohen Fußabdruck",
   "survey_penalty_description": "Ihr täglicher Fußabdruck war hoch, daher wurden {points} Punkte abgezogen. Sie können dies rückgängig machen, indem Sie eine der folgenden Maßnahmen ergreifen und mit einem Foto verifizieren.",
   "survey_provisional_title": "Vorläufige Punkte vergeben!",
-  "survey_provisional_description": "Sie haben vorläufig {points} Punkte verdient. Scannen Sie einen Beleg von Ihrem Tag, um Ihren Fußabdruck zu verifizieren und einen 500%igen Punktebonus zu erhalten!",
+  "survey_provisional_description": "Sie haben vorläufig {points} Punkte verdient. Scannen Sie einen Beleg von Ihrem Tag, um Ihren Fußabdruck zu verifizieren und einen 5x-Punktebonus zu erhalten!",
+  "survey_base_points_hint": "Ihre Basispunktzahl beträgt {base} Punkte. Der Bonus wird aus dieser Punktzahl berechnet.",
   "survey_analysis_title": "Analyse",
   "survey_recommendations_title": "Wie Sie sich morgen verbessern können:",
   "survey_extra_tips_title": "Erledigen Sie heute eine der Notwendigkeiten:",
@@ -164,3 +165,5 @@
   "toast_reward_redeemed_title": "Belohnung eingelöst!",
   "toast_reward_redeemed_description": "Sie haben \"{title}\" erfolgreich eingelöst."
 }
+
+    

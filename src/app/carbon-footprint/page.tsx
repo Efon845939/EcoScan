@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
@@ -13,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ChevronLeft, Loader2, Leaf, ThumbsUp, ThumbsDown, Meh, Sparkles, AlertTriangle, Receipt, Camera } from 'lucide-react';
 import {
@@ -27,18 +29,20 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
-import { computeProvisional, finalizeWithReceipt, pointsFromKgRegionAware } from '@/lib/carbon-calculator';
+import { REGION, computeKgDeterministic, pointsFromKgRegionAware, computeProvisional, finalizeWithReceipt } from '@/lib/carbon-calculator';
 
 export default function CarbonFootprintPage() {
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
     const { firestore } = useFirebase();
-    const { user } = useUser();
+    const { user, isUserLoading, isProfileLoading } = useUser();
+    const { data: userProfile } = useDoc(useMemoFirebase(() => (firestore && user) ? doc(firestore, 'users', user.uid) : null, [firestore, user]));
     const { t } = useTranslation();
     const router = useRouter();
 
     const [results, setResults] = useState<CarbonFootprintOutput | null>(null);
-    const [surveyPoints, setSurveyPoints] = useState(0);
+    const [surveyPoints, setSurveyPoints] = useState(0); // This will now store provisional points
+    const [basePoints, setBasePoints] = useState(0);
     const [receiptResult, setReceiptResult] = useState<ReceiptOutput | null>(null); // This would be populated from a parent component or context
     const [region, setRegion] = useState('Dubai, UAE');
     const [language, setLanguage] = useState('en');
@@ -55,9 +59,9 @@ export default function CarbonFootprintPage() {
       }, []);
 
     const [formData, setFormData] = useState<Omit<CarbonFootprintInput, 'language' | 'location'>>({
-        transport: [],
-        diet: [],
-        drink: [],
+        transport: [], // Will now hold a single value from radio
+        diet: [],      // Will now hold a single value from radio
+        drink: [],     // Will now hold a single value from radio
         energy: '',
       });
 
@@ -69,27 +73,22 @@ export default function CarbonFootprintPage() {
     [firestore, user]
     );
 
-    const handleCheckboxChange = (field: 'transport' | 'diet' | 'drink', value: string) => {
-    setFormData((prev) => {
-        const newValues = prev[field].includes(value)
-        ? prev[field].filter((item) => item !== value)
-        : [...prev[field], value];
-        return { ...prev, [field]: newValues };
-    });
+    const handleRadioChange = (field: 'transport' | 'diet' | 'drink', value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: [value] }));
     };
 
     const handleEnergyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isNoEnergy) return;
-    setFormData((prev) => ({ ...prev, energy: e.target.value }));
+        if (isNoEnergy) return;
+        setFormData((prev) => ({ ...prev, energy: e.target.value }));
     };
 
     const handleNoEnergyChange = (checked: boolean) => {
-    setIsNoEnergy(checked);
-    if (checked) {
-        setFormData((prev) => ({ ...prev, energy: 'none' }));
-    } else {
-        setFormData((prev) => ({ ...prev, energy: '' }));
-    }
+        setIsNoEnergy(checked);
+        if (checked) {
+            setFormData((prev) => ({ ...prev, energy: 'none' }));
+        } else {
+            setFormData((prev) => ({ ...prev, energy: '' }));
+        }
     };
     
     const handleVerifyWithReceipt = () => {
@@ -99,11 +98,12 @@ export default function CarbonFootprintPage() {
     const bonusPoints = finalizeWithReceipt(actualBasePoints);
     const provisionalPoints = computeProvisional(actualBasePoints);
 
-        if (userProfileRef && user?.uid) {
+        if (userProfileRef && user?.uid && userProfile) {
             const userRef = doc(firestore, 'users', user.uid);
-            // This is a simplified update. A transaction would be better in a real app.
+            // Revert provisional and add the full bonus
+            const newPoints = Math.max(0, (userProfile.totalPoints || 0) - provisionalPoints + bonusPoints);
             updateDocumentNonBlocking(userRef, {
-                totalPoints: Math.max(0, (userProfile?.totalPoints || 0) - provisionalPoints + bonusPoints),
+                totalPoints: newPoints,
             });
         }
         toast({
@@ -120,41 +120,54 @@ export default function CarbonFootprintPage() {
 
     const handleSubmit = () => {
         setIsLoading(true);
-        startTransition(() => {
-          analyzeCarbonFootprint({ ...formData, location: region, language })
-            .then((analysisResults) => {
-              const calculatedBasePoints = pointsFromKgRegionAware(analysisResults.estimatedFootprintKg, region as any);
+        startTransition(async () => {
+          try {
+            // 1. Ensure single values from form
+            const transport = formData.transport[0] as any;
+            const diet = formData.diet[0] as any;
+            const drink = formData.drink[0] as any;
+            const energy = (isNoEnergy ? "none" : formData.energy) as any;
+            
+            // 2. Run our own deterministic calculation
+            const deterministicKg = computeKgDeterministic(region as any, transport, diet, drink, energy);
+            const base = pointsFromKgRegionAware(deterministicKg, region as any);
+            const provisional = computeProvisional(base);
+
+            // 3. Call AI only for qualitative analysis
+            const aiAnalysis = await analyzeCarbonFootprint({ ...formData, location: region, language });
+
+            // 4. Update user profile with ONLY provisional points
+            if (userProfileRef && userProfile) {
+              const currentPoints = userProfile.totalPoints || 0;
+              const penaltyThreshold = (REGION[region.toLowerCase().replace(', ', '_') as keyof typeof REGION] || REGION.europe).max * 1.05;
+              const pointsChange = deterministicKg > penaltyThreshold ? -10 : provisional;
+              const newPoints = Math.max(0, currentPoints + pointsChange);
               
-              let finalPoints = 0;
-    
-              if (analysisResults.estimatedFootprintKg > 89) {
-                  finalPoints = -10;
-              } else {
-                finalPoints = computeProvisional(calculatedBasePoints);
-              }
-    
-              if (userProfileRef) {
-                const currentPoints = userProfile?.totalPoints || 0;
-                const newPoints = Math.max(0, currentPoints + finalPoints);
-                updateDocumentNonBlocking(userProfileRef, {
-                  totalPoints: newPoints,
-                  lastCarbonSurveyDate: serverTimestamp(),
-                });
-              }
-              setResults(analysisResults);
-              setSurveyPoints(finalPoints);
-            })
-            .catch((err) => {
+              updateDocumentNonBlocking(userProfileRef, {
+                totalPoints: newPoints,
+                lastCarbonSurveyDate: serverTimestamp(),
+              });
+            }
+
+            // 5. Set UI state with clear separation of points
+            setBasePoints(base);
+            setResults({
+                ...aiAnalysis, // Use AI for text
+                estimatedFootprintKg: deterministicKg, // But our numbers for data
+                points: base, // The base points for context
+            });
+            setSurveyPoints(provisional); // The points actually awarded (provisional)
+
+          } catch(err) {
               console.error(err);
               toast({
                 variant: 'destructive',
                 title: 'Analysis Failed',
                 description: 'Could not analyze your carbon footprint. Please try again.',
               });
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
+          } finally {
+              setIsLoading(false);
+          }
         });
       };
 
@@ -171,6 +184,15 @@ export default function CarbonFootprintPage() {
   const transportOptions = t('survey_q1_options', { returnObjects: true }) as Record<string, string>;
   const dietOptions = t('survey_q2_options', { returnObjects: true }) as Record<string, string>;
   const drinkOptions = t('survey_q4_options', { returnObjects: true }) as Record<string, string>;
+
+  if (isUserLoading || isProfileLoading) {
+    return (
+        <div className="flex flex-col items-center justify-center p-8">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="mt-4 text-lg font-semibold">{t('loading_profile')}</p>
+        </div>
+    )
+  }
 
   if (!results) {
     return (
@@ -189,60 +211,39 @@ export default function CarbonFootprintPage() {
                     </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                    <div className="space-y-3">
+                     <RadioGroup onValueChange={(value) => handleRadioChange('transport', value)}>
                         <Label>{t('survey_q1')}</Label>
                         <div className="space-y-2">
                         {Object.entries(transportOptions).map(([key, label]) => (
                             <div key={key} className="flex items-center space-x-2">
-                            <Checkbox
-                                id={`transport-${key}`}
-                                checked={formData.transport.includes(key)}
-                                onCheckedChange={() => handleCheckboxChange('transport', key)}
-                            />
-                            <Label
-                                htmlFor={`transport-${key}`}
-                                className="font-normal"
-                            >
-                                {label}
-                            </Label>
+                            <RadioGroupItem value={key} id={`transport-${key}`} />
+                            <Label htmlFor={`transport-${key}`} className="font-normal">{label}</Label>
                             </div>
                         ))}
                         </div>
-                    </div>
-                    <div className="space-y-3">
+                    </RadioGroup>
+                     <RadioGroup onValueChange={(value) => handleRadioChange('diet', value)}>
                         <Label>{t('survey_q2')}</Label>
                         <div className="space-y-2">
                         {Object.entries(dietOptions).map(([key, label]) => (
                             <div key={key} className="flex items-center space-x-2">
-                            <Checkbox
-                                id={`diet-${key}`}
-                                checked={formData.diet.includes(key)}
-                                onCheckedChange={() => handleCheckboxChange('diet', key)}
-                            />
-                            <Label htmlFor={`diet-${key}`} className="font-normal">
-                                {label}
-                            </Label>
+                             <RadioGroupItem value={key} id={`diet-${key}`} />
+                            <Label htmlFor={`diet-${key}`} className="font-normal">{label}</Label>
                             </div>
                         ))}
                         </div>
-                    </div>
-                    <div className="space-y-3">
+                    </RadioGroup>
+                    <RadioGroup onValueChange={(value) => handleRadioChange('drink', value)}>
                         <Label>{t('survey_q4')}</Label>
                         <div className="space-y-2">
                         {Object.entries(drinkOptions).map(([key, label]) => (
                             <div key={key} className="flex items-center space-x-2">
-                            <Checkbox
-                                id={`drink-${key}`}
-                                checked={formData.drink.includes(key)}
-                                onCheckedChange={() => handleCheckboxChange('drink', key)}
-                            />
-                            <Label htmlFor={`drink-${key}`} className="font-normal">
-                                {label}
-                            </Label>
+                            <RadioGroupItem value={key} id={`drink-${key}`} />
+                            <Label htmlFor={`drink-${key}`} className="font-normal">{label}</Label>
                             </div>
                         ))}
                         </div>
-                    </div>
+                    </RadioGroup>
                     <div className="space-y-2">
                         <Label htmlFor="energy">{t('survey_q3')}</Label>
                         <Input
@@ -289,11 +290,11 @@ export default function CarbonFootprintPage() {
   const isPenalty = surveyPoints < 0;
   
   const getAnalysisIcon = () => {
-    const score = pointsFromKgRegionAware(results.estimatedFootprintKg, region as any);
-    if (score >= 20) {
+    // Icon should be based on the BASE points, not the provisional ones
+    if (basePoints >= 20) {
       return <ThumbsUp className="h-4 w-4" />;
     }
-    if (score >= 10) {
+    if (basePoints >= 10) {
       return <Meh className="h-4 w-4" />;
     }
     return <ThumbsDown className="h-4 w-4" />;
@@ -339,7 +340,10 @@ export default function CarbonFootprintPage() {
                     <Sparkles className="h-4 w-4 text-yellow-500" />
                     <AlertTitle className="text-yellow-600 dark:text-yellow-400">{t('survey_provisional_title')}</AlertTitle>
                     <AlertDescription>
-                        {t('survey_provisional_description', { points: surveyPoints })}
+                       {t('survey_provisional_description', { points: surveyPoints })}
+                       <div className="mt-1 text-xs text-muted-foreground">
+                         ({t('survey_base_points_hint', { base: basePoints })})
+                       </div>
                     </AlertDescription>
                 </Alert>
                 )}
@@ -389,3 +393,5 @@ export default function CarbonFootprintPage() {
     </main>
   );
 }
+
+    

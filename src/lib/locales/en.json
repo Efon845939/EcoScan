@@ -74,7 +74,8 @@
   "survey_penalty_title": "High Footprint Penalty",
   "survey_penalty_description": "Your daily footprint was high, so {points} points have been deducted. You can reverse this by taking one of the actions below and verifying with a photo.",
   "survey_provisional_title": "Provisional Points Awarded!",
-  "survey_provisional_description": "You earned a provisional {points} points. Scan a receipt from your day to verify your footprint and get a 500% point bonus!",
+  "survey_provisional_description": "You earned a provisional {points} points. Scan a receipt from your day to verify your footprint and get a 5x point bonus!",
+  "survey_base_points_hint": "Your base score is {base} points. The bonus is calculated from this score.",
   "survey_analysis_title": "Analysis",
   "survey_recommendations_title": "How to improve tomorrow:",
   "survey_extra_tips_title": "Do one of the needs for today:",
@@ -164,3 +165,5 @@
   "toast_reward_redeemed_title": "Reward Redeemed!",
   "toast_reward_redeemed_description": "You've successfully redeemed \"{title}\"."
 }
+
+    
