@@ -1,8 +1,8 @@
 'use client';
-import { AppContainer } from '@/components/app-container';
+import { VerificationCenter } from '@/components/verification-center';
+import { useRouter } from 'next/navigation';
 
 export default function VerifyPage() {
-  return <AppContainer initialStep="verify" />;
+  const router = useRouter();
+  return <VerificationCenter onBack={() => router.push('/')} />;
 }
-
-    
