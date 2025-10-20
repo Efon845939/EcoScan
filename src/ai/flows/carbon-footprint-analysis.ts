@@ -18,6 +18,7 @@ import {
   RegionKey,
   Transport,
   Diet,
+  Drink,
   Energy,
 } from '@/lib/carbon-calculator';
 
@@ -29,6 +30,9 @@ const CarbonFootprintInputSchema = z.object({
   diet: z
     .array(z.string())
     .describe('Keys representing the primary diet today (e.g., "red_meat", "poultry_fish", "vegetarian", "vegan").'),
+  drink: z
+    .array(z.string())
+    .describe('Keys representing the primary drink consumption today (e.g., "drink_coffee_milk", "drink_bottled").'),
   energy: z
     .string()
     .describe('Energy usage habits at home (e.g., used AC/heater, lights on all day).'),
@@ -77,6 +81,7 @@ export async function analyzeCarbonFootprint(
   // We'll take the first selection as the primary mode for calculation.
   const transportMode = getPrimaryInput<Transport>(input.transport, 'walk_bike');
   const dietMode = getPrimaryInput<Diet>(input.diet, 'vegetarian_vegan');
+  const drinkMode = getPrimaryInput<Drink>(input.drink, 'drink_water_tea');
   
   // A simple mapping for energy text input to a category.
   const energyText = input.energy.toLowerCase();
@@ -92,6 +97,7 @@ export async function analyzeCarbonFootprint(
     regionKey,
     transportMode,
     dietMode,
+    drinkMode,
     energyMode
   );
 
@@ -111,6 +117,7 @@ You MUST generate your entire response (analysis, recommendations, tips, and tan
 - **User's activities today:**
   - Transportation: ${input.transport.join(', ')}
   - Diet: ${input.diet.join(', ')}
+  - Drink: ${input.drink.join(', ')}
   - Home Energy Use: ${input.energy}
 
 **YOUR TASKS:**

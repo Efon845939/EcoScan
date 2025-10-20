@@ -54,17 +54,25 @@
   "survey_q2": "كيف كان نظامك الغذائي اليوم؟",
   "survey_q2_options": {
     "red_meat": "يعتمد على اللحوم الحمراء",
-    "poultry_fish": "دواجن / سمك، بدون لحوم حمراء",
-    "vegetarian": "نباتي",
-    "vegan": "نباتي صرف"
+    "white_meat_fish": "دواجن / سمك",
+    "vegetarian_vegan": "نباتي / نباتي صرف",
+    "carb_based": "يعتمد على الكربوهيدرات"
   },
   "survey_q3": "كيف كان استهلاكك للطاقة في المنزل؟",
   "survey_q3_placeholder": "على سبيل المثال، استخدمت مكيف الهواء، تركت الأنوار مضاءة...",
+  "survey_q4": "ماذا شربت بشكل أساسي اليوم؟",
+  "survey_q4_options": {
+    "drink_coffee_milk": "قهوة بالحليب أو مشروبات ألبان",
+    "drink_bottled": "مياه معبأة / صودا / عصير",
+    "drink_alcohol": "مشروبات كحولية",
+    "drink_plant_based": "مشروبات نباتية / منزلية",
+    "drink_water_tea": "ماء الصنبور / شاي"
+  },
   "survey_calculate_button": "احسب بصمتي",
   "survey_results_title": "نتائج بصمتك اليومية",
   "survey_results_estimated": "البصمة المقدرة:",
   "survey_penalty_title": "عقوبة البصمة العالية",
-  "survey_penalty_description": "كانت بصمتك اليومية عالية، لذلك تم خصم {points} نقطة. يمكنك عكس ذلك عن طريق اتخاذ أحد الإجراءات أدناه والتحقق بصورة.",
+  "survey_penalty_description": "كانت بصمتك اليومية عالية, لذلك تم خصم {points} نقطة. يمكنك عكس ذلك عن طريق اتخاذ أحد الإجراءات أدناه والتحقق بصورة.",
   "survey_provisional_title": "تم منح نقاط مؤقتة!",
   "survey_provisional_description": "لقد ربحت {points} نقطة مؤقتة. امسح إيصالًا من يومك للتحقق من بصمتك والحصول على مكافأة نقاط بنسبة 500٪!",
   "survey_analysis_title": "تحليل",

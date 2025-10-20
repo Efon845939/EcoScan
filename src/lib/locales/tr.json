@@ -60,6 +60,14 @@
   },
   "survey_q3": "Evdeki enerji kullanımınız nasıldı?",
   "survey_q3_placeholder": "Örn: Klima kullandım, ışıkları açık bıraktım...",
+  "survey_q4": "Bugün ağırlıklı olarak ne içtiniz?",
+  "survey_q4_options": {
+    "drink_coffee_milk": "Sütlü kahve veya sütlü içecekler",
+    "drink_bottled": "Şişelenmiş su / Gazoz / Meyve suyu",
+    "drink_alcohol": "Alkollü içecekler",
+    "drink_plant_based": "Bitki bazlı süt / Ev yapımı içecekler",
+    "drink_water_tea": "Musluk suyu / Çay"
+  },
   "survey_calculate_button": "Ayak İzimi Hesapla",
   "survey_results_title": "Günlük Ayak İzi Sonuçları",
   "survey_results_estimated": "Tahmini Ayak İzi:",

@@ -1,98 +1,295 @@
-# Comprehensive Project Brief: EcoScan Rewards
+# EcoScan Rewards — Leaderboard, Monthly Bill (OCR) bonus flow, and Drink-based carbon factor — implementation plan & Firebase validation requests
 
-Hello ChatGPT,
+Hello Firebase / Google Cloud team,
 
-This document provides a detailed overview of the "EcoScan Rewards" web application. We have built a sophisticated platform that gamifies eco-friendly actions, and this brief will bring you up to speed on its functionality, architecture, and core logic.
+We’re expanding **EcoScan Rewards** with three production features and request your validation, quota guidance, and best-practice feedback. The features are:
 
----
+1. **Leaderboard (monthly, region-scoped, anti-fraud aware)**
+2. **Monthly Bill Verification** (electricity/water OCR, points, trend bonus)
+3. **Drink Category** in daily **carbon footprint** calculator (diet + drink composition)
 
-## 1. Core Concept & Vision
-
-EcoScan Rewards is a Next.js application designed to encourage and reward users for making environmentally conscious decisions. The core loop is simple: users perform green actions, verify them using their device's camera and our AI backend, and earn points. These points can then be redeemed for real-world rewards.
-
-The app's primary functions are:
-1.  **Recycling Verification:** Identifying the material of an item and verifying that the user disposes of it correctly.
-2.  **Carbon Footprint Tracking:** Allowing users to assess their daily carbon impact, rewarding sustainable choices, and providing actionable feedback for improvement.
+Below is our consolidated technical brief: data model, Cloud Functions, security, scheduling, and the concrete actions we request from your side.
 
 ---
 
-## 2. Key Features & User Flows
+## 0) Environment
 
-### A. Recycling & Material Identification Flow
-
-This is the primary point-earning mechanism for recycling.
-
-1.  **Initial Scan (`scan` step):** From the home screen, the user chooses to "Scan Product Packaging."
-2.  **Camera Input (`camera` step):** The app opens the device's camera. The user can either take a live photo of the item's packaging or upload an image file.
-3.  **AI Material Identification:** The captured image (as a data URI) is sent to a Genkit AI flow (`material-identification-from-scan`). This flow uses a multimodal AI model to analyze the image and returns:
-    *   `material`: The identified material (e.g., "Plastic", "Glass", "Aluminum").
-    *   `confidence`: A numerical score (0-1) of the AI's confidence.
-4.  **Low Confidence & Barcode Assistance:** If the AI's confidence is low (< 0.5), the user is prompted to enter the product's barcode number. This triggers a second AI flow (`confidence-based-assistance`) that uses the barcode as the primary source of truth to re-identify the material with higher confidence.
-5.  **Confirmation (`confirm` step):** The user is shown the identified material and the confidence level. They are then instructed to proceed with disposal.
-6.  **Disposal Verification (`verifyDisposal` step):** The camera opens again. The user must take a photo of themselves (or their hand) placing the item into the correct recycling bin.
-7.  **AI Fraud & Action Detection:** This new image is sent to the `verify-disposal-action` AI flow. This powerful flow is designed to:
-    *   Verify the action (is an item being placed in a bin?).
-    *   Detect fraud, such as duplicate submissions or AI-generated images.
-8.  **Points Awarded (`disposed` step):**
-    *   If the disposal is valid, the user is awarded points based on the material's value (logic in `src/lib/points.ts`).
-    *   If the AI detects fraud, a **-50 point penalty** is applied.
-    *   The user's point total in their Firestore user profile is updated accordingly.
-
-### B. Carbon Footprint Survey Flow
-
-This feature provides a daily assessment of the user's environmental impact.
-
-1.  **Initiate Survey (`carbonFootprint` step):** From the home screen, the user can start the daily survey. There is a 24-hour cooldown timer displayed, but the button remains active.
-2.  **User Input:** The user answers questions about their daily transportation, diet, and home energy use.
-3.  **AI Analysis:** The user's answers, along with their selected **Region** (e.g., "Dubai, UAE", "Turkey"), are sent to the `carbon-footprint-analysis` AI flow. This flow is specifically prompted to be deterministic and to scale its calculations based on regional averages, ensuring that the same input in Dubai yields a higher footprint than in Turkey.
-4.  **Results & Point Calculation:** The AI returns a detailed analysis, including:
-    *   `estimatedFootprintKg`: The estimated daily CO₂ footprint.
-    *   `sustainabilityScore`: A score from 1 to 10.
-    *   `recommendations` and `extraTips` for improvement.
-    *   The system then calculates points:
-        *   **Penalty:** If `estimatedFootprintKg` is > 30kg, a sliding scale penalty is applied (max -10 points).
-        *   **Provisional Reward:** If no penalty, the user gets a small provisional reward (`sustainabilityScore * 0.5`).
-5.  **Receipt Verification (500% Bonus):**
-    *   The user is encouraged to scan a receipt from their day to get a **500% bonus**.
-    *   The receipt image is sent to the `receipt-ocr-flow`, which validates if it's a real receipt and extracts data.
-    *   If the receipt is valid, the bonus points are calculated based on the *original* sustainability score (not the provisional points) and added to the user's total, replacing the provisional amount.
-6.  **Second Chance (Penalty Reversal):**
-    *   If the user received a penalty, they are given a "second chance."
-    *   They can take a photo of themselves performing one of the AI's recommended sustainable actions.
-    *   This image is sent to the `verify-sustainability-action` flow.
-    *   If the action is verified, the initial penalty points are reversed, and an additional **+15 bonus points** are awarded.
-
-### C. Rewards & Settings
-
-*   **Rewards (`rewards` step):** A dedicated section where users can see a list of available rewards (e.g., "Free Coffee") and redeem them using their points. Partner names and reward titles are fully translated.
-*   **Settings:** A modal dialog accessible from the header. It allows users to:
-    *   Change the **Region:** This directly impacts the carbon footprint calculation.
-    *   Change the **Language:** This affects all UI text via a comprehensive i18n system.
-    *   Preferences are saved to the browser's `localStorage` to persist between sessions.
+* **Project:** EcoScan Rewards
+* **Firebase Project ID:** `<PROJECT_ID>`
+* **Stack:** Next.js 15 (App Router), React, TypeScript
+* **Firebase:** Auth, Firestore (Native), Functions v2 (Node 18), Storage, Hosting
+* **AI/OCR:** Google Cloud Vision API (OCR/labels) and Genkit flows (server)
+* **Regions:** primary `europe-west4` (Functions/Hosting); OCR region per Vision defaults
 
 ---
 
-## 3. Technical Architecture
+## 1) Leaderboard (Monthly, Region-Scoped)
 
-*   **Frontend:** Next.js 15 (App Router), React, TypeScript.
-*   **UI:** ShadCN UI components, Tailwind CSS. Custom fonts (`Poppins`, `PT Sans`) are used for body and headlines.
-*   **Backend & Database:**
-    *   **Firebase Authentication:** Used for anonymous user sign-in. Each user gets a unique UID.
-    *   **Firestore:** The primary database. Key collections include:
-        *   `/users/{userId}`: Stores the user's profile, including `totalPoints` and `lastCarbonSurveyDate`.
-*   **Generative AI:**
-    *   **Genkit:** The core framework for all AI functionality. AI logic is organized into server-side "flows" in `src/ai/flows/`.
-    *   **Google AI (Gemini):** The primary model used for all multimodal (image + text) analysis tasks.
+### 1.1 Goal
 
-### Internationalization (i18n)
+A monthly leaderboard that:
 
-The app is fully internationalized to support multiple languages.
-*   **Locale Files:** Language strings are stored in JSON files under `src/lib/locales/` (e.g., `en.json`, `tr.json`).
-*   **Key-Based System:** All text is referenced by a key (e.g., `scan_card_title`). We do **not** store JSX or objects in the translation files.
-*   **`useTranslation` Hook:** A custom React hook (`src/hooks/use-translation.tsx`) provides a `t()` function that retrieves the correct string for the current language.
-*   **Dynamic Placeholders:** The system uses an ICU-like syntax (`{placeholder}`) to inject dynamic values into translated strings. Example: `t('confirm_card_confidence', { confidence: 95 })`.
-*   **AI Translation:** The `carbon-footprint-analysis` flow is instructed to generate its entire response in the user's selected language.
+* Resets on the first day of each month
+* Is **region-aware** (e.g., “Dubai Top 100”, “Istanbul Top 100”)
+* Uses a **composite score** that blends points with sustainability behavior (not just raw points)
+* Is resilient to fraud (duplicate images, unrealistic carbon values)
+
+### 1.2 Data model (Firestore)
+
+```
+users/{uid}
+  - displayName: string
+  - region: "ae-dubai" | "tr-istanbul" | ...
+  - totalPoints: number
+  - carbon: { avgDailyKg: number, last30dSavingsRatio: number }
+  - ...
+
+leaderboards/monthly/{YYYY-MM}/entries/{uid}
+  - displayName: string
+  - region: string
+  - totalPoints: number
+  - ecoScore: number     // composite
+  - rank: number         // optional denormalized
+  - snapshotAt: timestamp
+```
+
+> We’ll build a composite **ecoScore** such as:
+> `ecoScore = (totalPoints / 1000 * 0.5) + (carbonSavingsRatio * 50)`
+> where `carbonSavingsRatio = clamp( (baselineKg - last30dAvgKg) / baselineKg , 0 , 1 )`.
+
+### 1.3 Cloud Function (monthly rollup)
+
+* **Scheduler:** `0 0 1 * *` (UTC)
+* Reads all active users, computes ecoScore, writes to `leaderboards/monthly/{YYYY-MM}/entries` in batches.
+* Optionally computes **top N** per region and stores in a cached doc for fast reads.
+
+**Pseudocode (v2 Functions):**
+
+```ts
+export const rollupMonthlyLeaderboard = onSchedule("0 0 1 * *", async () => {
+  const batch = db.batch();
+  const now = new Date();
+  const ym = `${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}`;
+  const snap = await db.collection("users").select("displayName","region","totalPoints","carbon").get();
+
+  for (const doc of snap.docs) {
+    const u = doc.data();
+    const ratio = Math.max(0, Math.min(1, Number(u?.carbon?.last30dSavingsRatio || 0)));
+    const ecoScore = (Number(u.totalPoints||0)/1000*0.5) + (ratio*50);
+    const ref = db.doc(`leaderboards/monthly/${ym}/entries/${doc.id}`);
+    batch.set(ref, {
+      displayName: u.displayName || "User",
+      region: u.region || "unknown",
+      totalPoints: Number(u.totalPoints || 0),
+      ecoScore: Number(ecoScore.toFixed(2)),
+      snapshotAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  }
+  await batch.commit();
+});
+```
+
+### 1.4 Security & Indexing
+
+* **Reads:** public or authenticated (as per product), but write only via Functions SA.
+* **Rules:** deny client writes to `leaderboards/**`.
+* **Indexes:** composite for querying top by `region` ordered by `ecoScore` desc.
+
+```rules
+match /leaderboards/{period}/{ym}/entries/{uid} {
+  allow read: if true;
+  allow write: if false; // only backend
+}
+```
+
+**Requested validation from Firebase**
+
+* Confirm recommended **batch size** and best practice for writing thousands of entries monthly.
+* Guidance for **denormalized rank** calculation (Cloud Functions side vs client sort).
+* Quota advice if we compute region top lists (e.g., aggregation strategies).
 
 ---
 
-This project represents a complete, feature-rich application with a sophisticated, AI-driven backend and a responsive, internationalized frontend. The logic is designed to be robust, handling complex user flows, fraud detection, and regional nuances. Please use this document as your guide for any future work on the EcoScan Rewards app.
+## 2) Monthly Bill Verification (Electricity/Water OCR + Points)
+
+### 2.1 Goal
+
+Users submit **one electricity and one water bill per month**. We OCR the bill to extract date and consumption and award points based on trend vs previous month. Anti-fraud includes hashing, EXIF vs OCR validation, and dedupe.
+
+### 2.2 Data model
+
+```
+users/{uid}/bills/{billId}
+  - type: "electricity" | "water"
+  - month: "YYYY-MM"
+  - consumption: number       // kWh or m³
+  - previousMonth: number     // last known
+  - deltaPercent: number
+  - bonusPoints: number
+  - status: "approved" | "pending" | "rejected" | "duplicate"
+  - provider: string
+  - ocrConfidence: number
+  - imageHash: string
+  - createdAt, processedAt
+```
+
+### 2.3 Upload & OCR flow
+
+1. Client captures bill photo (camera-only, gallery disabled UI) and uploads to **Storage**
+2. `onFinalize` triggers Cloud Function `processBillImage`
+3. Function:
+
+   * Downloads, computes **SHA-256** and **pHash**
+   * Runs **Vision OCR** to extract:
+
+     * `provider` (electricity/water keyword match)
+     * `statementDate` → derive `month`
+     * `consumption` (kWh or m³)
+   * Dedupe: same user + same month + same type + same hash → `duplicate` → **-50 pts** penalty (optional policy)
+   * Reads previous month bill to compute `deltaPercent`
+   * Computes bonus:
+
+     * decrease > 5% → **+75**
+     * within ±5% → **+50**
+     * increase → **+25** (honesty bonus)
+   * Writes doc and updates user’s points in a **transaction**
+
+**Pseudocode extract:**
+
+```ts
+const bonus = delta <= -0.05 ? 75 : (Math.abs(delta) <= 0.05 ? 50 : 25);
+await db.runTransaction(async tx => {
+  tx.set(billRef, { ...fields, bonusPoints: bonus, status: "approved" });
+  tx.update(userRef, { totalPoints: FieldValue.increment(bonus) });
+});
+```
+
+### 2.4 Anti-fraud & validation
+
+* **Duplicate**: same SHA-256 → reject/penalize
+* **Temporal check**: OCR date vs EXIF vs server time (drift > 7 days → `pending/reject`)
+* **Provider filter**: must match electricity/water providers dictionary
+* **One bill per type per month** enforced by query or unique key (`users/{uid}/bills/{type}-{YYYY-MM}`)
+
+### 2.5 Security Rules (excerpt)
+
+```rules
+match /users/{uid}/bills/{billId} {
+  allow read: if request.auth != null && request.auth.uid == uid;
+  allow create: if request.auth != null && request.auth.uid == uid
+                && request.resource.data.keys().hasOnly(["type","imagePath","createdAt"]);
+  allow update, delete: if false; // backend only
+}
+```
+
+**Requested validation from Firebase**
+
+* Confirm Vision OCR quotas and pricing estimates for **monthly spikes** (billing cycles).
+* Recommended pattern to **auto-delete raw images** in 24h via **lifecycle** or scheduled Function.
+* Best practice for **dictionary/regex** provider matching with multilingual bills (ar/tr/en).
+* Guidance on **atomic uniqueness** for “one bill per month per type” (document ID strategy vs transaction guard).
+
+---
+
+## 3) Drink Category (Diet + Drink in Carbon Footprint)
+
+### 3.1 Goal
+
+Improve daily carbon model by adding a **drink** dimension (production + packaging impact). Options (example):
+
+* `drink_coffee_milk` — Coffee or milk-based drinks (~2.0 kg)
+* `drink_bottled` — Bottled water/soda/juice (~1.5 kg)
+* `drink_alcohol` — Alcoholic drinks (~2.5 kg)
+* `drink_plant_based` — Plant-based / homemade (~0.5 kg)
+* `drink_water_tea` — Tap water / tea / herbal tea (~0.2 kg)
+
+### 3.2 Back-end composition
+
+```ts
+const DIET_KG = {
+  red_meat_heavy: 20,
+  white_fish: 8,
+  vegetarian_vegan: 5,
+  carb_based: 10
+};
+const DRINK_KG = {
+  drink_coffee_milk: 2.0,
+  drink_bottled: 1.5,
+  drink_alcohol: 2.5,
+  drink_plant_based: 0.5,
+  drink_water_tea: 0.2
+};
+
+export function calcDailyDietDrinkKg(dietKey: keyof typeof DIET_KG, drinkKey: keyof typeof DRINK_KG) {
+  return DIET_KG[dietKey] + DRINK_KG[drinkKey];
+}
+```
+
+* We integrate this into the existing **region-aware** calculator (min/avg/max clamp) to produce `estimatedFootprintKg`.
+* All outputs are **rounded to one decimal** for determinism.
+
+### 3.3 i18n
+
+Add keys in `locales/ar.json`, `ja.json`, `tr.json`, etc.
+Ensure AI analysis text also reflects the chosen drink category (language enforced via `"language"` param).
+
+**Requested validation from Firebase**
+
+* No special quotas needed, but please confirm **Genkit** guidance for ensuring the model includes the `drink` factor when composing analysis (system prompt structure, determinism).
+
+---
+
+## 4) End-to-End Security & Rules Summary
+
+* **Client cannot alter points directly.** All point grants/deductions only via Cloud Functions transactions.
+* **Images**: read/write by owner; processing fields updated only by backend SA.
+* **Leaderboards**: read-only to clients, write-only by backend.
+* **Bills**: one per type per month enforced. Duplicate hashes penalized.
+* **Translations**: string-only; no JSX/functions in Firestore.
+
+---
+
+## 5) Hosting & Caching (short)
+
+* `Vary: Accept-Language` for localized content
+* Cache static assets immutable; locale JSON TTL 1h
+* Optional: cache **leaderboard top lists** via a denormalized doc for fast reads
+
+---
+
+## 6) Actions we request from Firebase/GCP
+
+| # | Request                                                                                             | Reason                                   | Priority |
+| - | --------------------------------------------------------------------------------------------------- | ---------------------------------------- | -------- |
+| 1 | Validate Firestore schema & Rules for **leaderboards monthly writes** and region-scoped queries     | Prevent hot-spotting & ensure safe reads | High     |
+| 2 | Confirm Cloud Functions **scheduler & batch** best practices for monthly rollup                     | Reliability at scale                     | High     |
+| 3 | Approve **Vision OCR quota** for monthly bill spikes and share cost guidance                        | Predictable billing                      | High     |
+| 4 | Advise on **unique-per-month** pattern for bills (`type-YYYY-MM` doc IDs vs transaction guard)      | Data integrity                           | High     |
+| 5 | Review **anti-fraud** hashing and dedupe (SHA-256 + pHash) and provide any recommended improvements | Abuse prevention                         | Medium   |
+| 6 | Confirm Genkit guidance for **deterministic analysis** and for including `drink` factor explicitly  | Consistency                              | Medium   |
+| 7 | Share best practice for **caching leaderboard snapshots** (top N per region)                        | Performance                              | Medium   |
+
+---
+
+## 7) Appendices
+
+### 7.1 Example Firestore composite indexes
+
+* `leaderboards/monthly/{YYYY-MM}/entries` order by `region` asc, `ecoScore` desc
+* `users/{uid}/bills` where `type` equals, `month` equals (for uniqueness checks)
+
+### 7.2 Sample client strings (TR/AR/EN excerpts)
+
+* TR: “**Elektrik Faturanı Onayla** — Bu ay: {kwh} kWh • Geçen ay: {prev} kWh”
+* AR: “**تحقق من فاتورة الكهرباء** — هذا الشهر: {kwh} ك.و.س • الشهر الماضي: {prev} ك.و.س”
+* EN: “**Verify Electricity Bill** — This month: {kwh} kWh • Last month: {prev} kWh”
+
+---
+
+We are ready to proceed and can share a staging environment for joint QA.
+Thank you for reviewing our implementation plan and for your guidance on quotas, rules, and best practices.
+
+Best regards,
+**EcoScan Technical & Product Team**
+`<NAME>` — `<email@domain.com>` — `+90-5xx-xxx-xxxx`
+Firebase Project ID: `<PROJECT_ID>`

@@ -54,12 +54,20 @@
   "survey_q2": "今日の食事はどうでしたか？",
   "survey_q2_options": {
     "red_meat": "赤身肉が多い",
-    "poultry_fish": "鶏肉/魚、赤身肉なし",
-    "vegetarian": "ベジタリアン",
-    "vegan": "ビーガン"
+    "white_meat_fish": "白身肉/魚",
+    "vegetarian_vegan": "ベジタリアン/ビーガン",
+    "carb_based": "炭水化物ベース/高炭水化物"
   },
   "survey_q3": "家庭でのエネルギー使用量はどうでしたか？",
   "survey_q3_placeholder": "例：エアコンを使った、電気をつけっぱなしにした...",
+  "survey_q4": "今日は主に何を飲みましたか？",
+  "survey_q4_options": {
+    "drink_coffee_milk": "ミルク入りコーヒーまたは乳飲料",
+    "drink_bottled": "ボトルウォーター/ソーダ/ジュース",
+    "drink_alcohol": "アルコール飲料",
+    "drink_plant_based": "植物性ミルク/自家製ドリンク",
+    "drink_water_tea": "水道水/お茶"
+  },
   "survey_calculate_button": "フットプリントを計算",
   "survey_results_title": "毎日のフットプリント結果",
   "survey_results_estimated": "推定フットプリント：",

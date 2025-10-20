@@ -60,6 +60,14 @@
   },
   "survey_q3": "How was your energy use at home?",
   "survey_q3_placeholder": "e.g., Used the AC, kept lights on...",
+  "survey_q4": "What did you primarily drink today?",
+  "survey_q4_options": {
+    "drink_coffee_milk": "Coffee with milk or dairy drinks",
+    "drink_bottled": "Bottled water / Soda / Juice",
+    "drink_alcohol": "Alcoholic beverages",
+    "drink_plant_based": "Plant-based milk / Homemade drinks",
+    "drink_water_tea": "Tap water / Tea"
+  },
   "survey_calculate_button": "Calculate My Footprint",
   "survey_results_title": "Your Daily Footprint Results",
   "survey_results_estimated": "Estimated Footprint:",

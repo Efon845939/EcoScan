@@ -13,6 +13,15 @@ const DIET_KG = {
   carb_based: 10,
 };
 
+const DRINK_KG = {
+  drink_coffee_milk: 2.0,
+  drink_bottled: 1.5,
+  drink_alcohol: 2.5,
+  drink_plant_based: 0.5,
+  drink_water_tea: 0.2
+};
+
+
 const ENERGY_KG = {
   low: 6,
   medium: 12,
@@ -33,16 +42,23 @@ const REGIONS = {
 export type RegionKey = keyof typeof REGIONS;
 export type Transport = keyof typeof TRANSPORT_KG;
 export type Diet = keyof typeof DIET_KG;
+export type Drink = keyof typeof DRINK_KG;
 export type Energy = keyof typeof ENERGY_KG;
+
+
+export function calcDailyDietDrinkKg(dietKey: Diet, drinkKey: Drink) {
+  return DIET_KG[dietKey] + DRINK_KG[drinkKey];
+}
 
 export function computeCarbonKgDeterministic(
   region: RegionKey,
   transport: Transport,
   diet: Diet,
+  drink: Drink,
   energy: Energy
 ): number {
   const base =
-    TRANSPORT_KG[transport] + DIET_KG[diet] + ENERGY_KG[energy];
+    TRANSPORT_KG[transport] + calcDailyDietDrinkKg(diet, drink) + ENERGY_KG[energy];
 
   // Scale to region average relative to a neutral anchor (here: Germany avg=20)
   const neutralAvg = 20; // anchor

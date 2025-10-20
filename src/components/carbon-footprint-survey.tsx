@@ -52,6 +52,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   const [formData, setFormData] = useState<Omit<CarbonFootprintInput, 'language' | 'location'>>({
     transport: [],
     diet: [],
+    drink: [],
     energy: '',
   });
 
@@ -62,7 +63,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     [firestore, user]
   );
   
-  const handleCheckboxChange = (field: 'transport' | 'diet', value: string) => {
+  const handleCheckboxChange = (field: 'transport' | 'diet' | 'drink', value: string) => {
     setFormData((prev) => {
       const newValues = prev[field].includes(value)
         ? prev[field].filter((item) => item !== value)
@@ -140,10 +141,12 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   const isFormInvalid =
     formData.transport.length === 0 ||
     formData.diet.length === 0 ||
+    formData.drink.length === 0 ||
     !formData.energy;
 
   const transportOptions = t('survey_q1_options', { returnObjects: true }) as Record<string, string>;
   const dietOptions = t('survey_q2_options', { returnObjects: true }) as Record<string, string>;
+  const drinkOptions = t('survey_q4_options', { returnObjects: true }) as Record<string, string>;
 
   // Show form if there are no results yet
   if (!results) {
@@ -192,6 +195,23 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
                     onCheckedChange={() => handleCheckboxChange('diet', key)}
                   />
                   <Label htmlFor={`diet-${key}`} className="font-normal">
+                    {label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-3">
+            <Label>{t('survey_q4')}</Label>
+            <div className="space-y-2">
+              {Object.entries(drinkOptions).map(([key, label]) => (
+                <div key={key} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`drink-${key}`}
+                    checked={formData.drink.includes(key)}
+                    onCheckedChange={() => handleCheckboxChange('drink', key)}
+                  />
+                  <Label htmlFor={`drink-${key}`} className="font-normal">
                     {label}
                   </Label>
                 </div>
