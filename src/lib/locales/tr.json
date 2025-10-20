@@ -1,3 +1,4 @@
+
 {
   "header_title": "EcoScan Ödülleri",
   "header_points": "Puan",
@@ -79,15 +80,15 @@
   "guide_rules_rule4": "Hileli resimler göndererek puan sistemini manipüle etmeye çalışmak **-50 puan cezası** ile sonuçlanacak ve hesap askıya alınmasına neden olabilir.",
   "guide_howto_title": "Nasıl Yapılır Kılavuzları",
   "guide_howto_recycle_title": "Nasıl Geri Dönüşüm Yapılır ve Kazanılır:",
-  "guide_howto_recycle_step1": "Ana menüden <1 />'e dokunun.",
+  "guide_howto_recycle_step1": "Ana menüden <1 /> butonuna dokunun.",
   "guide_howto_recycle_step2": "Öğenin ambalajını taramak için kameranızı kullanın. Yapay zekamız malzemeyi tanımlayacaktır.",
-  "guide_howto_recycle_step3": "<1 />'e dokunun. Bu, kameranızı tekrar açacaktır.",
+  "guide_howto_recycle_step3": "<1 /> butonuna dokunun. Bu, kameranızı tekrar açacaktır.",
   "guide_howto_recycle_step4": "Kendinizin (veya elinizin) öğeyi bir geri dönüşüm kutusuna yerleştirdiği net bir fotoğrafını çekin.",
   "guide_howto_recycle_step5": "Yapay zekamız eyleminizi doğrulayacaktır. Başarılı doğrulama üzerine puanlar anında verilir!",
   "guide_howto_footprint_title": "Karbon Ayak İzinizi Nasıl Doğrularsınız:",
-  "guide_howto_footprint_step1": "Ana menüden <1 />'e dokunun ve günlük anketi tamamlayın.",
+  "guide_howto_footprint_step1": "Ana menüden <1 /> butonuna dokunun ve günlük anketi tamamlayın.",
   "guide_howto_footprint_step2": "İlk analizinizi ve geçici puanlarınızı alın.",
-  "guide_howto_footprint_step3": "Kamerayı açmak için <1 />'e dokunun.",
+  "guide_howto_footprint_step3": "Kamerayı açmak için <1 /> butonuna dokunun.",
   "guide_howto_footprint_step4": "Günlük aktivitelerinizi yansıtan bugünden bir fiş tarayın (örneğin, market alışverişi, ulaşım biletleri).",
   "guide_howto_footprint_step5": "Fiş doğrulanırsa, geçici puanlarınız tam puanlar artı %500 bonus ile değiştirilecektir!",
   "settings_title": "Ayarlar",
@@ -126,3 +127,5 @@
   "toast_reward_redeemed_title": "Ödül Kullanıldı!",
   "toast_reward_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız."
 }
+
+    
