@@ -1,297 +1,202 @@
-# EcoScan Rewards — Leaderboard, Monthly Bill (OCR) bonus flow, and Drink-based carbon factor — implementation plan & Firebase validation requests
+# Subject: EcoScan Rewards — Region-aware points mapping bug, provisional vs. 500% receipt bonus math, and leaderboard consistency
 
 Hello Firebase / Google Cloud team,
 
-We’re expanding **EcoScan Rewards** with three production features and request your validation, quota guidance, and best-practice feedback. The features are:
+We’ve fixed the model endpoint/config issues, but we’re now facing **points-calculation defects** that are causing severe user-facing inconsistencies:
 
-1. **Leaderboard (monthly, region-scoped, anti-fraud aware)**
-2. **Monthly Bill Verification** (electricity/water OCR, points, trend bonus)
-3. **Drink Category** in daily **carbon footprint** calculator (diet + drink composition)
+1. **Region-based points mapping is not applied (or applied incorrectly).**
+   In Kuwait, a 75 kg CO₂/day result (clearly in the red band) yields **only +2 points** without receipt. That contradicts our published region benchmarks and expected monotonic mapping.
 
-Below is our consolidated technical brief: data model, Cloud Functions, security, scheduling, and the concrete actions we request from your side.
+2. **Provisional vs. Receipt Bonus (500%) is compounded incorrectly.**
+   The code appears to apply the **500% bonus on the provisional points** or on a partially scaled value, instead of replacing the provisional grant with `basePoints * 5`. Users see tiny provisional points and nonsensical final totals.
 
----
+3. **Leaderboard counts provisional/invalid points.**
+   Some runs show provisional points leaking into monthly totals used by the leaderboard. Only final, confirmed points should be included.
 
-## 0) Environment
-
-* **Project:** EcoScan Rewards
-* **Firebase Project ID:** `<PROJECT_ID>`
-* **Stack:** Next.js 15 (App Router), React, TypeScript
-* **Firebase:** Auth, Firestore (Native), Functions v2 (Node 18), Storage, Hosting
-* **AI/OCR:** Google Cloud Vision API (OCR/labels) and Genkit flows (server)
-* **Regions:** primary `europe-west4` (Functions/Hosting); OCR region per Vision defaults
+Below are the **expected behaviors**, **reference implementations**, and **requests** for your validation and guidance.
 
 ---
 
-## 1) Leaderboard (Monthly, Region-Scoped)
+## 1) Region-aware, deterministic points mapping
 
-### 1.1 Goal
+### 1.1 Region benchmarks (recap)
 
-A monthly leaderboard that:
+| Region      | Min | Avg | Max | Unit       |
+| ----------- | --- | --- | --- | ---------- |
+| Turkey      | 5   | 10  | 25  | kg CO₂/day |
+| Europe      | 8   | 20  | 40  | kg CO₂/day |
+| USA         | 15  | 40  | 60  | kg CO₂/day |
+| UAE (Dubai) | 20  | 50  | 70  | kg CO₂/day |
+| Kuwait      | 25  | 65  | 85  | kg CO₂/day |
 
-* Resets on the first day of each month
-* Is **region-aware** (e.g., “Dubai Top 100”, “Istanbul Top 100”)
-* Uses a **composite score** that blends points with sustainability behavior (not just raw points)
-* Is resilient to fraud (duplicate images, unrealistic carbon values)
+### 1.2 Expected map (piecewise linear, monotonic)
 
-### 1.2 Data model (Firestore)
+* At `min` → **30 points**
+* At `avg` → **15 points**
+* At `max` → **0 points**
+* Above `max` → apply penalty (we clamp to `max`, so penalty should not trigger here)
+* Round once at the end
 
-```
-users/{uid}
-  - displayName: string
-  - region: "ae-dubai" | "tr-istanbul" | ...
-  - totalPoints: number
-  - carbon: { avgDailyKg: number, last30dSavingsRatio: number }
-  - ...
-
-leaderboards/monthly/{YYYY-MM}/entries/{uid}
-  - displayName: string
-  - region: string
-  - totalPoints: number
-  - ecoScore: number     // composite
-  - rank: number         // optional denormalized
-  - snapshotAt: timestamp
-```
-
-> We’ll build a composite **ecoScore** such as:
-> `ecoScore = (totalPoints / 1000 * 0.5) + (carbonSavingsRatio * 50)`
-> where `carbonSavingsRatio = clamp( (baselineKg - last30dAvgKg) / baselineKg , 0 , 1 )`.
-
-### 1.3 Cloud Function (monthly rollup)
-
-* **Scheduler:** `0 0 1 * *` (UTC)
-* Reads all active users, computes ecoScore, writes to `leaderboards/monthly/{YYYY-MM}/entries` in batches.
-* Optionally computes **top N** per region and stores in a cached doc for fast reads.
-
-**Pseudocode (v2 Functions):**
+**Reference TypeScript:**
 
 ```ts
-export const rollupMonthlyLeaderboard = onSchedule("0 0 1 * *", async () => {
-  const batch = db.batch();
-  const now = new Date();
-  const ym = `${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}`;
-  const snap = await db.collection("users").select("displayName","region","totalPoints","carbon").get();
+type RegionKey = "turkey"|"europe"|"usa"|"uae"|"kuwait";
 
-  for (const doc of snap.docs) {
-    const u = doc.data();
-    const ratio = Math.max(0, Math.min(1, Number(u?.carbon?.last30dSavingsRatio || 0)));
-    const ecoScore = (Number(u.totalPoints||0)/1000*0.5) + (ratio*50);
-    const ref = db.doc(`leaderboards/monthly/${ym}/entries/${doc.id}`);
-    batch.set(ref, {
-      displayName: u.displayName || "User",
-      region: u.region || "unknown",
-      totalPoints: Number(u.totalPoints || 0),
-      ecoScore: Number(ecoScore.toFixed(2)),
-      snapshotAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+const REGION = {
+  turkey: { min: 5,  avg: 10, max: 25 },
+  europe: { min: 8,  avg: 20, max: 40 },
+  usa:    { min: 15, avg: 40, max: 60 },
+  uae:    { min: 20, avg: 50, max: 70 },
+  kuwait: { min: 25, avg: 65, max: 85 }
+} as const;
+
+export function pointsFromKgRegionAware(kg: number, region: RegionKey): number {
+  const { min, avg, max } = REGION[region];
+  const clamped = Math.max(min, Math.min(kg, max));
+
+  if (clamped <= min) return 30;            // best
+  if (clamped >= max) return 0;             // worst
+
+  if (clamped <= avg) {                      // min..avg -> 30..15
+    const t = (clamped - min) / (avg - min);
+    return Math.round(30 - 15 * t);
+  } else {                                   // avg..max -> 15..0
+    const t = (clamped - avg) / (max - avg);
+    return Math.round(15 - 15 * t);
   }
-  await batch.commit();
-});
-```
-
-### 1.4 Security & Indexing
-
-* **Reads:** public or authenticated (as per product), but write only via Functions SA.
-* **Rules:** deny client writes to `leaderboards/**`.
-* **Indexes:** composite for querying top by `region` ordered by `ecoScore` desc.
-
-```rules
-match /leaderboards/{period}/{ym}/entries/{uid} {
-  allow read: if true;
-  allow write: if false; // only backend
 }
 ```
 
-**Requested validation from Firebase**
+**Validation example (Kuwait):**
 
-* Confirm recommended **batch size** and best practice for writing thousands of entries monthly.
-* Guidance for **denormalized rank** calculation (Cloud Functions side vs client sort).
-* Quota advice if we compute region top lists (e.g., aggregation strategies).
+* 25 kg → 30 pts
+* 65 kg → 15 pts
+* **75 kg → ~8 pts**
+  Şu an kullanıcılar 75 kg’da **2 puan** görüyor; bu, map’in uygulanmadığını (ya da global/yanlış bandı kullandığını) gösterir.
 
 ---
 
-## 2) Monthly Bill Verification (Electricity/Water OCR + Points)
+## 2) Provisional vs. Receipt 500% Bonus — correct math
 
-### 2.1 Goal
+### 2.1 Expected logic
 
-Users submit **one electricity and one water bill per month**. We OCR the bill to extract date and consumption and award points based on trend vs previous month. Anti-fraud includes hashing, EXIF vs OCR validation, and dedupe.
+* Compute **basePoints** from region-aware map.
+* **Provisional** without receipt: `provisional = floor(basePoints * 0.10)`
+* **Receipt validated (500% bonus):** Replace provisional with `final = basePoints * 5`.
 
-### 2.2 Data model
+  * Not additive over provisional.
+  * Not applied on already damped values.
+  * Provisional must be **reverted** in a transaction, then final written.
 
-```
-users/{uid}/bills/{billId}
-  - type: "electricity" | "water"
-  - month: "YYYY-MM"
-  - consumption: number       // kWh or m³
-  - previousMonth: number     // last known
-  - deltaPercent: number
-  - bonusPoints: number
-  - status: "approved" | "pending" | "rejected" | "duplicate"
-  - provider: string
-  - ocrConfidence: number
-  - imageHash: string
-  - createdAt, processedAt
-```
-
-### 2.3 Upload & OCR flow
-
-1. Client captures bill photo (camera-only, gallery disabled UI) and uploads to **Storage**
-2. `onFinalize` triggers Cloud Function `processBillImage`
-3. Function:
-
-   * Downloads, computes **SHA-256** and **pHash**
-   * Runs **Vision OCR** to extract:
-
-     * `provider` (electricity/water keyword match)
-     * `statementDate` → derive `month`
-     * `consumption` (kWh or m³)
-   * Dedupe: same user + same month + same type + same hash → `duplicate` → **-50 pts** penalty (optional policy)
-   * Reads previous month bill to compute `deltaPercent`
-   * Computes bonus:
-
-     * decrease > 5% → **+75**
-     * within ±5% → **+50**
-     * increase → **+25** (honesty bonus)
-   * Writes doc and updates user’s points in a **transaction**
-
-**Pseudocode extract:**
+**Reference TypeScript:**
 
 ```ts
-const bonus = delta <= -0.05 ? 75 : (Math.abs(delta) <= 0.05 ? 50 : 25);
+export function computeProvisional(basePoints: number) {
+  return Math.floor(basePoints * 0.10);
+}
+
+export function finalizeWithReceipt(basePoints: number) {
+  return basePoints * 5; // 500% of base, replaces provisional
+}
+```
+
+**Server transaction sketch (Firestore):**
+
+```ts
 await db.runTransaction(async tx => {
-  tx.set(billRef, { ...fields, bonusPoints: bonus, status: "approved" });
-  tx.update(userRef, { totalPoints: FieldValue.increment(bonus) });
+  const userDoc = await tx.get(userRef);
+  const current = Number(userDoc.data()?.totalPoints || 0);
+
+  // revert provisional if exists
+  if (provisionalGranted) {
+    tx.update(userRef, { totalPoints: current - provisionalGranted });
+  }
+
+  // grant final
+  tx.update(userRef, { totalPoints: FieldValue.increment(finalizeWithReceipt(basePoints)) });
 });
 ```
 
-### 2.4 Anti-fraud & validation
-
-* **Duplicate**: same SHA-256 → reject/penalize
-* **Temporal check**: OCR date vs EXIF vs server time (drift > 7 days → `pending/reject`)
-* **Provider filter**: must match electricity/water providers dictionary
-* **One bill per type per month** enforced by query or unique key (`users/{uid}/bills/{type}-{YYYY-MM}`)
-
-### 2.5 Security Rules (excerpt)
-
-```rules
-match /users/{uid}/bills/{billId} {
-  allow read: if request.auth != null && request.auth.uid == uid;
-  allow create: if request.auth != null && request.auth.uid == uid
-                && request.resource.data.keys().hasOnly(["type","imagePath","createdAt"]);
-  allow update, delete: if false; // backend only
-}
-```
-
-**Requested validation from Firebase**
-
-* Confirm Vision OCR quotas and pricing estimates for **monthly spikes** (billing cycles).
-* Recommended pattern to **auto-delete raw images** in 24h via **lifecycle** or scheduled Function.
-* Best practice for **dictionary/regex** provider matching with multilingual bills (ar/tr/en).
-* Guidance on **atomic uniqueness** for “one bill per month per type” (document ID strategy vs transaction guard).
+**Bug we observe now:** 500% bonus seems to be applied on the **provisional** or on a pre-clamped value, leading to absurdly low totals like **2 → 10**, when it should be **~8 → 40** in the Kuwait 75 kg example.
 
 ---
 
-## 3) Drink Category (Diet + Drink in Carbon Footprint)
+## 3) Leaderboard consistency
 
-### 3.1 Goal
+### 3.1 Rules
 
-Improve daily carbon model by adding a **drink** dimension (production + packaging impact). Options (example):
+* Leaderboard must count only **finalized** points:
 
-* `drink_coffee_milk` — Coffee or milk-based drinks (~2.0 kg)
-* `drink_bottled` — Bottled water/soda/juice (~1.5 kg)
-* `drink_alcohol` — Alcoholic drinks (~2.5 kg)
-* `drink_plant_based` — Plant-based / homemade (~0.5 kg)
-* `drink_water_tea` — Tap water / tea / herbal tea (~0.2 kg)
+  * Approved recycling events
+  * Receipt-verified carbon results (500% case)
+  * Approved monthly bill bonuses
+* Exclude:
 
-### 3.2 Back-end composition
+  * Provisional
+  * Pending
+  * Rejected
+  * Penalized duplicates (unless net total after penalty)
+
+**Recommended pipeline:**
+
+* Maintain `users/{uid}.totalPoints` as the **single source of truth**, updated only by backend Functions.
+* Leaderboard rollup reads `totalPoints` on schedule (monthly) and writes snapshots to `leaderboards/monthly/{YYYY-MM}/entries`.
+* Optionally keep a running monthly counter `users/{uid}.monthPoints` that only includes finalized events.
+
+---
+
+## 4) Unit tests we propose (must pass)
+
+1. **Region map determinism**
 
 ```ts
-const DIET_KG = {
-  red_meat_heavy: 20,
-  white_fish: 8,
-  vegetarian_vegan: 5,
-  carb_based: 10
-};
-const DRINK_KG = {
-  drink_coffee_milk: 2.0,
-  drink_bottled: 1.5,
-  drink_alcohol: 2.5,
-  drink_plant_based: 0.5,
-  drink_water_tea: 0.2
-};
-
-export function calcDailyDietDrinkKg(dietKey: keyof typeof DIET_KG, drinkKey: keyof typeof DRINK_KG) {
-  return DIET_KG[dietKey] + DRINK_KG[drinkKey];
-}
+expect(pointsFromKgRegionAware(75, "kuwait")).toBe(8); // or ±1 after rounding policy
 ```
 
-* We integrate this into the existing **region-aware** calculator (min/avg/max clamp) to produce `estimatedFootprintKg`.
-* All outputs are **rounded to one decimal** for determinism.
+2. **Provisional/receipt math**
 
-### 3.3 i18n
+```ts
+const base = 8;
+expect(computeProvisional(base)).toBe(0);      // floor(0.8) = 0, acceptable
+expect(finalizeWithReceipt(base)).toBe(40);    // 8 * 5
+```
 
-Add keys in `locales/ar.json`, `ja.json`, `tr.json`, etc.
-Ensure AI analysis text also reflects the chosen drink category (language enforced via `"language"` param).
+3. **Transactional replace**
 
-**Requested validation from Firebase**
+* After granting provisional 0–3 pts, receipt validation **replaces** it with base×5, not adds.
 
-* No special quotas needed, but please confirm **Genkit** guidance for ensuring the model includes the `drink` factor when composing analysis (system prompt structure, determinism).
+4. **Leaderboard exclusion**
 
----
-
-## 4) End-to-End Security & Rules Summary
-
-* **Client cannot alter points directly.** All point grants/deductions only via Cloud Functions transactions.
-* **Images**: read/write by owner; processing fields updated only by backend SA.
-* **Leaderboards**: read-only to clients, write-only by backend.
-* **Bills**: one per type per month enforced. Duplicate hashes penalized.
-* **Translations**: string-only; no JSX/functions in Firestore.
+* Provisional entries do not change `totalPoints` or `monthPoints` used for leaderboard.
 
 ---
 
-## 5) Hosting & Caching (short)
+## 5) Likely root causes
 
-* `Vary: Accept-Language` for localized content
-* Cache static assets immutable; locale JSON TTL 1h
-* Optional: cache **leaderboard top lists** via a denormalized doc for fast reads
-
----
-
-## 6) Actions we request from Firebase/GCP
-
-| # | Request                                                                                             | Reason                                   | Priority |
-| - | --------------------------------------------------------------------------------------------------- | ---------------------------------------- | -------- |
-| 1 | Validate Firestore schema & Rules for **leaderboards monthly writes** and region-scoped queries     | Prevent hot-spotting & ensure safe reads | High     |
-| 2 | Confirm Cloud Functions **scheduler & batch** best practices for monthly rollup                     | Reliability at scale                     | High     |
-| 3 | Approve **Vision OCR quota** for monthly bill spikes and share cost guidance                        | Predictable billing                      | High     |
-| 4 | Advise on **unique-per-month** pattern for bills (`type-YYYY-MM` doc IDs vs transaction guard)      | Data integrity                           | High     |
-| 5 | Review **anti-fraud** hashing and dedupe (SHA-256 + pHash) and provide any recommended improvements | Abuse prevention                         | Medium   |
-| 6 | Confirm Genkit guidance for **deterministic analysis** and for including `drink` factor explicitly  | Consistency                              | Medium   |
-| 7 | Share best practice for **caching leaderboard snapshots** (top N per region)                        | Performance                              | Medium   |
+* Points map uses a **global scale** instead of the region table for some locales (e.g., Kuwait).
+* Provisional and 500% flows are **composed in the wrong order**, multiplying the wrong quantity.
+* Missing transaction **revert-then-grant** step allows provisional to linger.
+* Leaderboard query includes **pending/provisional** documents or derives from a collection sum rather than `users.totalPoints`.
 
 ---
 
-## 7) Appendices
+## 6) Requests to Firebase/Genkit team
 
-### 7.1 Example Firestore composite indexes
+| # | Request                                                                                                          | Purpose               |
+| - | ---------------------------------------------------------------------------------------------------------------- | --------------------- |
+| 1 | Validate region-aware mapping code path is always used (no fallback to global map).                              | Fix Kuwait low points |
+| 2 | Review provisional vs receipt math and confirm the **REPLACE** pattern (not additive).                           | Correct 500% logic    |
+| 3 | Recommend Firestore transaction pattern to safely revert provisional then grant final.                           | Data integrity        |
+| 4 | Confirm best practice to keep **totalPoints** authoritative and exclude provisional from leaderboard aggregates. | Leaderboard accuracy  |
+| 5 | Provide guidance for unit/integration tests for deterministic points mapping across regions.                     | Prevent regressions   |
 
-* `leaderboards/monthly/{YYYY-MM}/entries` order by `region` asc, `ecoScore` desc
-* `users/{uid}/bills` where `type` equals, `month` equals (for uniqueness checks)
+Environment:
 
-### 7.2 Sample client strings (TR/AR/EN excerpts)
+* Project: **EcoScan Rewards**
+* Firebase Project ID: `<PROJECT_ID>`
+* Functions v2 (Node 18), Firestore (Native), Next.js 15
 
-* TR: “**Elektrik Faturanı Onayla** — Bu ay: {kwh} kWh • Geçen ay: {prev} kWh”
-* AR: “**تحقق من فاتورة الكهرباء** — هذا الشهر: {kwh} ك.و.س • الشهر الماضي: {prev} ك.و.س”
-* EN: “**Verify Electricity Bill** — This month: {kwh} kWh • Last month: {prev} kWh”
-
----
-
-We are ready to proceed and can share a staging environment for joint QA.
-Thank you for reviewing our implementation plan and for your guidance on quotas, rules, and best practices.
+We’re ready to provide test payloads and logs. A brief engineering review on the mapping and transaction order will likely resolve the user-facing inconsistencies in Kuwait and other high-emission regions.
 
 Best regards,
-**EcoScan Technical & Product Team**
-`<NAME>` — `<email@domain.com>` — `+90-5xx-xxx-xxxx`
-Firebase Project ID: `<PROJECT_ID>`
-
-    
+**EcoScan Technical & Product Team** <NAME> — [email@domain.com](mailto:email@domain.com) — +90-5xx-xxx-xxxx

@@ -115,7 +115,8 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           setBasePoints(calculatedBasePoints);
           
           let finalPoints = 0;
-          const penalty = analysisResults.estimatedFootprintKg > 30 ? -Math.round((analysisResults.estimatedFootprintKg - 30) / 2) : 0;
+          const penaltyThreshold = 30; // Global penalty threshold
+          const penalty = analysisResults.estimatedFootprintKg > penaltyThreshold ? -Math.round((analysisResults.estimatedFootprintKg - penaltyThreshold) / 2) : 0;
 
           if (penalty < 0) {
             finalPoints = Math.max(-10, penalty);
@@ -125,7 +126,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
 
           if (userProfileRef && userProfile) {
             const currentPoints = userProfile.totalPoints || 0;
-            const newPoints = currentPoints + finalPoints;
+            const newPoints = Math.max(0, currentPoints + finalPoints);
             updateDocumentNonBlocking(userProfileRef, {
               totalPoints: newPoints,
               lastCarbonSurveyDate: serverTimestamp(),
