@@ -1,6 +1,4 @@
 
-
-
 // Neutral baseline factors (pre-region scale)
 const TRANSPORT_KG = {
   car_gasoline: 28, // daily heavy-use proxy
@@ -74,7 +72,7 @@ export function computeCarbonKgDeterministic(
   const { min, avg, max } = regionData;
   const scale = avg / neutralAvg;
   let kg = base * scale;
-  
+
   // 3. Clamp and round in one step
   kg = Math.max(min, Math.min(kg, max));
   return Number(kg.toFixed(1));
@@ -107,5 +105,3 @@ export function computeProvisional(basePoints: number) {
 export function finalizeWithReceipt(basePoints: number) {
   return basePoints * 5; // 500% of base, replaces provisional
 }
-
-    

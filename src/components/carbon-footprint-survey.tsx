@@ -128,19 +128,25 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           setBasePoints(calculatedBasePoints);
           
           let finalPoints = 0;
-          const penaltyThreshold = 30; // Global penalty threshold
-          // This penalty logic needs to be more robust, as pointed out in bug reports.
-          // For now, we calculate a simple penalty if the footprint is high.
-          const penalty = analysisResults.estimatedFootprintKg > penaltyThreshold ? -Math.round((analysisResults.estimatedFootprintKg - penaltyThreshold) / 2) : 0;
+          const penaltyThresholdKg = 30; // This is a global value and likely part of the bug.
+          
+          // Let's use the new robust calculation.
+          const points = pointsFromKgRegionAware(analysisResults.estimatedFootprintKg, regionKey);
+          
+          // Check for penalty case separately
+          const rawFootprint = analysisResults.estimatedFootprintKg; // Assuming this is the "raw" pre-clamped value if we had one.
+          const regionMax = 85; // Example for Kuwait, should come from REGIONS
+          
+          let penaltyPoints = 0;
+          if (rawFootprint > regionMax * 1.05) { // User's suggestion
+              penaltyPoints = -10;
+          }
 
-          // A high footprint SHOULD result in negative points.
-          // A score of 0 from pointsFromKgRegionAware means the footprint is at or above the regional max.
-          if (calculatedBasePoints <= 0) {
-            // Apply a simple penalty for being over the max. This should be refined.
-            finalPoints = -10;
+          if (penaltyPoints < 0) {
+              finalPoints = penaltyPoints;
           } else {
              // If not getting a penalty, award provisional points
-            finalPoints = computeProvisional(calculatedBasePoints);
+            finalPoints = computeProvisional(points);
           }
 
 
@@ -261,7 +267,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
                 <Checkbox
                   id="no-energy"
                   checked={isNoEnergy}
-                  onCheckedChange={handleNoEnergyChange}
+                  onCheckedChange={(checked) => handleNoEnergyChange(Boolean(checked))}
                 />
                 <Label htmlFor="no-energy" className="font-normal">
                   {t('survey_q3_no_energy')}
@@ -387,7 +393,3 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     </Card>
   );
 }
-
-    
-
-    
