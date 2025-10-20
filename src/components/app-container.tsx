@@ -551,7 +551,7 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
                 setSurveyResults(null);
                 setReceiptResult(null);
                 setStep('carbonFootprint');
-              }} className="h-20 text-base md:h-24" disabled={!!cooldownTimeLeft}>
+              }} className="h-20 text-base md:h-24">
                 <Footprints className="mr-2" />
                 {cooldownTimeLeft ? (
                   <span className="text-center text-sm leading-tight">{t('scan_card_footprint_cooldown')}<br /><span className="font-mono text-base">{formatTimeLeft(cooldownTimeLeft)}</span></span>
