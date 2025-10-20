@@ -8,6 +8,8 @@ import { en } from '@/lib/locales';
 interface TranslationContextType {
   translations: Record<string, any>;
   t: (key: string, options?: Record<string, string | number | boolean | object>) => any;
+  language: string;
+  setLanguage: (language: string) => void;
 }
 
 // Create the context with a default value
@@ -17,9 +19,11 @@ const TranslationContext = createContext<TranslationContextType | undefined>(und
 export function TranslationProvider({
   children,
   language,
+  setLanguage,
 }: {
   children: ReactNode;
   language: string;
+  setLanguage: (language: string) => void;
 }) {
   const [translations, setTranslations] = useState(en);
 
@@ -73,7 +77,7 @@ export function TranslationProvider({
   };
 
   return (
-    <TranslationContext.Provider value={{ translations, t }}>
+    <TranslationContext.Provider value={{ translations, t, language, setLanguage }}>
       {children}
     </TranslationContext.Provider>
   );
