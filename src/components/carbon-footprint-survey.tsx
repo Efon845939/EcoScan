@@ -70,8 +70,8 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     });
   };
 
-  const handleEnergyChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, energy: value }));
+  const handleEnergyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, energy: e.target.value }));
   };
 
   const handleVerifyWithReceipt = () => {
@@ -79,7 +79,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
 
     // Calculate base points from sustainability score (not provisional points)
     const basePoints = Math.round(results.sustainabilityScore * 2.5);
-    const bonusPoints = basePoints * 5; // 500% bonus
+    const bonusPoints = basePoints * 1; // 100% bonus
 
      if (userProfileRef && userProfile) {
         // Add the bonus points to the user's total.
@@ -211,7 +211,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
               id="energy"
               placeholder={t('survey_q3_placeholder')}
               value={formData.energy}
-              onChange={(e) => handleEnergyChange(e.target.value)}
+              onChange={handleEnergyChange}
             />
           </div>
         </CardContent>
@@ -333,4 +333,3 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     </Card>
   );
 }
-

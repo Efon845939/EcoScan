@@ -159,9 +159,9 @@ export function GuideSection({ onBack }: GuideSectionProps) {
               <div>
                 <h4 className="font-medium mb-2">{t('guide_howto_recycle_title')}</h4>
                 <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                  <li>{t('guide_howto_recycle_step1', { '1': <span className="inline-flex items-center gap-1 font-semibold text-foreground"><Camera size={14} /> {t('scan_card_scan_button')}</span> })}</li>
+                  <li>{t('guide_howto_recycle_step1', { button: t('scan_card_scan_button') })}</li>
                   <li>{t('guide_howto_recycle_step2')}</li>
-                  <li>{t('guide_howto_recycle_step3', { '1': <span className="inline-flex items-center gap-1 font-semibold text-foreground"><Camera size={14} /> {t('confirm_card_verify_button')}</span> })}</li>
+                  <li>{t('guide_howto_recycle_step3', { button: t('confirm_card_verify_button') })}</li>
                   <li>{t('guide_howto_recycle_step4')}</li>
                   <li>{t('guide_howto_recycle_step5')}</li>
                 </ol>
@@ -169,9 +169,9 @@ export function GuideSection({ onBack }: GuideSectionProps) {
               <div>
                 <h4 className="font-medium mb-2">{t('guide_howto_footprint_title')}</h4>
                  <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                  <li>{t('guide_howto_footprint_step1', { '1': <span className="inline-flex items-center gap-1 font-semibold text-foreground"><Footprints size={14} /> {t('scan_card_footprint_button')}</span> })}</li>
+                  <li>{t('guide_howto_footprint_step1', { button: t('scan_card_footprint_button') })}</li>
                   <li>{t('guide_howto_footprint_step2')}</li>
-                  <li>{t('guide_howto_footprint_step3', { '1': <span className="inline-flex items-center gap-1 font-semibold text-foreground"><Receipt size={14} /> {t('survey_scan_receipt_button')}</span> })}</li>
+                  <li>{t('guide_howto_footprint_step3', { button: t('survey_scan_receipt_button') })}</li>
                   <li>{t('guide_howto_footprint_step4')}</li>
                   <li>{t('guide_howto_footprint_step5')}</li>
                 </ol>

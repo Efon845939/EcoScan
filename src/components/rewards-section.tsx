@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,16 +13,14 @@ import { useTranslation } from '@/hooks/use-translation';
 
 export const rewards = [
   {
-    id: 1,
-    title: 'Free Coffee',
+    id: "free_coffee",
     partner: 'The Daily Grind',
     points: 250,
     imageId: 'reward-partner-1',
     icon: Ticket,
   },
   {
-    id: 2,
-    title: '$5 Off Groceries',
+    id: "groceries_5_off",
     partner: 'Green Grocer',
     points: 600,
     imageId: 'reward-partner-2',
@@ -29,24 +28,21 @@ export const rewards = [
   },
 
   {
-    id: 3,
-    title: '$10 Off Clothes',
+    id: "clothes_10_off",
     partner: 'Eco Threads',
     points: 850,
     imageId: 'reward-partner-3',
     icon: Shirt,
   },
   {
-    id: 4,
-    title: 'Free Movie Ticket',
+    id: "movie_ticket",
     partner: 'Cineplex Green',
     points: 1200,
     imageId: 'reward-partner-4',
     icon: Film,
   },
   {
-    id: 5,
-    title: '$15 Off Shoes',
+    id: "shoes_15_off",
     partner: 'Sustainable Soles',
     points: 1500,
     imageId: 'reward-partner-5',
@@ -85,9 +81,10 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
     if (userProfileRef) {
       const newPoints = userPoints - reward.points;
       updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
+      const rewardTitle = t(`rewards.${reward.id}.title`);
       toast({
         title: t('toast_reward_redeemed_title'),
-        description: t('toast_reward_redeemed_description', {title: reward.title}),
+        description: t('toast_reward_redeemed_description', {title: rewardTitle}),
       });
       setRedeemed(true);
     }
@@ -126,6 +123,8 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
         {rewards.map((reward) => {
           const partnerImage = PlaceHolderImages.find((p) => p.id === reward.imageId);
           const canRedeem = userPoints >= reward.points;
+          const rewardTitle = t(`rewards.${reward.id}.title`);
+
           return (
             <div
               key={reward.id}
@@ -143,7 +142,7 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
                   />
                 )}
                 <div>
-                  <p className="font-semibold">{reward.title}</p>
+                  <p className="font-semibold">{rewardTitle}</p>
                   <p className="text-sm text-muted-foreground">{reward.partner}</p>
                 </div>
               </div>
