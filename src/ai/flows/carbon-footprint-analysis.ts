@@ -97,7 +97,7 @@ export async function analyzeCarbonFootprint(
 
   // 2. Use the AI for qualitative analysis based on the deterministic result.
   const { output } = await ai.generate({
-    model: 'googleai/gemini-1.5-pro',
+    model: 'googleai/gemini-1.5-pro-latest',
     prompt: `You are an environmental expert providing a carbon footprint analysis.
 Your primary role is to provide engaging, qualitative feedback based on a pre-calculated, deterministic carbon footprint.
 You MUST NOT calculate the carbon footprint yourself. Use the number provided.
