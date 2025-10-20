@@ -451,21 +451,14 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
               </div>
               <canvas ref={canvasRef} className="hidden" />
             </CardContent>
-            <CardFooter className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardFooter className="flex justify-center">
               <Button
                 size="lg"
                 onClick={handleCapture}
                 disabled={!hasCameraPermission}
+                className="w-full md:w-auto"
               >
                 <Camera className="mr-2" /> {t('camera_capture_button')}
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={step === 'verifyDisposal'}
-              >
-                {t('camera_upload_button')}
               </Button>
             </CardFooter>
           </Card>
