@@ -50,6 +50,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { TranslationProvider, useTranslation } from '@/hooks/use-translation';
 import { MaterialIcon } from './material-icon';
 import { RewardsSection } from './rewards-section';
 import { CarbonFootprintSurvey } from './carbon-footprint-survey';
@@ -71,8 +72,30 @@ function formatTimeLeft(milliseconds: number) {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+const AppContainerWithTranslations = () => {
+    const [language, setLanguage] = useState('en');
 
-export function AppContainer() {
+    useEffect(() => {
+        const savedLanguage = localStorage.getItem('app-language');
+        if (savedLanguage) {
+            setLanguage(savedLanguage);
+        }
+    }, []);
+
+    const handleLanguageChange = (newLanguage: string) => {
+        setLanguage(newLanguage);
+        localStorage.setItem('app-language', newLanguage);
+    };
+    
+    return (
+        <TranslationProvider language={language}>
+            <AppContainer onLanguageChange={handleLanguageChange} currentLanguage={language} />
+        </TranslationProvider>
+    )
+}
+
+
+function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange: (lang: string) => void, currentLanguage: string}) {
   const [step, setStep] = useState<Step>('scan');
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [barcodeNumber, setBarcodeNumber] = useState('');
@@ -95,7 +118,6 @@ export function AppContainer() {
   const [showCameraAlert, setShowCameraAlert] = useState(false);
   const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number | null>(null);
   const [region, setRegion] = useState('Dubai, UAE');
-  const [language, setLanguage] = useState('en');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -103,6 +125,7 @@ export function AppContainer() {
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
+  const { t } = useTranslation();
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -112,12 +135,8 @@ export function AppContainer() {
 
   useEffect(() => {
     const savedRegion = localStorage.getItem('app-region');
-    const savedLanguage = localStorage.getItem('app-language');
     if (savedRegion) {
       setRegion(savedRegion);
-    }
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
     }
   }, []);
 
@@ -125,17 +144,16 @@ export function AppContainer() {
     setRegion(newRegion);
     localStorage.setItem('app-region', newRegion);
     toast({
-      title: 'Region Updated',
-      description: `Your region has been set to ${newRegion}.`,
+      title: t('toast_region_updated_title'),
+      description: t('toast_region_updated_description', { region: newRegion }),
     });
   };
 
   const handleLanguageChange = (newLanguage: string) => {
-    setLanguage(newLanguage);
-    localStorage.setItem('app-language', newLanguage);
+    onLanguageChange(newLanguage);
     toast({
-      title: 'Language Updated',
-      description: `Language has been set. The app will update on the next refresh.`,
+      title: t('toast_language_updated_title'),
+      description: t('toast_language_updated_description'),
     });
   };
 
@@ -159,9 +177,8 @@ export function AppContainer() {
           setTimeout(() => setShowCameraAlert(false), 5000); // Auto-dismiss alert
           toast({
             variant: 'destructive',
-            title: 'Camera Access Denied',
-            description:
-              'Please enable camera permissions in your browser settings.',
+            title: t('camera_not_found_title'),
+            description: t('camera_not_found_description'),
           });
         }
       };
@@ -175,7 +192,7 @@ export function AppContainer() {
         }
       };
     }
-  }, [step, toast]);
+  }, [step, toast, t]);
   
   useEffect(() => {
     if (!isUserLoading && !user && auth) {
@@ -260,7 +277,7 @@ export function AppContainer() {
     }
     
     setIsLoading(true);
-    setLoadingMessage('Identifying material...');
+    setLoadingMessage(t('loading_material'));
     setScannedImage(dataUri);
     startTransition(() => {
       identifyMaterialSimple({ photoDataUri: dataUri, productDescription: '' })
@@ -276,8 +293,8 @@ export function AppContainer() {
           console.error('AI Error:', error);
           toast({
             variant: 'destructive',
-            title: 'Identification Failed',
-            description: 'Could not identify the material. Please try again.',
+            title: t('toast_identification_failed_title'),
+            description: t('toast_identification_failed_description'),
           });
           resetState();
         })
@@ -287,7 +304,7 @@ export function AppContainer() {
 
   const processReceiptImage = (dataUri: string) => {
     setIsLoading(true);
-    setLoadingMessage('Processing receipt...');
+    setLoadingMessage(t('loading_receipt'));
     setScannedImage(dataUri);
     startTransition(() => {
       processReceipt({ receiptImageUri: dataUri })
@@ -298,8 +315,8 @@ export function AppContainer() {
           } else {
             toast({
               variant: 'destructive',
-              title: 'Invalid Receipt',
-              description: 'This does not appear to be a valid receipt. Please try again with a clear photo.',
+              title: t('toast_invalid_receipt_title'),
+              description: t('toast_invalid_receipt_description'),
             });
           }
           setStep('carbonFootprint');
@@ -308,8 +325,8 @@ export function AppContainer() {
           console.error('AI Error:', error);
           toast({
             variant: 'destructive',
-            title: 'Receipt Processing Failed',
-            description: 'Could not read the receipt. Please try again with a clearer image.',
+            title: t('toast_receipt_failed_title'),
+            description: t('toast_receipt_failed_description'),
           });
           setStep('carbonFootprint');
         })
@@ -348,7 +365,7 @@ export function AppContainer() {
     if (!scannedImage || !barcodeNumber) return;
     setShowLowConfidenceModal(false);
     setIsLoading(true);
-    setLoadingMessage('Re-identifying material with barcode...');
+    setLoadingMessage(t('loading_barcode'));
     startTransition(() => {
       identifyMaterialWithBarcode({
         photoDataUri: scannedImage,
@@ -362,8 +379,8 @@ export function AppContainer() {
           console.error('AI Error:', error);
           toast({
             variant: 'destructive',
-            title: 'Identification Failed',
-            description: 'Could not identify the material using the barcode. Please try again.',
+            title: t('toast_identification_failed_title'),
+            description: t('toast_identification_failed_description'),
           });
           resetState();
         })
@@ -375,7 +392,7 @@ export function AppContainer() {
     if (!identifiedMaterial) return;
 
     setIsLoading(true);
-    setLoadingMessage('Verifying your disposal...');
+    setLoadingMessage(t('loading_disposal'));
 
     startTransition(() => {
       verifyDisposalAction({
@@ -392,15 +409,15 @@ export function AppContainer() {
               updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
             }
             toast({
-              title: 'Verification Complete!',
-              description: `You've earned ${pointsAwarded} points for recycling.`,
+              title: t('toast_verification_complete_title'),
+              description: t('toast_verification_complete_description', {points: pointsAwarded}),
             });
             setStep('disposed');
           } else {
             // Handle invalid disposal, including fraud
             toast({
               variant: 'destructive',
-              title: 'Verification Failed',
+              title: t('toast_verification_failed_title'),
               description: result.reason,
             });
 
@@ -417,8 +434,8 @@ export function AppContainer() {
         .catch((err) => {
           toast({
             variant: 'destructive',
-            title: 'Verification Error',
-            description: 'An unexpected error occurred during verification. Please try again.',
+            title: t('toast_verification_error_title'),
+            description: t('toast_verification_error_description'),
           });
            setStep('scan');
         })
@@ -438,7 +455,7 @@ export function AppContainer() {
     const bonusPoints = Math.round(penaltyAmount * 1.5); 
 
     setIsLoading(true);
-    setLoadingMessage('Verifying your action...');
+    setLoadingMessage(t('loading_action'));
 
     startTransition(() => {
       verifySustainabilityAction({
@@ -459,13 +476,13 @@ export function AppContainer() {
             updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
           }
           toast({
-            title: 'Action Verified!',
-            description: `Penalty reversed! You've earned ${totalPointsAwarded} total points.`,
+            title: t('toast_action_verified_title'),
+            description: t('toast_action_verified_description', {points: totalPointsAwarded}),
           });
         } else {
           toast({
             variant: 'destructive',
-            title: 'Verification Failed',
+            title: t('toast_verification_failed_title'),
             description: result.reason,
           });
         }
@@ -473,8 +490,8 @@ export function AppContainer() {
       .catch((err) => {
         toast({
           variant: 'destructive',
-          title: 'Verification Error',
-          description: 'An error occurred during verification.',
+          title: t('toast_verification_error_title'),
+          description: t('toast_verification_error_description'),
         });
       })
       .finally(() => {
@@ -494,8 +511,8 @@ export function AppContainer() {
     setSustainabilityRecommendations([...analysisResults.recommendations, ...analysisResults.extraTips]);
     setSurveyPoints(points);
 
-    const pointString = points >= 0 ? `+${points} Points` : `${points} Points`;
-    setAnimatePoints(pointString);
+    const pointString = points >= 0 ? `+${points}` : `${points}`;
+    setAnimatePoints(pointString + ' ' + t('header_points'));
      setTimeout(() => {
       setAnimatePoints(false), 1500;
     });
@@ -510,7 +527,7 @@ export function AppContainer() {
         return (
             <div className="flex flex-col items-center justify-center p-8">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="mt-4 text-lg font-semibold">Loading your profile...</p>
+                <p className="mt-4 text-lg font-semibold">{t('loading_profile')}</p>
             </div>
         )
     }
@@ -519,32 +536,33 @@ export function AppContainer() {
         return (
           <Card className="text-center">
             <CardHeader>
-              <CardTitle className="font-headline text-3xl">Ready to Go Green?</CardTitle>
+              <CardTitle className="font-headline text-3xl">{t('scan_card_title')}</CardTitle>
               <CardDescription>
-                Choose an action to earn points and track your impact.
+                {t('scan_card_description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
                <Button size="lg" onClick={() => setStep('camera')} className="h-20 text-base md:h-24">
                 <Camera className="mr-2" />
-                Scan Product Packaging
+                {t('scan_card_scan_button')}
               </Button>
               <Button size="lg" variant="outline" onClick={() => {
-                setSurveyResults(null); // Reset results when starting a new survey
+                setSurveyResults(null);
+                setReceiptResult(null);
                 setStep('carbonFootprint');
               }} className="h-20 text-base md:h-24">
                 <Footprints className="mr-2" />
                 {cooldownTimeLeft ? (
-                  <span className="text-center text-sm leading-tight">Tomorrow's Carbon Footprint in:<br /><span className="font-mono text-base">{formatTimeLeft(cooldownTimeLeft)}</span></span>
+                  <span className="text-center text-sm leading-tight">{t('scan_card_footprint_cooldown')}<br /><span className="font-mono text-base">{formatTimeLeft(cooldownTimeLeft)}</span></span>
                 ) : (
-                  'See Your Carbon Footprint'
+                  t('scan_card_footprint_button')
                 )}
               </Button>
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
                <Button variant="link" onClick={() => setStep('rewards')}>
                 <Award className="mr-2" />
-                View My Rewards ({userPoints} Points)
+                {t('scan_card_rewards_link')} ({userPoints} {t('header_points')})
               </Button>
             </CardFooter>
           </Card>
@@ -554,23 +572,23 @@ export function AppContainer() {
       case 'verifyDisposal':
       case 'verifySustainability':
         let backStep: Step = 'scan';
-        let title = 'Scan Your Item';
-        let description = "Position the item's packaging in the frame.";
+        let title = t('camera_scan_item_title');
+        let description = t('camera_scan_item_description');
 
         if (step === 'receipt') {
           backStep = 'carbonFootprint';
-          title = 'Scan Your Receipt';
-          description = 'Position the entire receipt in the frame.';
+          title = t('camera_scan_receipt_title');
+          description = t('camera_scan_receipt_description');
         }
         if (step === 'verifyDisposal') {
           backStep = 'confirm';
-          title = 'Verify Your Disposal';
-          description = 'Take a photo of yourself placing the item in the correct recycling bin.';
+          title = t('camera_verify_disposal_title');
+          description = t('camera_verify_disposal_description');
         }
         if (step === 'verifySustainability') {
             backStep = 'carbonFootprint';
-            title = 'Verify Your Action';
-            description = 'Take a photo of yourself performing one of the recommended sustainable actions.';
+            title = t('camera_verify_action_title');
+            description = t('camera_verify_action_description');
         }
 
         return (
@@ -583,7 +601,7 @@ export function AppContainer() {
                   className="absolute left-0"
                   onClick={() => setStep(backStep)}
                 >
-                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                  <ChevronLeft className="mr-2 h-4 w-4" /> {t('camera_back_button')}
                 </Button>
                 <CardTitle className="font-headline text-2xl">
                   {title}
@@ -608,9 +626,9 @@ export function AppContainer() {
                 {showCameraAlert && hasCameraPermission === false && (
                   <Alert variant="destructive" className="w-auto">
                     <Video className="h-4 w-4" />
-                    <AlertTitle>Camera Not Found</AlertTitle>
+                    <AlertTitle>{t('camera_not_found_title')}</AlertTitle>
                     <AlertDescription>
-                      Could not access camera. Please check permissions or upload a file.
+                     {t('camera_not_found_description')}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -626,7 +644,7 @@ export function AppContainer() {
                 onClick={handleCapture}
                 disabled={hasCameraPermission !== true}
               >
-                <CircleDot className="mr-2" /> Capture
+                <CircleDot className="mr-2" /> {t('camera_capture_button')}
               </Button>
               <Button
                 size="lg"
@@ -634,7 +652,7 @@ export function AppContainer() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={step === 'verifyDisposal' || step === 'verifySustainability'}
               >
-                Upload File
+                {t('camera_upload_button')}
               </Button>
             </CardFooter>
           </Card>
@@ -646,10 +664,10 @@ export function AppContainer() {
             <CardHeader>
               <CardTitle className="font-headline text-2xl flex items-center gap-2">
                 <MaterialIcon material={identifiedMaterial.material} className="h-8 w-8 text-primary" />
-                Material Identified: {identifiedMaterial.material}
+                {t('confirm_card_title', {material: identifiedMaterial.material})}
               </CardTitle>
               <CardDescription>
-                Next, please take a photo of you disposing the item in the correct bin to verify and earn points.
+                {t('confirm_card_description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
@@ -661,16 +679,16 @@ export function AppContainer() {
                 className="rounded-lg border object-contain"
               />
               <p className="text-sm text-muted-foreground">
-                Confidence: {Math.round(identifiedMaterial.confidence * 100)}%
+                {t('confirm_card_confidence', {confidence: Math.round(identifiedMaterial.confidence * 100)})}
               </p>
             </CardContent>
             <CardFooter className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <Button size="lg" onClick={handleConfirmDisposal}>
                 <Camera className="mr-2" />
-                Verify Disposal
+                {t('confirm_card_verify_button')}
               </Button>
               <Button size="lg" variant="outline" onClick={resetState}>
-                Scan Another Item
+                {t('confirm_card_scan_another_button')}
               </Button>
             </CardFooter>
           </Card>
@@ -688,20 +706,20 @@ export function AppContainer() {
             )}
             <CardHeader>
               <Sparkles className="mx-auto h-12 w-12 text-yellow-400" />
-              <CardTitle className="font-headline text-3xl">Disposal Verified!</CardTitle>
+              <CardTitle className="font-headline text-3xl">{t('disposed_card_title')}</CardTitle>
               <CardDescription>
-                Thank you for helping the environment! Your points have been added to your account.
+                {t('disposed_card_description')}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold font-headline text-primary">{userPoints} pts</p>
+              <p className="text-4xl font-bold font-headline text-primary">{userPoints} {t('header_points')}</p>
             </CardContent>
             <CardFooter className="flex-col gap-4">
               <Button size="lg" onClick={resetState}>
-                Scan Another Item
+                {t('disposed_card_scan_another_button')}
               </Button>
               <Button variant="link" onClick={() => setStep('rewards')}>
-                Check out rewards
+                {t('disposed_card_rewards_link')}
               </Button>
             </CardFooter>
           </Card>
@@ -717,6 +735,22 @@ export function AppContainer() {
     }
   };
 
+  let currentLoadingMessage = loadingMessage;
+    if (isLoading) {
+        if (loadingMessage === 'Identifying material...') {
+            currentLoadingMessage = t('loading_material');
+        } else if (loadingMessage === 'Re-identifying material with barcode...') {
+            currentLoadingMessage = t('loading_barcode');
+        } else if (loadingMessage === 'Verifying your disposal...') {
+            currentLoadingMessage = t('loading_disposal');
+        } else if (loadingMessage === 'Verifying your action...') {
+            currentLoadingMessage = t('loading_action');
+        } else if (loadingMessage === 'Processing receipt...') {
+            currentLoadingMessage = t('loading_receipt');
+        }
+    }
+
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header points={userPoints} onNavigate={setStep} onShowSettings={handleOpenSettings} />
@@ -728,7 +762,7 @@ export function AppContainer() {
         {isLoading && (
           <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="mt-4 text-lg font-semibold">{loadingMessage}</p>
+            <p className="mt-4 text-lg font-semibold">{currentLoadingMessage}</p>
           </div>
         )}
 
@@ -743,9 +777,9 @@ export function AppContainer() {
         <Dialog open={showLowConfidenceModal} onOpenChange={setShowLowConfidenceModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-headline">Help Us Be Certain</DialogTitle>
+              <DialogTitle className="font-headline">{t('confirm_card_title')}</DialogTitle>
               <DialogDescription>
-                To identify the material with more confidence, please type the barcode number from the product's packaging.
+                {t('confirm_card_description')}
               </DialogDescription>
             </DialogHeader>
             <Input
@@ -766,20 +800,20 @@ export function AppContainer() {
         <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-headline">Settings</DialogTitle>
+              <DialogTitle className="font-headline">{t('settings_title')}</DialogTitle>
               <DialogDescription>
-                Manage your application settings and preferences.
+                {t('settings_description')}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
                <Button variant="outline" className="justify-start" onClick={() => { setStep('guide'); setShowSettingsModal(false); }}>
                   <BookCopy className="mr-2" />
-                  App Guide & Rules
+                  {t('settings_guide_button')}
                </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
                    <Globe />
-                   Region
+                   {t('settings_region_label')}
                 </Label>
                 <Select value={region} onValueChange={handleRegionChange}>
                   <SelectTrigger className="col-span-3">
@@ -799,9 +833,9 @@ export function AppContainer() {
               <div className="grid grid-cols-4 items-center gap-4">
                  <Label htmlFor="language" className="text-right flex items-center gap-2 justify-end">
                     <Languages />
-                   Language
+                   {t('settings_language_label')}
                 </Label>
-                <Select value={language} onValueChange={handleLanguageChange}>
+                <Select value={currentLanguage} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a language" />
                   </SelectTrigger>
@@ -817,7 +851,7 @@ export function AppContainer() {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={() => setShowSettingsModal(false)}>Close</Button>
+              <Button onClick={() => setShowSettingsModal(false)}>{t('settings_close_button')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -825,7 +859,7 @@ export function AppContainer() {
         <Dialog open={showReceiptResultModal} onOpenChange={setShowReceiptResultModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-headline">Receipt Scanned</DialogTitle>
+              <DialogTitle className="font-headline">{t('toast_receipt_failed_title')}</DialogTitle>
               <DialogDescription>
                 Here is the data we extracted. You can now close this and get your 500% point bonus!
               </DialogDescription>
@@ -849,7 +883,7 @@ export function AppContainer() {
             )}
             <DialogFooter>
               <Button onClick={() => setShowReceiptResultModal(false)}>
-                Close
+                {t('settings_close_button')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -858,3 +892,5 @@ export function AppContainer() {
     </div>
   );
 }
+
+export { AppContainerWithTranslations as AppContainer };

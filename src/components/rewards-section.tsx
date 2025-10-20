@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useFirebase, useUser, updateDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { useTranslation } from '@/hooks/use-translation';
 
 
 export const rewards = [
@@ -63,6 +64,7 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
   const [redeemed, setRedeemed] = useState(false);
   const { firestore } = useFirebase();
   const { user } = useUser();
+  const { t } = useTranslation();
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -74,8 +76,8 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
     if (userPoints < reward.points) {
       toast({
         variant: 'destructive',
-        title: 'Not enough points',
-        description: `You need ${reward.points} points to redeem this reward.`,
+        title: t('toast_not_enough_points_title'),
+        description: t('toast_not_enough_points_description', {points: reward.points}),
       });
       return;
     }
@@ -84,8 +86,8 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
       const newPoints = userPoints - reward.points;
       updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
       toast({
-        title: 'Reward Redeemed!',
-        description: `You've successfully redeemed "${reward.title}".`,
+        title: t('toast_reward_redeemed_title'),
+        description: t('toast_reward_redeemed_description', {title: reward.title}),
       });
       setRedeemed(true);
     }
@@ -95,13 +97,13 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
     return (
         <Card className="w-full">
             <CardHeader>
-                <CardTitle className="font-headline pt-8 text-center text-2xl">Reward Claimed!</CardTitle>
+                <CardTitle className="font-headline pt-8 text-center text-2xl">{t('rewards_redeemed_title')}</CardTitle>
                 <CardDescription className="text-center">
-                    Enjoy your discount. Thank you for your contribution!
+                    {t('rewards_redeemed_description')}
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
-                <Button onClick={onBack}>Back to Main Menu</Button>
+                <Button onClick={onBack}>{t('rewards_back_button')}</Button>
             </CardContent>
         </Card>
     )
@@ -112,12 +114,12 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
       <CardHeader>
         <div className="relative flex items-center justify-center">
             <Button variant="ghost" size="sm" className="absolute left-0" onClick={onBack}>
-            <ChevronLeft className="mr-2 h-4 w-4" /> Back
+            <ChevronLeft className="mr-2 h-4 w-4" /> {t('camera_back_button')}
             </Button>
-            <CardTitle className="font-headline text-2xl">Redeem Your Points</CardTitle>
+            <CardTitle className="font-headline text-2xl">{t('rewards_title')}</CardTitle>
         </div>
         <CardDescription className="text-center pt-2">
-          Use your points to get discounts at our partner stores.
+          {t('rewards_description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -147,7 +149,7 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
               </div>
               <Button onClick={() => handleRedeem(reward)} disabled={!canRedeem}>
                 <Ticket className="mr-2 h-4 w-4" />
-                {reward.points} pts
+                {reward.points} {t('header_points')}
               </Button>
             </div>
           );
