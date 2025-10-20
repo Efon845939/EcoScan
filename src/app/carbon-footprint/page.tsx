@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
@@ -27,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking, useDoc } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { REGION, computeKgDeterministic, pointsFromKgRegionAware, computeProvisional, finalizeWithReceipt } from '@/lib/carbon-calculator';
 
@@ -35,8 +34,10 @@ export default function CarbonFootprintPage() {
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
     const { firestore } = useFirebase();
-    const { user, isUserLoading, isProfileLoading } = useUser();
-    const { data: userProfile } = useDoc(useMemoFirebase(() => (firestore && user) ? doc(firestore, 'users', user.uid) : null, [firestore, user]));
+    const { user, isUserLoading } = useUser();
+    const userProfileRef = useMemoFirebase(() => (firestore && user) ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+
     const { t } = useTranslation();
     const router = useRouter();
 
@@ -59,19 +60,14 @@ export default function CarbonFootprintPage() {
       }, []);
 
     const [formData, setFormData] = useState<Omit<CarbonFootprintInput, 'language' | 'location'>>({
-        transport: [], // Will now hold a single value from radio
-        diet: [],      // Will now hold a single value from radio
-        drink: [],     // Will now hold a single value from radio
+        transport: [],
+        diet: [],
+        drink: [],
         energy: '',
       });
 
     const [isLoading, setIsLoading] = useState(false);
     const [isNoEnergy, setIsNoEnergy] = useState(false);
-
-    const userProfileRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
-    [firestore, user]
-    );
 
     const handleRadioChange = (field: 'transport' | 'diet' | 'drink', value: string) => {
         setFormData((prev) => ({ ...prev, [field]: [value] }));
@@ -139,7 +135,9 @@ export default function CarbonFootprintPage() {
             // 4. Update user profile with ONLY provisional points
             if (userProfileRef && userProfile) {
               const currentPoints = userProfile.totalPoints || 0;
-              const penaltyThreshold = (REGION[region.toLowerCase().replace(', ', '_') as keyof typeof REGION] || REGION.europe).max * 1.05;
+              const regionKey = region.toLowerCase().replace(/, /g, '_').replace(' ', '_') as keyof typeof REGION;
+              const regionData = REGION[regionKey] || REGION.europe; // Fallback to europe
+              const penaltyThreshold = regionData.max * 1.05;
               const pointsChange = deterministicKg > penaltyThreshold ? -10 : provisional;
               const newPoints = Math.max(0, currentPoints + pointsChange);
               
@@ -393,5 +391,3 @@ export default function CarbonFootprintPage() {
     </main>
   );
 }
-
-    

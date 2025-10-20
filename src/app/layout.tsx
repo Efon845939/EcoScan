@@ -27,7 +27,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased">
+      <body className="min-h-screen bg-white dark:bg-[#0b0f15] bg-[radial-gradient(900px_900px_at_0%_0%,rgba(34,197,94,0.10),transparent_60%),radial-gradient(900px_900px_at_100%_0%,rgba(59,130,246,0.10),transparent_60%)] dark:bg-[radial-gradient(900px_900px_at_0%_0%,rgba(34,197,94,0.18),transparent_60%),radial-gradient(900px_900px_at_100%_0%,rgba(59,130,246,0.18),transparent_60%)] antialiased font-body">
         <FirebaseClientProvider>
             {children}
             <Toaster />
