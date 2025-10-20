@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ChevronLeft, Loader2, Leaf, ThumbsUp, Sparkles, AlertTriangle, Receipt, Camera } from 'lucide-react';
+import { ChevronLeft, Loader2, Leaf, ThumbsUp, ThumbsDown, Meh, Sparkles, AlertTriangle, Receipt, Camera } from 'lucide-react';
 import {
   analyzeCarbonFootprint,
   CarbonFootprintInput,
@@ -28,19 +28,6 @@ import { Checkbox } from './ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
 
-const transportOptions = [
-  'Car (Gasoline)',
-  'Electric Vehicle',
-  'Bus or Train',
-  'Bike or Walk',
-];
-const dietOptions = [
-  'Heavy on red meat',
-  'Poultry/Fish, no red meat',
-  'Vegetarian',
-  'Vegan',
-];
-
 type CarbonFootprintSurveyProps = {
   onBack: () => void;
   onScanReceipt: () => void;
@@ -51,9 +38,10 @@ type CarbonFootprintSurveyProps = {
   surveyPoints: number;
   receiptResult: ReceiptOutput | null;
   region: string;
+  language: string;
 };
 
-export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance, results, surveyPoints, receiptResult, region }: CarbonFootprintSurveyProps) {
+export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance, results, surveyPoints, receiptResult, region, language }: CarbonFootprintSurveyProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -61,7 +49,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   const { user } = useUser();
   const { t } = useTranslation();
 
-  const [formData, setFormData] = useState<CarbonFootprintInput>({
+  const [formData, setFormData] = useState<Omit<CarbonFootprintInput, 'language'>>({
     location: region,
     transport: [],
     diet: [],
@@ -111,7 +99,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     if (receiptResult) {
         handleVerifyWithReceipt();
     }
-  }, [receiptResult]);
+  }, [receiptResult, results, userProfileRef, userProfile]);
 
   // Update formData location when region prop changes
   useEffect(() => {
@@ -122,7 +110,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   const handleSubmit = () => {
     setIsLoading(true);
     startTransition(() => {
-      analyzeCarbonFootprint(formData)
+      analyzeCarbonFootprint({ ...formData, language })
         .then((analysisResults) => {
           let points = 0;
           if (analysisResults.estimatedFootprintKg > 30) {
@@ -161,6 +149,9 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     formData.diet.length === 0 ||
     !formData.energy;
 
+  const transportOptions = t('survey_q1_options', { returnObjects: true }) as Record<string, string>;
+  const dietOptions = t('survey_q2_options', { returnObjects: true }) as Record<string, string>;
+
   // Show form if there are no results yet
   if (!results) {
     return (
@@ -180,18 +171,18 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           <div className="space-y-3">
             <Label>{t('survey_q1')}</Label>
             <div className="space-y-2">
-              {transportOptions.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
+              {Object.entries(transportOptions).map(([key, label]) => (
+                <div key={key} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`transport-${option}`}
-                    checked={formData.transport.includes(option)}
-                    onCheckedChange={() => handleCheckboxChange('transport', option)}
+                    id={`transport-${key}`}
+                    checked={formData.transport.includes(key)}
+                    onCheckedChange={() => handleCheckboxChange('transport', key)}
                   />
                   <Label
-                    htmlFor={`transport-${option}`}
+                    htmlFor={`transport-${key}`}
                     className="font-normal"
                   >
-                    {option}
+                    {label}
                   </Label>
                 </div>
               ))}
@@ -200,15 +191,15 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           <div className="space-y-3">
             <Label>{t('survey_q2')}</Label>
             <div className="space-y-2">
-              {dietOptions.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
+              {Object.entries(dietOptions).map(([key, label]) => (
+                <div key={key} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`diet-${option}`}
-                    checked={formData.diet.includes(option)}
-                    onCheckedChange={() => handleCheckboxChange('diet', option)}
+                    id={`diet-${key}`}
+                    checked={formData.diet.includes(key)}
+                    onCheckedChange={() => handleCheckboxChange('diet', key)}
                   />
-                  <Label htmlFor={`diet-${option}`} className="font-normal">
-                    {option}
+                  <Label htmlFor={`diet-${key}`} className="font-normal">
+                    {label}
                   </Label>
                 </div>
               ))}
@@ -245,6 +236,17 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
 
   // Otherwise, show the results page.
   const isPenalty = surveyPoints < 0;
+  
+  const getAnalysisIcon = () => {
+    if (results.sustainabilityScore >= 8) {
+      return <ThumbsUp className="h-4 w-4" />;
+    }
+    if (results.sustainabilityScore <= 4) {
+      return <ThumbsDown className="h-4 w-4" />;
+    }
+    return <Meh className="h-4 w-4" />;
+  };
+
 
   return (
     <Card>
@@ -266,7 +268,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
             <span className="text-xl"> kg CO₂</span>
           </p>
           <p className="text-muted-foreground mt-2 text-sm italic">
-            {t('survey_results_comparison', { comparison: results.tangibleComparison.toLowerCase() })}
+            {results.tangibleComparison}
           </p>
         </div>
         
@@ -289,7 +291,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
         )}
 
         <Alert>
-          <ThumbsUp className="h-4 w-4" />
+          {getAnalysisIcon()}
           <AlertTitle>{t('survey_analysis_title')}</AlertTitle>
           <AlertDescription>{results.analysis}</AlertDescription>
         </Alert>
@@ -331,3 +333,4 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     </Card>
   );
 }
+

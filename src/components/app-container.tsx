@@ -449,9 +449,7 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
   const handleSustainabilityVerification = (actionImage: string) => {
     if (sustainabilityRecommendations.length === 0) return;
     
-    // The number of points lost, but positive
     const penaltyAmount = Math.abs(surveyPoints); 
-    // Bonus is proportional to penalty
     const bonusPoints = Math.round(penaltyAmount * 1.5); 
 
     setIsLoading(true);
@@ -464,14 +462,11 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
       })
       .then((result) => {
         if (result.isValid) {
-          // Reverses penalty and adds a bonus
-          // Here we just add penaltyAmount (to reverse the deduction) and the bonus
           const totalPointsAwarded = penaltyAmount + bonusPoints;
           setAnimatePoints(`+${totalPointsAwarded}`);
 
           if (userProfileRef && userProfile) {
             const currentPoints = userProfile.totalPoints || 0;
-            // The penalty was already applied, so we add it back, plus the bonus
             const newPoints = Math.max(0, currentPoints + totalPointsAwarded);
             updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
           }
@@ -550,7 +545,7 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
                 setSurveyResults(null);
                 setReceiptResult(null);
                 setStep('carbonFootprint');
-              }} className="h-20 text-base md:h-24">
+              }} className="h-20 text-base md:h-24" disabled={cooldownTimeLeft !== null}>
                 <Footprints className="mr-2" />
                 {cooldownTimeLeft ? (
                   <span className="text-center text-sm leading-tight">{t('scan_card_footprint_cooldown')}<br /><span className="font-mono text-base">{formatTimeLeft(cooldownTimeLeft)}</span></span>
@@ -727,7 +722,7 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
       case 'rewards':
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'carbonFootprint':
-        return <CarbonFootprintSurvey onBack={resetState} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} results={surveyResults} surveyPoints={surveyPoints} receiptResult={receiptResult} region={region}/>;
+        return <CarbonFootprintSurvey onBack={resetState} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} results={surveyResults} surveyPoints={surveyPoints} receiptResult={receiptResult} region={region} language={currentLanguage} />;
       case 'guide':
         return <GuideSection onBack={() => setStep('scan')} />;
       default:
@@ -868,7 +863,7 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
                 <div className="text-sm space-y-2">
                     <p><strong>Merchant:</strong> {receiptResult.merchantName}</p>
                     <p><strong>Total:</strong> {receiptResult.totalAmount} {receiptResult.currency}</p>
-                    <p><strong>Date:</strong> {new Date(receiptResult.receiptDatetime!).toLocaleString()}</p>
+                    <p><strong>Date:</strong> {receiptResult.receiptDatetime ? new Date(receiptResult.receiptDatetime).toLocaleString() : 'N/A'}</p>
                     {receiptResult.lineItems && receiptResult.lineItems.length > 0 && (
                         <div>
                             <strong>Items:</strong>

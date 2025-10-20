@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
@@ -6,7 +7,7 @@ import { en } from '@/lib/locales';
 // The shape of the context
 interface TranslationContextType {
   translations: Record<string, any>;
-  t: (key: string, options?: Record<string, string | number>) => string;
+  t: (key: string, options?: Record<string, string | number | boolean | object>) => any;
 }
 
 // Create the context with a default value
@@ -35,16 +36,16 @@ export function TranslationProvider({
     loadTranslations();
   }, [language]);
 
-  const t = (key: string, options: Record<string, string | number> = {}) => {
+  const t = (key: string, options: Record<string, string | number | boolean | object> = {}) => {
     const keys = key.split('.');
-    let text = translations;
+    let text: any = translations;
 
     for (const k of keys) {
       if (text && typeof text === 'object' && k in text) {
         text = text[k];
       } else {
         // Fallback to English if key not found
-        let fallbackText = en;
+        let fallbackText: any = en;
         for (const fk of keys) {
              if (fallbackText && typeof fallbackText === 'object' && fk in fallbackText) {
                 fallbackText = fallbackText[fk];
@@ -57,9 +58,15 @@ export function TranslationProvider({
       }
     }
 
+    if (options.returnObjects) {
+      return text;
+    }
+
     let final_text = String(text);
     for(const option in options) {
-        final_text = final_text.replace(`{${option}}`, String(options[option]));
+        if (option !== 'returnObjects') {
+            final_text = final_text.replace(`{${option}}`, String(options[option]));
+        }
     }
     
     return final_text;

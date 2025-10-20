@@ -29,6 +29,9 @@ export function GuideSection({ onBack }: GuideSectionProps) {
   const sortedMaterials = Object.entries(materialPoints).sort(([, a], [, b]) => b - a);
   const sortedRewards = [...rewards].sort((a, b) => a.points - b.points);
 
+  const translatedSurveyItems = t('guide_survey_items', { returnObjects: true }) as any;
+  const translatedRules = t('guide_rules_list', { returnObjects: true }) as string[];
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -65,7 +68,7 @@ export function GuideSection({ onBack }: GuideSectionProps) {
               <ul className="space-y-1 rounded-md border p-4 text-sm">
                 {sortedMaterials.map(([material, points]) => (
                   <li key={material} className="flex justify-between">
-                    <span className="capitalize">{material}</span>
+                    <span className="capitalize">{t(`materials.${material}`)}</span>
                     <span className="font-bold text-primary">{points} {t('header_points')}</span>
                   </li>
                 ))}
@@ -84,37 +87,20 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                 {t('guide_survey_description')}
               </p>
               <ul className="space-y-2 rounded-md border p-4 text-sm">
-                <li className="flex justify-between items-center">
-                  <span>
-                    {t('guide_survey_item1')} <br />
-                    <small>({t('guide_survey_item1_desc')})</small>
-                  </span>
-                  <span className="font-bold text-destructive">-1 to -10 {t('header_points')}</span>
-                </li>
-                <li className="flex justify-between items-center">
-                  <span>
-                    {t('guide_survey_item2')} <br />
-                    <small>({t('guide_survey_item2_desc')})</small>
-                  </span>
-                  <span className="font-bold text-primary">Up to 5 {t('header_points')}</span>
-                </li>
-                 <li className="flex justify-between items-center">
-                  <span>
-                    {t('guide_survey_item3')}<br />
-                    <small>({t('guide_survey_item3_desc')})</small>
-                  </span>
-                  <span className="font-bold text-yellow-500">+500% Bonus</span>
-                </li>
-                 <li className="flex justify-between items-center">
-                  <span>
-                    {t('guide_survey_item4')}<br />
-                    <small>({t('guide_survey_item4_desc')})</small>
-                  </span>
-                  <span className="font-bold text-primary">+15 {t('header_points')}</span>
-                </li>
+                 {Object.values(translatedSurveyItems).map((item: any, index: number) => (
+                    <li key={index} className="flex justify-between items-center">
+                      <span>
+                        {item.title}<br />
+                        <small>({item.desc})</small>
+                      </span>
+                      <span className={`font-bold ${item.points.includes('-') ? 'text-destructive' : 'text-primary'}`}>
+                        {item.points.replace('{points}', t('header_points'))}
+                      </span>
+                    </li>
+                  ))}
               </ul>
               <p className="text-xs text-muted-foreground pt-2">
-                The provisional reward formula is `sustainabilityScore * 0.5`. The penalty is a sliding scale based on how much your footprint exceeds 30kg.
+                {t('guide_survey_footer')}
               </p>
             </AccordionContent>
           </AccordionItem>
@@ -133,7 +119,7 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                 {sortedRewards.map((reward) => (
                   <li key={reward.id} className="flex justify-between">
                     <span>
-                      {reward.title}{' '}
+                      {t(`rewards.${reward.id}.title`)}{' '}
                       <small className="text-muted-foreground">
                         ({reward.partner})
                       </small>
@@ -156,10 +142,9 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                 {t('guide_rules_description')}
               </p>
               <ul className="list-disc list-inside space-y-2 rounded-md border p-4 text-sm">
-                <li>{t('guide_rules_rule1')}</li>
-                <li>{t('guide_rules_rule2')}</li>
-                <li>{t('guide_rules_rule3')}</li>
-                <li>{t('guide_rules_rule4')}</li>
+                {translatedRules.map((rule, index) => (
+                  <li key={index}>{rule}</li>
+                ))}
               </ul>
             </AccordionContent>
           </AccordionItem>
