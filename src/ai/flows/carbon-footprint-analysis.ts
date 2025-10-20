@@ -58,11 +58,15 @@ export async function analyzeCarbonFootprint(
   return carbonFootprintFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'carbonFootprintPrompt',
-  input: { schema: CarbonFootprintInputSchema },
-  output: { schema: CarbonFootprintOutputSchema },
-  system: `You are an environmental expert providing a carbon footprint analysis. Your calculations MUST be deterministic and consistent. Given the same inputs, you MUST always return the exact same outputs.
+const carbonFootprintFlow = ai.defineFlow(
+  {
+    name: 'carbonFootprintFlow',
+    inputSchema: CarbonFootprintInputSchema,
+    outputSchema: CarbonFootprintOutputSchema,
+  },
+  async (input) => {
+    const { output } = await ai.generate({
+      prompt: `You are an environmental expert providing a carbon footprint analysis. Your calculations MUST be deterministic and consistent. Given the same inputs, you MUST always return the exact same outputs.
 
 You MUST generate your entire response (analysis, recommendations, tips, and tangibleComparison) in the language specified by the 'language' parameter. Default to English if no language is provided.
 
@@ -79,12 +83,12 @@ You MUST scale your carbon footprint estimate based on the user's location. Use 
 | Japan            | 26           | 32                           |
 | *General/Default*| 25           | 30                           |
 
-User's response language: {{{language}}}
-User's location: {{{location}}}
+User's response language: ${input.language}
+User's location: ${input.location}
 User's activities today:
-- Transportation: {{#each transport}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
-- Diet: {{#each diet}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
-- Home Energy Use: {{{energy}}}
+- Transportation: ${input.transport.join(', ')}
+- Diet: ${input.diet.join(', ')}
+- Home Energy Use: ${input.energy}
 
 Based on this, provide:
 1. A deterministic, estimated carbon footprint in kg CO₂ for the day, scaled to their region using the table.
@@ -94,19 +98,13 @@ Based on this, provide:
 5. A list of 2-3 additional, general tips for what the user can do today to keep their footprint low.
 6. A 'sustainabilityScore' from 1 to 10. A score of 10 means very sustainable (low carbon footprint), and 1 means not sustainable (high carbon footprint).
 `,
-  config: {
-    temperature: 0.0,
-  }
-});
-
-const carbonFootprintFlow = ai.defineFlow(
-  {
-    name: 'carbonFootprintFlow',
-    inputSchema: CarbonFootprintInputSchema,
-    outputSchema: CarbonFootprintOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
+      output: {
+        schema: CarbonFootprintOutputSchema,
+      },
+      config: {
+        temperature: 0.0,
+      },
+    });
     return output!;
   }
 );
