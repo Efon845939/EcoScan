@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useRef, ChangeEvent, useTransition, useEffect } from 'react';
@@ -47,6 +45,7 @@ import { TranslationProvider, useTranslation } from '@/hooks/use-translation';
 import { MaterialIcon } from './material-icon';
 import { RewardsSection } from './rewards-section';
 import { GuideSection } from './guide-section';
+import { VerificationCenter } from './verification-center';
 import { cn } from '@/lib/utils';
 import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
 import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
@@ -54,9 +53,9 @@ import { getPointsForMaterial } from '@/lib/points';
 import SurveyButton from './survey-button';
 
 
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide';
+export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify';
 
-const AppContainerWithTranslations = () => {
+const AppContainerWithTranslations = ({ initialStep }: { initialStep?: Step }) => {
     const [language, setLanguage] = useState('en');
 
     useEffect(() => {
@@ -79,14 +78,14 @@ const AppContainerWithTranslations = () => {
     
     return (
         <TranslationProvider language={language}>
-            <AppContainer onLanguageChange={handleLanguageChange} currentLanguage={language} />
+            <AppContainer onLanguageChange={handleLanguageChange} currentLanguage={language} initialStep={initialStep} />
         </TranslationProvider>
     )
 }
 
 
-function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange: (lang: string) => void, currentLanguage: string}) {
-  const [step, setStep] = useState<Step>('scan');
+function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' }: { onLanguageChange: (lang: string) => void, currentLanguage: string, initialStep?: Step}) {
+  const [step, setStep] = useState<Step>(initialStep);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [barcodeNumber, setBarcodeNumber] = useState('');
   const [identifiedMaterial, setIdentifiedMaterial] =
@@ -542,6 +541,8 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'guide':
         return <GuideSection onBack={() => setStep('scan')} />;
+      case 'verify':
+        return <VerificationCenter onBack={() => setStep('scan')} />;
       default:
         return null;
     }
