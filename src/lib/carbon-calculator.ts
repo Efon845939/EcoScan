@@ -105,3 +105,4 @@ export function computeProvisional(basePoints: number) {
 export function finalizeWithReceipt(basePoints: number) {
   return basePoints * 5; // 500% of base, replaces provisional
 }
+
