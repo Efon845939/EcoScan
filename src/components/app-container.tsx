@@ -11,6 +11,7 @@ import {
   BookCopy,
   Languages,
   Globe,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -103,7 +104,6 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
@@ -259,18 +259,6 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
         const dataUri = canvas.toDataURL('image/jpeg');
         processImage(dataUri);
       }
-    }
-  };
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUri = e.target?.result as string;
-        processImage(dataUri);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -572,14 +560,6 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
           </div>
         )}
 
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept="image/*"
-        />
-
         <Dialog open={showLowConfidenceModal} onOpenChange={setShowLowConfidenceModal}>
           <DialogContent>
             <DialogHeader>
@@ -615,6 +595,10 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                <Button variant="outline" className="justify-start" onClick={() => { setStep('guide'); setShowSettingsModal(false); }}>
                   <BookCopy className="mr-2" />
                   {t('settings_guide_button')}
+               </Button>
+               <Button variant="outline" className="justify-start" onClick={() => { setStep('verify'); setShowSettingsModal(false); }}>
+                  <ShieldCheck className="mr-2" />
+                  Verification Center
                </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">

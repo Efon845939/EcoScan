@@ -11,18 +11,19 @@ export default function SurveyButton({ cooldownEndsAt }: { cooldownEndsAt?: numb
   const { inCooldown, label } = useCooldown(cooldownEndsAt);
 
   const handleClick = () => {
-    if (inCooldown) r.push("/verify"); else r.push("/carbon-footprint");
+    // Always navigate to the survey page for now.
+    r.push("/carbon-footprint");
   };
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      aria-disabled={inCooldown}
+      disabled={inCooldown}
       className={cn(
         "h-20 text-base md:h-24 w-full rounded-md px-4 py-3 font-semibold transition flex flex-col items-center justify-center select-none",
         inCooldown
-          ? "bg-gray-300 text-gray-700 cursor-pointer opacity-80"
+          ? "bg-gray-300 text-gray-700 cursor-not-allowed opacity-70"
           : "bg-primary text-primary-foreground hover:bg-primary/90"
       )}
       title={inCooldown ? t('scan_card_footprint_cooldown') : t('scan_card_footprint_button')}
