@@ -27,6 +27,7 @@ import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
+import { computePointsFromKgRegionAware, RegionKey } from '@/lib/carbon-calculator';
 
 type CarbonFootprintSurveyProps = {
   onBack: () => void;
@@ -84,7 +85,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
      if (userProfileRef && userProfile) {
         // Add the bonus points to the user's total.
         // We subtract the provisional points that were already added.
-        const provisionalPoints = Math.round(results.sustainabilityScore * 0.5);
+        const provisionalPoints = surveyPoints;
         const currentPoints = userProfile.totalPoints || 0;
         const newPoints = Math.max(0, currentPoints - provisionalPoints + bonusPoints);
         updateDocumentNonBlocking(userProfileRef, {
@@ -109,14 +110,9 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     startTransition(() => {
       analyzeCarbonFootprint({ ...formData, location: region, language })
         .then((analysisResults) => {
-          let points = 0;
-          if (analysisResults.estimatedFootprintKg > 30) {
-            const penalty = -Math.min(10, Math.round((analysisResults.estimatedFootprintKg - 30) / 2));
-            points = penalty;
-          } else {
-            points = Math.round(analysisResults.sustainabilityScore * 0.5);
-          }
-
+          const regionKey = region.split(',')[0].toLowerCase().replace(' ', '_') as RegionKey;
+          const points = computePointsFromKgRegionAware(analysisResults.estimatedFootprintKg, regionKey);
+          
           if (userProfileRef && userProfile) {
             const currentPoints = userProfile.totalPoints || 0;
             const newPoints = Math.max(0, currentPoints + points);
