@@ -1,4 +1,3 @@
-
 // Neutral baseline factors (pre-region scale)
 const TRANSPORT_KG = {
   car_gasoline: 28, // daily heavy-use proxy
@@ -12,7 +11,6 @@ const DIET_KG = {
   white_meat_fish: 8,
   vegetarian_vegan: 5,
   carb_based: 10,
-  vegan: 3,
 };
 
 const ENERGY_KG = {
