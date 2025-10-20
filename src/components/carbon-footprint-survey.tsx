@@ -114,9 +114,14 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           const calculatedBasePoints = pointsFromKgRegionAware(analysisResults.estimatedFootprintKg, regionKey);
           setBasePoints(calculatedBasePoints);
           
-          const points = surveyPoints < 0 ? surveyPoints : computeProvisional(calculatedBasePoints);
-          const penalty = analysisResults.estimatedFootprintKg > 85 ? -10 : 0;
-          const finalPoints = penalty !== 0 ? penalty : points;
+          let finalPoints = 0;
+          const penalty = analysisResults.estimatedFootprintKg > 30 ? -Math.round((analysisResults.estimatedFootprintKg - 30) / 2) : 0;
+
+          if (penalty < 0) {
+            finalPoints = Math.max(-10, penalty);
+          } else {
+            finalPoints = computeProvisional(calculatedBasePoints);
+          }
 
           if (userProfileRef && userProfile) {
             const currentPoints = userProfile.totalPoints || 0;
@@ -350,3 +355,5 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     </Card>
   );
 }
+
+    
