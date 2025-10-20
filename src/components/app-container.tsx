@@ -10,10 +10,6 @@ import {
   ChevronLeft,
   Sparkles,
   Award,
-  Video,
-  CircleDot,
-  Footprints,
-  Receipt,
   BookCopy,
   Languages,
   Globe,
@@ -23,10 +19,7 @@ import {
   MaterialIdentificationOutput,
 } from '@/ai/flows/material-identification-from-scan';
 import { identifyMaterialWithBarcode } from '@/ai/flows/confidence-based-assistance';
-import { processReceipt, ReceiptOutput } from '@/ai/flows/receipt-ocr-flow';
 import { verifyDisposalAction, VerifyDisposalActionOutput } from '@/ai/flows/verify-disposal-action';
-import { verifySustainabilityAction } from '@/ai/flows/verify-sustainability-action';
-import { CarbonFootprintOutput, analyzeCarbonFootprint } from '@/ai/flows/carbon-footprint-analysis';
 
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
@@ -46,7 +39,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -54,24 +46,15 @@ import { useToast } from '@/hooks/use-toast';
 import { TranslationProvider, useTranslation } from '@/hooks/use-translation';
 import { MaterialIcon } from './material-icon';
 import { RewardsSection } from './rewards-section';
-import { CarbonFootprintSurvey } from './carbon-footprint-survey';
 import { GuideSection } from './guide-section';
 import { cn } from '@/lib/utils';
 import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
 import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { differenceInMilliseconds, addHours } from 'date-fns';
 import { getPointsForMaterial } from '@/lib/points';
+import SurveyButton from './survey-button';
 
 
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'carbonFootprint' | 'receipt' | 'guide' | 'verifySustainability';
-
-function formatTimeLeft(milliseconds: number) {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
+export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide';
 
 const AppContainerWithTranslations = () => {
     const [language, setLanguage] = useState('en');
@@ -108,11 +91,7 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
   const [barcodeNumber, setBarcodeNumber] = useState('');
   const [identifiedMaterial, setIdentifiedMaterial] =
     useState<MaterialIdentificationOutput | null>(null);
-  const [receiptResult, setReceiptResult] = useState<ReceiptOutput | null>(null);
-  const [surveyResults, setSurveyResults] = useState<CarbonFootprintOutput | null>(null);
-  const [sustainabilityRecommendations, setSustainabilityRecommendations] = useState<string[]>([]);
-  const [surveyPoints, setSurveyPoints] = useState(0);
-  const [showReceiptResultModal, setShowReceiptResultModal] = useState(false);
+  
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Identifying material...');
@@ -122,9 +101,6 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(
     null
   );
-  const [showCameraAlert, setShowCameraAlert] = useState(false);
-  const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number | null>(null);
-  const [region, setRegion] = useState('Dubai, UAE');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -139,6 +115,7 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
     [firestore, user]
   );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+  const [region, setRegion] = useState('Dubai, UAE');
 
   useEffect(() => {
     const savedRegion = localStorage.getItem('app-region');
@@ -166,7 +143,7 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
 
 
   useEffect(() => {
-    if (step === 'camera' || step === 'receipt' || step === 'verifyDisposal' || step === 'verifySustainability') {
+    if (step === 'camera' || step === 'verifyDisposal') {
       const getCameraPermission = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
@@ -180,8 +157,6 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
         } catch (error) {
           console.error('Error accessing camera:', error);
           setHasCameraPermission(false);
-          setShowCameraAlert(true);
-          setTimeout(() => setShowCameraAlert(false), 5000); // Auto-dismiss alert
           toast({
             variant: 'destructive',
             title: t('camera_not_found_title'),
@@ -229,30 +204,6 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
 
   const lastSurveyTimestamp = userProfile?.lastCarbonSurveyDate as Timestamp | undefined;
 
-  useEffect(() => {
-    if (!lastSurveyTimestamp) {
-      setCooldownTimeLeft(null);
-      return;
-    }
-
-    const lastSurveyDate = lastSurveyTimestamp.toDate();
-    const cooldownEndDate = addHours(lastSurveyDate, 24);
-
-    const interval = setInterval(() => {
-      const now = new Date();
-      const timeLeft = differenceInMilliseconds(cooldownEndDate, now);
-      if (timeLeft <= 0) {
-        setCooldownTimeLeft(null);
-        clearInterval(interval);
-      } else {
-        setCooldownTimeLeft(timeLeft);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [lastSurveyTimestamp]);
-
-
   const userPoints = userProfile?.totalPoints ?? 0;
   
   const resetState = () => {
@@ -260,26 +211,13 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
     setScannedImage(null);
     setBarcodeNumber('');
     setIdentifiedMaterial(null);
-    setReceiptResult(null);
-    setSurveyResults(null);
     setIsLoading(false);
     setHasCameraPermission(null);
-    setSurveyPoints(0);
   };
   
   const processImage = (dataUri: string) => {
-    if (step === 'receipt') {
-      processReceiptImage(dataUri);
-      return;
-    }
-
     if (step === 'verifyDisposal') {
       handleDisposalVerification(dataUri);
-      return;
-    }
-
-    if (step === 'verifySustainability') {
-      handleSustainabilityVerification(dataUri);
       return;
     }
     
@@ -309,37 +247,6 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
     });
   };
 
-  const processReceiptImage = (dataUri: string) => {
-    setIsLoading(true);
-    setLoadingMessage(t('loading_receipt'));
-    setScannedImage(dataUri);
-    startTransition(() => {
-      processReceipt({ receiptImageUri: dataUri })
-        .then((result) => {
-          if (result.isValidReceipt && result.merchantName && result.totalAmount) {
-             setReceiptResult(result);
-             setShowReceiptResultModal(true);
-          } else {
-            toast({
-              variant: 'destructive',
-              title: t('toast_invalid_receipt_title'),
-              description: t('toast_invalid_receipt_description'),
-            });
-          }
-          setStep('carbonFootprint');
-        })
-        .catch((error) => {
-          console.error('AI Error:', error);
-          toast({
-            variant: 'destructive',
-            title: t('toast_receipt_failed_title'),
-            description: t('toast_receipt_failed_description'),
-          });
-          setStep('carbonFootprint');
-        })
-        .finally(() => setIsLoading(false));
-    });
-  };
 
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
@@ -453,72 +360,9 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
     });
   };
 
-  const handleSustainabilityVerification = (actionImage: string) => {
-    if (sustainabilityRecommendations.length === 0) return;
-    
-    const penaltyAmount = Math.abs(surveyPoints); 
-    const bonusPoints = 15;
-
-    setIsLoading(true);
-    setLoadingMessage(t('loading_action'));
-
-    startTransition(() => {
-      verifySustainabilityAction({
-        recommendations: sustainabilityRecommendations,
-        photoOfActionUri: actionImage,
-      })
-      .then((result) => {
-        if (result.isValid) {
-          const totalPointsAwarded = penaltyAmount + bonusPoints;
-          setAnimatePoints(`+${totalPointsAwarded}`);
-
-          if (userProfileRef && userProfile) {
-            const currentPoints = userProfile.totalPoints || 0;
-            const newPoints = Math.max(0, currentPoints + totalPointsAwarded);
-            updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
-          }
-          toast({
-            title: t('toast_action_verified_title'),
-            description: t('toast_action_verified_description', {points: totalPointsAwarded}),
-          });
-        } else {
-          toast({
-            variant: 'destructive',
-            title: t('toast_verification_failed_title'),
-            description: result.reason,
-          });
-        }
-      })
-      .catch((err) => {
-        toast({
-          variant: 'destructive',
-          title: t('toast_verification_error_title'),
-          description: t('toast_verification_error_description'),
-        });
-      })
-      .finally(() => {
-        setIsLoading(false);
-        setStep('carbonFootprint'); // Go back to survey results after attempt
-        setTimeout(() => setAnimatePoints(false), 2000);
-      });
-    });
-  };
-
   const handleConfirmDisposal = () => {
     setStep('verifyDisposal'); 
   };
-  
-  const handleSurveyComplete = (points: number, analysisResults: CarbonFootprintOutput) => {
-    setSurveyResults(analysisResults);
-    setSustainabilityRecommendations([...analysisResults.recommendations, ...analysisResults.extraTips]);
-    setSurveyPoints(points);
-
-    const pointString = points >= 0 ? `+${points}` : `${points}`;
-    setAnimatePoints(pointString + ' ' + t('header_points'));
-     setTimeout(() => {
-      setAnimatePoints(false), 1500;
-    });
-  }
   
   const handleOpenSettings = () => {
     setShowSettingsModal(true);
@@ -548,18 +392,7 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
                 <Camera className="mr-2" />
                 {t('scan_card_scan_button')}
               </Button>
-              <Button size="lg" variant="outline" onClick={() => {
-                setSurveyResults(null);
-                setReceiptResult(null);
-                setStep('carbonFootprint');
-              }} className="h-20 text-base md:h-24">
-                <Footprints className="mr-2" />
-                {cooldownTimeLeft ? (
-                  <span className="text-center text-sm leading-tight">{t('scan_card_footprint_cooldown')}<br /><span className="font-mono text-base">{formatTimeLeft(cooldownTimeLeft)}</span></span>
-                ) : (
-                  t('scan_card_footprint_button')
-                )}
-              </Button>
+              <SurveyButton cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} />
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
                <Button variant="link" onClick={() => setStep('rewards')}>
@@ -570,27 +403,15 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
           </Card>
         );
       case 'camera':
-      case 'receipt':
       case 'verifyDisposal':
-      case 'verifySustainability':
         let backStep: Step = 'scan';
         let title = t('camera_scan_item_title');
         let description = t('camera_scan_item_description');
 
-        if (step === 'receipt') {
-          backStep = 'carbonFootprint';
-          title = t('camera_scan_receipt_title');
-          description = t('camera_scan_receipt_description');
-        }
         if (step === 'verifyDisposal') {
           backStep = 'confirm';
           title = t('camera_verify_disposal_title');
           description = t('camera_verify_disposal_description');
-        }
-        if (step === 'verifySustainability') {
-            backStep = 'carbonFootprint';
-            title = t('camera_verify_action_title');
-            description = t('camera_verify_action_description');
         }
 
         return (
@@ -619,22 +440,13 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
                   ref={videoRef}
                   className={cn(
                     'w-full h-full object-cover',
-                    hasCameraPermission === false && 'hidden'
+                    !hasCameraPermission && 'hidden'
                   )}
                   autoPlay
                   muted
                   playsInline
                 />
-                {showCameraAlert && hasCameraPermission === false && (
-                  <Alert variant="destructive" className="w-auto">
-                    <Video className="h-4 w-4" />
-                    <AlertTitle>{t('camera_not_found_title')}</AlertTitle>
-                    <AlertDescription>
-                     {t('camera_not_found_description')}
-                    </AlertDescription>
-                  </Alert>
-                )}
-                {hasCameraPermission === null && (
+                 {!hasCameraPermission && (
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 )}
               </div>
@@ -644,15 +456,15 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
               <Button
                 size="lg"
                 onClick={handleCapture}
-                disabled={hasCameraPermission !== true}
+                disabled={!hasCameraPermission}
               >
-                <CircleDot className="mr-2" /> {t('camera_capture_button')}
+                <Camera className="mr-2" /> {t('camera_capture_button')}
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={step === 'verifyDisposal' || step === 'verifySustainability'}
+                disabled={step === 'verifyDisposal'}
               >
                 {t('camera_upload_button')}
               </Button>
@@ -728,8 +540,6 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
         );
       case 'rewards':
         return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
-      case 'carbonFootprint':
-        return <CarbonFootprintSurvey onBack={resetState} onScanReceipt={() => setStep('receipt')} userProfile={userProfile} onSurveyComplete={handleSurveyComplete} onSecondChance={() => setStep('verifySustainability')} results={surveyResults} surveyPoints={surveyPoints} receiptResult={receiptResult} region={region} language={currentLanguage} />;
       case 'guide':
         return <GuideSection onBack={() => setStep('scan')} />;
       default:
@@ -854,39 +664,6 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
             </div>
             <DialogFooter>
               <Button onClick={() => setShowSettingsModal(false)}>{t('settings_close_button')}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showReceiptResultModal} onOpenChange={setShowReceiptResultModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="font-headline">{t('toast_receipt_failed_title')}</DialogTitle>
-              <DialogDescription>
-                Here is the data we extracted. You can now close this and get your 500% point bonus!
-              </DialogDescription>
-            </DialogHeader>
-            {receiptResult && (
-                <div className="text-sm space-y-2">
-                    <p><strong>Merchant:</strong> {receiptResult.merchantName}</p>
-                    <p><strong>Total:</strong> {receiptResult.totalAmount} {receiptResult.currency}</p>
-                    <p><strong>Date:</strong> {receiptResult.receiptDatetime ? new Date(receiptResult.receiptDatetime).toLocaleString() : 'N/A'}</p>
-                    {receiptResult.lineItems && receiptResult.lineItems.length > 0 && (
-                        <div>
-                            <strong>Items:</strong>
-                            <ul className="list-disc pl-5">
-                                {receiptResult.lineItems.map((item, index) => (
-                                    <li key={index}>{item.name} - {item.amount}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            )}
-            <DialogFooter>
-              <Button onClick={() => setShowReceiptResultModal(false)}>
-                {t('settings_close_button')}
-              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
