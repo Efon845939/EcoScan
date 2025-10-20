@@ -76,7 +76,7 @@ export async function analyzeCarbonFootprint(
   // Map form data to the stricter types required by the deterministic calculator.
   // We'll take the first selection as the primary mode for calculation.
   const transportMode = getPrimaryInput<Transport>(input.transport, 'walk_bike');
-  const dietMode = getPrimaryInput<Diet>(input.diet, 'vegan');
+  const dietMode = getPrimaryInput<Diet>(input.diet, 'vegetarian_vegan');
   
   // A simple mapping for energy text input to a category.
   const energyText = input.energy.toLowerCase();
