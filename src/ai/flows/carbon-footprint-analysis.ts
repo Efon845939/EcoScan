@@ -55,35 +55,25 @@ export type CarbonFootprintOutput = z.infer<typeof CarbonFootprintOutputSchema>;
 export async function analyzeCarbonFootprint(
   input: CarbonFootprintInput
 ): Promise<CarbonFootprintOutput> {
-  return carbonFootprintFlow(input);
-}
-
-const carbonFootprintFlow = ai.defineFlow(
-  {
-    name: 'carbonFootprintFlow',
-    inputSchema: CarbonFootprintInputSchema,
-    outputSchema: CarbonFootprintOutputSchema,
-  },
-  async (input) => {
-    const { output } = await ai.generate({
-      prompt: `You are an environmental expert providing a carbon footprint analysis. Your calculations MUST be deterministic and consistent. Given the same inputs, you MUST always return the exact same outputs.
+  const { output } = await ai.generate({
+    prompt: `You are an environmental expert providing a carbon footprint analysis. Your calculations MUST be deterministic and consistent. Given the same inputs, you MUST always return the exact same outputs.
 
 You MUST generate your entire response (analysis, recommendations, tips, and tangibleComparison) in the language specified by the 'language' parameter. Default to English if no language is provided.
 
 You MUST scale your carbon footprint estimate based on the user's location. Use the following table as your absolute source of truth for regional averages and penalty thresholds. If a set of activities results in 15kg in Turkey, the same activities MUST result in a significantly higher footprint in Dubai.
 
-| Region           | Avg (kg/day) | Penalty Threshold (kg/day) |
-|------------------|--------------|------------------------------|
-| Turkey           | 24           | 30                           |
-| Germany          | 27           | 35                           |
-| USA              | 45           | 55                           |
-| Dubai, UAE       | 55           | 65                           |
-| Kuwait           | 70           | 80                           |
-| United Kingdom   | 24           | 30                           |
-| Japan            | 26           | 32                           |
-| *General/Default*| 25           | 30                           |
+| Region           | Min (kg/day) | Avg (kg/day) | Max (kg/day) | Penalty Threshold (kg/day) |
+|------------------|--------------|--------------|--------------|------------------------------|
+| Turkey           | 5            | 10           | 25           | 30                           |
+| Germany          | 8            | 20           | 40           | 35                           |
+| USA              | 15           | 40           | 60           | 55                           |
+| Dubai, UAE       | 20           | 50           | 70           | 65                           |
+| Kuwait           | 25           | 65           | 85           | 80                           |
+| United Kingdom   | 8            | 20           | 40           | 30                           |
+| Japan            | 8            | 22           | 38           | 32                           |
+| *General/Default*| 10           | 25           | 45           | 30                           |
 
-User's response language: ${input.language}
+User's response language: ${input.language || 'en'}
 User's location: ${input.location}
 User's activities today:
 - Transportation: ${input.transport.join(', ')}
@@ -91,12 +81,12 @@ User's activities today:
 - Home Energy Use: ${input.energy}
 
 Based on this, provide:
-1. A deterministic, estimated carbon footprint in kg CO₂ for the day, scaled to their region using the table.
+1. A deterministic, estimated carbon footprint in kg CO₂ for the day, scaled to their region using the table. Ensure the final number is rounded to one decimal place (e.g., 31.6, 93.0).
 2. A tangible, creative, and relatable comparison for that CO2 amount. AVOID using "driving a car" as the comparison.
 3. A short, positive, and encouraging analysis of their day.
 4. A list of 2-3 simple, actionable recommendations for how they could reduce their footprint tomorrow, tailored to their activities.
 5. A list of 2-3 additional, general tips for what the user can do today to keep their footprint low.
-6. A 'sustainabilityScore' from 1 to 10. A score of 10 means very sustainable (low carbon footprint), and 1 means not sustainable (high carbon footprint).
+6. A 'sustainabilityScore' from 1 to 10. A score of 10 means very sustainable (low carbon footprint), and 1 means not sustainable (high carbon footprint). This score should also be deterministic.
 `,
       output: {
         schema: CarbonFootprintOutputSchema,
