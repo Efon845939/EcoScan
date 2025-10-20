@@ -36,11 +36,11 @@
   "rewards_redeemed_description": "İndiriminizin tadını çıkarın. Katkınız için teşekkür ederiz!",
   "rewards_back_button": "Ana Menüye Geri Dön",
   "rewards": {
-    "free_coffee": { "title": "Ücretsiz Kahve", "partner": "The Daily Grind" },
-    "groceries_5_off": { "title": "Market Alışverişinde 5$ İndirim", "partner": "Green Grocer" },
-    "clothes_10_off": { "title": "Kıyafette 10$ İndirim", "partner": "Eco Threads" },
-    "movie_ticket": { "title": "Ücretsiz Sinema Bileti", "partner": "Cineplex Green" },
-    "shoes_15_off": { "title": "Ayakkabıda 15$ İndirim", "partner": "Sustainable Soles" }
+    "free_coffee": { "title": "Ücretsiz Kahve", "partner": "Günlük Mola" },
+    "groceries_5_off": { "title": "Market Alışverişinde 5$ İndirim", "partner": "Yeşil Bakkal" },
+    "clothes_10_off": { "title": "Kıyafette 10$ İndirim", "partner": "Eko-Moda" },
+    "movie_ticket": { "title": "Ücretsiz Sinema Bileti", "partner": "Yeşil Sinema" },
+    "shoes_15_off": { "title": "Ayakkabıda 15$ İndirim", "partner": "Sürdürülebilir Adımlar" }
   },
   "survey_title": "Günlük Ayak İziniz",
   "survey_description": "Bugünkü karbon ayak izinizin bir tahminini almak için birkaç soruyu yanıtlayın. Yemeğinizden sonra fişinizi almayı ve karbon ayak izinizi onaylamayı unutmayın.",
