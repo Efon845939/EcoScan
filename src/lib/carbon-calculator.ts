@@ -98,11 +98,16 @@ export function pointsFromKgRegionAware(kg: number, region: RegionKey): number {
   }
 }
 
+export function penaltyIfOutOfRange(rawKg: number, region: RegionKey) {
+    const { max } = REGIONS[region] || REGIONS.default;
+    return rawKg > max * 1.05 ? -10 : 0;
+}
+
+
 export function computeProvisional(basePoints: number) {
   return Math.floor(basePoints * 0.10);
 }
 
 export function finalizeWithReceipt(basePoints: number) {
-  return basePoints * 5; // 500% of base, replaces provisional
+  return basePoints * 3; // 300% of base, replaces provisional
 }
-

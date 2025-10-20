@@ -27,7 +27,7 @@ import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
-import { pointsFromKgRegionAware, RegionKey, computeProvisional, finalizeWithReceipt } from '@/lib/carbon-calculator';
+import { pointsFromKgRegionAware, RegionKey, computeProvisional, finalizeWithReceipt, penaltyIfOutOfRange } from '@/lib/carbon-calculator';
 
 type CarbonFootprintSurveyProps = {
   onBack: () => void;
@@ -128,25 +128,13 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           setBasePoints(calculatedBasePoints);
           
           let finalPoints = 0;
-          const penaltyThresholdKg = 30; // This is a global value and likely part of the bug.
-          
-          // Let's use the new robust calculation.
-          const points = pointsFromKgRegionAware(analysisResults.estimatedFootprintKg, regionKey);
-          
-          // Check for penalty case separately
-          const rawFootprint = analysisResults.estimatedFootprintKg; // Assuming this is the "raw" pre-clamped value if we had one.
-          const regionMax = 85; // Example for Kuwait, should come from REGIONS
-          
-          let penaltyPoints = 0;
-          if (rawFootprint > regionMax * 1.05) { // User's suggestion
-              penaltyPoints = -10;
-          }
+          const penalty = penaltyIfOutOfRange(analysisResults.estimatedFootprintKg, regionKey);
 
-          if (penaltyPoints < 0) {
-              finalPoints = penaltyPoints;
+          if (penalty < 0) {
+              finalPoints = penalty;
           } else {
              // If not getting a penalty, award provisional points
-            finalPoints = computeProvisional(points);
+            finalPoints = computeProvisional(calculatedBasePoints);
           }
 
 

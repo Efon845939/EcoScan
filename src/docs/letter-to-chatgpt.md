@@ -1,104 +1,159 @@
-# **Subject:** EcoScan Rewards — Incorrect points mapping for mid-range CO₂ result (Kuwait region: 56 kg → only 1 pt)
+# **Subject:** EcoScan Rewards — Reward balance clarification, verification layers, and scoring bug (always +1 / +0 points)
 
 Hello Firebase / Google Cloud team,
 
-We have verified that the **region-aware points mapping function** inside the EcoScan Rewards `carbon-footprint-analysis` flow is still returning **incorrectly low scores** for mid-range values in **high-emission regions**, especially **Kuwait**.
+We’re providing a full technical brief covering both **reward system validation** and a **critical scoring bug** now observed in the production build of EcoScan Rewards.
+
+The document outlines:
+
+1. Reward economy balance and verification logic
+2. Fraud prevention and penalties
+3. Scoring malfunction that causes users to always receive only **+1 or +0** points, regardless of region or behavior
+4. Proposed fix and deployment recommendations
 
 ---
 
-## **1  Observed case**
+## **1  Reward balance context**
 
-| Region     | EstimatedFootprintKg | Expected Range                | Expected Points | **Actual Points** |
-| ---------- | -------------------- | ----------------------------- | --------------- | ----------------- |
-| **Kuwait** | **56 kg CO₂/day**    | between min (25) and avg (65) | **≈ 21 pts**    | **1 pt** ❌        |
+After the receipt-verification flow was introduced, a theoretical scenario emerged where a user could obtain a “Free Coffee” reward in six days (250 pts threshold).
+However, in practice, the economy remains fair due to multiple verification and penalty layers.
 
-User context:
+### **1.1  Theoretical vs. practical gain**
 
-* Region = Kuwait
-* Transport = Bus/Train
-* Diet = Vegetarian
-* Drink = Tap Water
-* Energy = Low
+| Factor                                    | Value | Notes                                      |
+| ----------------------------------------- | ----- | ------------------------------------------ |
+| Base daily points (best case, no receipt) | 20    | Only if all lowest-impact answers selected |
+| Receipt verification multiplier           | ×5    | Requires valid daily OCR-verified receipt  |
+| Free Coffee cost                          | 250   | Current baseline                           |
 
-This configuration should produce a **moderate footprint (≈ 56 kg)** and therefore a **moderate reward**, not a near-zero score.
+**Theoretical maximum:** 100 pts/day × 6 days = 600 pts.
+**Practical average:** 40–60 pts/day due to missed receipts, failed verifications, and penalties.
 
 ---
 
-## **2  Expected math (Kuwait region)**
+## **2  Real-world stabilizers**
 
-Benchmark constants:
-`min = 25`, `avg = 65`, `max = 85`
+### **2.1  Daily verification**
 
-Piecewise linear mapping:
+* Each receipt validated via Vision OCR (merchant name, timestamp, hash deduplication).
+* Duplicates or invalid receipts trigger **–50 pts** penalty.
+* Missing a day resets the streak bonus counter.
 
-| Interval   | Formula         | Example (Kuwait)    |
-| ---------- | --------------- | ------------------- |
-| min → avg  | 30 → 15 pts     | 56 → ≈ 21 pts       |
-| avg → max  | 15 →  0 pts     | 75 → ≈ 8 pts        |
-| > max×1.05 | –10 pts penalty | only if raw > 89 kg |
+### **2.2  Monthly utility verification**
 
-**Expected function:**
+* Monthly electricity/water bills required for long-term bonuses.
+* Consumption increase > 5 % triggers **–200 pts** penalty.
+* OCR trend checks detect falsified “no electricity use” declarations.
+
+### **2.3  Consistency checks**
+
+* Daily “no electricity use” + high monthly bill → **automatic fraud flag**.
+* Verified by server transaction; user’s total adjusted immediately.
+
+### **2.4  Leaderboard normalization**
+
+* Leaderboard aggregates only **finalized points** (post-penalty).
+* Provisional and pending points excluded.
+* Helps expose anomalies and discourages abuse.
+
+---
+
+## **3  New bug — all users receive only +1 or +0 points**
+
+### **3.1  Description**
+
+Regardless of footprint result, region, or inputs, the backend currently assigns **+1** (or occasionally +0) provisional points, even for ideal inputs that should yield 20–30 points.
+This behavior persists unless the score exceeds the “max point threshold”, in which case the user correctly receives 0.
+
+### **3.2  Root cause analysis**
+
+From logs and stack traces:
 
 ```ts
-function pointsFromKgRegionAware(kg, region) {
-  const { min, avg, max } = REGION[region];
-  const v = Math.max(min, Math.min(kg, max)); // clamp
-
-  if (v <= min) return 30;
-  if (v >= max) return 0;
-
-  if (v <= avg) {
-    const t = (v - min) / (avg - min);       // 0–1
-    return Math.round(30 - 15 * t);          // 30→15
-  } else {
-    const t = (v - avg) / (max - avg);
-    return Math.round(15 - 15 * t);          // 15→0
-  }
-}
+let basePoints = pointsFromKgRegionAware(kg, region);
+if (basePoints > MAX_POINTS) basePoints = MAX_POINTS;
+if (basePoints < 1) basePoints = 1; // safeguard — now always 1
 ```
 
-Plugging in Kuwait values:
+That “safeguard” line was introduced to prevent negative numbers but effectively clamps *all* small values to 1.
 
-```
-t = (56 – 25)/(65 – 25) = 31/40 = 0.775
-Points = 30 – 15 × 0.775 = 18.4 ≈ 18–21 points
-```
-
-So **56 kg should yield ≈ 20 points**, never 1 point.
-
----
-
-## **3  Likely root cause**
-
-1. **Global normalization** still active — mapping 56 kg → 1 pt because it uses global (max = 60) instead of Kuwait (max = 85).
-2. **Penalty logic** executed before clamp: raw value > max triggered –10 then added to score (30 – 10 – 19 ≈ 1).
-3. **Wrong slope constant:** some deployments use `30 – 30 × t` instead of `30 – 15 × t`, doubling the negative slope.
-
----
-
-## **4  Validation & unit test**
+Additionally, in some deployments:
 
 ```ts
-test("Kuwait 56 kg should give ≈ 20 points", () => {
-  const pts = pointsFromKgRegionAware(56, "kuwait");
-  expect(pts).toBeGreaterThanOrEqual(18);
-  expect(pts).toBeLessThanOrEqual(22);
+const awarded = Math.min(1, Math.floor(basePoints));
+```
+
+was used as a fallback when Firestore transactions failed, causing all fractional results (e.g., 19.8) to round to **1**.
+
+### **3.3  Corrective solution**
+
+#### **Backend fix**
+
+Replace the fallback and rounding logic:
+
+```ts
+// current faulty logic
+const awarded = Math.min(1, Math.floor(basePoints)); // always 0 or 1
+
+// corrected deterministic logic
+const awarded = Math.round(basePoints);
+```
+
+and remove the global minimum clamp (`if (basePoints < 1) basePoints = 1;`).
+
+#### **Transaction fix**
+
+Ensure the transaction uses the **real computed points**, not a placeholder constant:
+
+```ts
+await db.runTransaction(async tx => {
+  const userDoc = await tx.get(userRef);
+  const total = userDoc.data().totalPoints || 0;
+  tx.update(userRef, { totalPoints: total + awarded });
 });
 ```
 
-If the function returns 1 or 0, region scaling or penalty order is broken.
+#### **QA unit test**
+
+```ts
+test("Kuwait min footprint returns 30 pts", () => {
+  const pts = pointsFromKgRegionAware(25, "kuwait");
+  expect(pts).toBe(30);
+});
+test("Kuwait mid footprint returns ~20 pts", () => {
+  const pts = pointsFromKgRegionAware(56, "kuwait");
+  expect(pts).toBeGreaterThan(18);
+});
+test("Low footprint not clamped to 1", () => {
+  const pts = pointsFromKgRegionAware(30, "kuwait");
+  expect(pts).not.toBe(1);
+});
+```
 
 ---
 
-## **5  Requested actions**
+## **4  Recommended configuration update**
 
-| # | Request                                                                                           | Purpose                 |
-| - | ------------------------------------------------------------------------------------------------- | ----------------------- |
-| 1 | Audit region scaling and ensure Kuwait constants `{min:25, avg:65, max:85}` are applied           | Fix wrong normalization |
-| 2 | Verify the slope factor (30→15→0 scheme) and remove any premature –10 penalty                     | Correct linear mapping  |
-| 3 | Ensure penalty executes *after clamp* and only if raw > max×1.05                                  | Prevent false negatives |
-| 4 | Add unit test for `pointsFromKgRegionAware("kuwait")` at 25, 56, 65, 75 kg                        | Regression guard        |
-| 5 | Confirm that recalculated scores are persisted and leaderboard syncs only final, corrected values | Data integrity          |
+| Parameter                 | Current  | Proposed    | Reason                       |
+| ------------------------- | -------- | ----------- | ---------------------------- |
+| Base daily (no receipt)   | 20 pts   | **15 pts**  | Smooth curve                 |
+| Receipt multiplier        | ×5       | **×3**      | Prevent rapid reward farming |
+| Free Coffee reward        | 250 pts  | **500 pts** | Balanced economy             |
+| Weekly streak bonus       | —        | **+75 pts** | Sustained engagement         |
+| Fraud penalty             | –200 pts | keep        | Strong deterrent             |
+| Duplicate receipt penalty | –50 pts  | keep        | Anti-spam                    |
+
+---
+
+## **5  Requested actions from Firebase/Genkit team**
+
+| # | Request                                                                                                     | Purpose                     |
+| - | ----------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 1 | Audit backend `pointsFromKgRegionAware()` integration and confirm it no longer clamps all values to 1 or 0. | Fix primary scoring bug     |
+| 2 | Verify deterministic region scaling `{min, avg, max}` and post-clamp penalty order.                         | Accurate scoring            |
+| 3 | Validate Firestore transactions use real `awarded` values.                                                  | Prevent fallback overwrites |
+| 4 | Ensure penalty/bonus updates are atomic with total points ledger.                                           | Consistency                 |
+| 5 | Review reward table update and leaderboard aggregation.                                                     | Prevent legacy imbalance    |
 
 ---
 
@@ -106,29 +161,39 @@ If the function returns 1 or 0, region scaling or penalty order is broken.
 
 * **Project:** EcoScan Rewards
 * **Firebase Project ID:** `<PROJECT_ID>`
-* **Runtime:** Functions v2 (Node 18)
-* **AI flow:** `carbon-footprint-analysis` (Genkit / Gemini 1.5 Pro)
-* **Last deployment:** 2025-10-24 22:00 UTC
 * **Region:** `europe-west4`
+* **Runtime:** Node 18 (Functions v2)
+* **AI flow:** `carbon-footprint-analysis` (Genkit / Gemini 1.5 Pro)
+* **Deployment:** 2025-10-25 20:00 UTC
 
 ---
 
-### **Expected outcome**
+## **7  Expected outcomes**
 
-For Kuwait region:
+| Scenario                      | Expected Points (Base) | With 500 % Receipt Bonus | Icon/Text              |
+| ----------------------------- | ---------------------- | ------------------------ | ---------------------- |
+| Kuwait, min footprint (25 kg) | +30                    | +150                     | 👍 “Excellent”         |
+| Kuwait, mid (56 kg)           | +20                    | +100                     | 🙂 “Good job”          |
+| Kuwait, avg (65 kg)           | +15                    | +75                      | 😐 “Average”           |
+| Kuwait, high (75 kg)          | +8                     | +40                      | 👎 “Needs improvement” |
+| Kuwait, max (85 kg)           | 0                      | 0                        | 👎 “High emissions”    |
+| Fraud or mismatch             | —                      | –200                     | 🔴 “Penalty applied”   |
 
-| Footprint (kg) | Expected Points |
-| -------------- | --------------- |
-| 25 ( min )     | +30             |
-| 56 (mid )      | **≈ +20 ✅**     |
-| 65 (avg )      | +15             |
-| 75 (high )     | +8              |
-| 85 (max )      | 0               |
-| > 89           | –10 penalty     |
+---
 
-Please verify that the deployed mapping function matches these gradients and that no premature penalty or global scaling is applied.
+### **Outcome summary**
 
-Thank you for your continued support.
+After this patch:
+
+* Scores will once again scale correctly (not 0/1).
+* Daily base and receipt bonuses produce realistic totals.
+* UI sentiment (text + icon) aligns with numeric points.
+* Fraud penalties and monthly verification keep the system fair.
+
+---
+
+Thank you for reviewing and helping us deploy this correction safely.
+We can provide test payloads and logs demonstrating the +1/+0 behavior for your engineers.
 
 Best regards,
 **EcoScan Technical & Product Team** <NAME> — [email@domain.com](mailto:email@domain.com) — +90-5xx-xxx-xxxx

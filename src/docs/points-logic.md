@@ -55,9 +55,9 @@ To ensure fairness, penalties and rewards are scaled based on regional daily COâ
     *   This results in a small initial reward (e.g., 1-3 points).
 
 3.  **Receipt Verification Bonus:**
-    *   If a user successfully scans a receipt, their provisional points are replaced by a much larger bonus.
-    *   **Formula:** `Final Points = Base Points * 5`
-    *   This is a 5x multiplier on the initial `Base Points`, not the provisional ones.
+    *   If a user successfully scans a receipt, their provisional points are replaced by a larger bonus.
+    *   **Formula:** `Final Points = Base Points * 3`
+    *   This is a 3x multiplier on the initial `Base Points`, not the provisional ones.
 
 4.  **Second Chance Bonus:**
     *   If a user receives a penalty, they can perform one of the AI-recommended actions and submit photo proof.
@@ -73,7 +73,7 @@ This logic is defined in `src/components/rewards-section.tsx`.
 
 | Reward                | Partner Store         | Points Cost |
 |-----------------------|-----------------------|-------------|
-| **Free Coffee**       | The Daily Grind       | 450         |
+| **Free Coffee**       | The Daily Grind       | 500         |
 | **$5 Off Groceries**  | Green Grocer          | 900         |
 | **$10 Off Clothes**   | Eco Threads           | 1200        |
 | **Free Movie Ticket** | Cineplex Green        | 1600        |

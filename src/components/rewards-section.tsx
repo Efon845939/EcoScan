@@ -14,7 +14,7 @@ import { useTranslation } from '@/hooks/use-translation';
 export const rewards = [
   {
     id: "free_coffee",
-    points: 450,
+    points: 500,
     imageId: 'reward-partner-1',
     icon: Ticket,
   },
