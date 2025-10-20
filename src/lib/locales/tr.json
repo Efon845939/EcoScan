@@ -60,6 +60,7 @@
   },
   "survey_q3": "Evdeki enerji kullanımınız nasıldı?",
   "survey_q3_placeholder": "Örn: Klima kullandım, ışıkları açık bıraktım...",
+  "survey_q3_no_energy": "Bugün evde elektrik kullanmadım",
   "survey_q4": "Bugün ağırlıklı olarak ne içtiniz?",
   "survey_q4_options": {
     "drink_coffee_milk": "Sütlü kahve veya sütlü içecekler",

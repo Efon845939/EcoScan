@@ -60,6 +60,7 @@
   },
   "survey_q3": "Wie war Ihr Energieverbrauch zu Hause?",
   "survey_q3_placeholder": "z.B. Klimaanlage benutzt, Lichter angelassen...",
+  "survey_q3_no_energy": "Ich habe heute zu Hause keinen Strom verbraucht",
   "survey_q4": "Was haben Sie heute hauptsächlich getrunken?",
   "survey_q4_options": {
     "drink_coffee_milk": "Kaffee mit Milch oder Milchgetränke",

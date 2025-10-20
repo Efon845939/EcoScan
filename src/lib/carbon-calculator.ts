@@ -24,6 +24,7 @@ const DRINK_KG = {
 
 
 const ENERGY_KG = {
+  none: 0,
   low: 6,
   medium: 12,
   high: 20,
@@ -60,23 +61,24 @@ export function computeCarbonKgDeterministic(
   drink: Drink,
   energy: Energy
 ): number {
+  // 1. Calculate base kg (neutral)
   const base =
     (TRANSPORT_KG[transport] || 0) +
     calcDailyDietDrinkKg(diet, drink) +
     (ENERGY_KG[energy] || 0);
 
-  // Scale to region average relative to a neutral anchor (here: Germany avg=20)
-  const neutralAvg = 20; // anchor
+  // 2. Apply regional scaling (anchor: neutral avg = 20)
+  const neutralAvg = 20;
   const regionData = REGIONS[region] || REGIONS['default'];
   const { min, avg, max } = regionData;
   const scale = avg / neutralAvg;
-
   let kg = base * scale;
   
-  // Final clamp and rounding to 0.1 kg
+  // 3. Clamp and round in one step
   kg = Math.max(min, Math.min(kg, max));
   return Number(kg.toFixed(1));
 }
+
 
 export function pointsFromKgRegionAware(kg: number, region: RegionKey): number {
   const regionData = REGIONS[region] || REGIONS.default;

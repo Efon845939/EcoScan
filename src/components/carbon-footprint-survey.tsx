@@ -58,6 +58,8 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
 
   const [isLoading, setIsLoading] = useState(false);
   const [basePoints, setBasePoints] = useState(0);
+   const [isNoEnergy, setIsNoEnergy] = useState(false);
+
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -74,8 +76,19 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   };
 
   const handleEnergyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+     if (isNoEnergy) return;
     setFormData((prev) => ({ ...prev, energy: e.target.value }));
   };
+
+  const handleNoEnergyChange = (checked: boolean) => {
+    setIsNoEnergy(checked);
+    if (checked) {
+      setFormData((prev) => ({ ...prev, energy: 'none' }));
+    } else {
+      setFormData((prev) => ({ ...prev, energy: '' }));
+    }
+  };
+
 
   const handleVerifyWithReceipt = () => {
     if (!results || !receiptResult || !receiptResult.isValidReceipt || basePoints === 0) return;
@@ -230,12 +243,23 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           </div>
           <div className="space-y-2">
             <Label htmlFor="energy">{t('survey_q3')}</Label>
-            <Input
-              id="energy"
-              placeholder={t('survey_q3_placeholder')}
-              value={formData.energy}
-              onChange={handleEnergyChange}
-            />
+             <Input
+                id="energy"
+                placeholder={t('survey_q3_placeholder')}
+                value={formData.energy}
+                onChange={handleEnergyChange}
+                disabled={isNoEnergy}
+              />
+              <div className="flex items-center space-x-2 pt-2">
+                <Checkbox
+                  id="no-energy"
+                  checked={isNoEnergy}
+                  onCheckedChange={handleNoEnergyChange}
+                />
+                <Label htmlFor="no-energy" className="font-normal">
+                  {t('survey_q3_no_energy')}
+                </Label>
+              </div>
           </div>
         </CardContent>
         <CardFooter>
