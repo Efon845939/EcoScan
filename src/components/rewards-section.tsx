@@ -14,32 +14,32 @@ import { useTranslation } from '@/hooks/use-translation';
 export const rewards = [
   {
     id: "free_coffee",
-    points: 250,
+    points: 450,
     imageId: 'reward-partner-1',
     icon: Ticket,
   },
   {
     id: "groceries_5_off",
-    points: 600,
+    points: 900,
     imageId: 'reward-partner-2',
     icon: ShoppingBasket,
   },
 
   {
     id: "clothes_10_off",
-    points: 850,
+    points: 1200,
     imageId: 'reward-partner-3',
     icon: Shirt,
   },
   {
     id: "movie_ticket",
-    points: 1200,
+    points: 1600,
     imageId: 'reward-partner-4',
     icon: Film,
   },
   {
     id: "shoes_15_off",
-    points: 1500,
+    points: 2000,
     imageId: 'reward-partner-5',
     icon: FootprintsIcon,
   },

@@ -81,8 +81,8 @@ This logic is defined in `src/components/rewards-section.tsx`.
 
 | Reward                | Partner Store         | Points Cost |
 |-----------------------|-----------------------|-------------|
-| **Free Coffee**       | The Daily Grind       | 250         |
-| **$5 Off Groceries**  | Green Grocer          | 600         |
-| **$10 Off Clothes**   | Eco Threads           | 850         |
-| **Free Movie Ticket** | Cineplex Green        | 1200        |
-| **$15 Off Shoes**     | Sustainable Soles     | 1500        |
+| **Free Coffee**       | The Daily Grind       | 450         |
+| **$5 Off Groceries**  | Green Grocer          | 900         |
+| **$10 Off Clothes**   | Eco Threads           | 1200        |
+| **Free Movie Ticket** | Cineplex Green        | 1600        |
+| **$15 Off Shoes**     | Sustainable Soles     | 2000        |
