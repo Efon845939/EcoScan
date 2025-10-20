@@ -1,5 +1,6 @@
 
 
+
 // Neutral baseline factors (pre-region scale)
 const TRANSPORT_KG = {
   car_gasoline: 28, // daily heavy-use proxy
@@ -16,10 +17,10 @@ const DIET_KG = {
 };
 
 const DRINK_KG = {
-  drink_coffee_milk: 2.0,
-  drink_bottled: 1.5,
-  drink_alcohol: 2.5,
-  drink_water_tea: 0.4,
+    drink_coffee_milk: 2.0,
+    drink_bottled: 1.5,
+    drink_alcohol: 2.5,
+    drink_water_tea: 0.4,
 };
 
 
@@ -83,16 +84,18 @@ export function computeCarbonKgDeterministic(
 export function pointsFromKgRegionAware(kg: number, region: RegionKey): number {
   const regionData = REGIONS[region] || REGIONS.default;
   const { min, avg, max } = regionData;
-  const clamped = Math.max(min, Math.min(kg, max));
+  // The kg value is already clamped by computeCarbonKgDeterministic,
+  // but we clamp again here as a safeguard.
+  const v = Math.max(min, Math.min(kg, max));
 
-  if (clamped <= min) return 30; // best
-  if (clamped >= max) return 0;  // worst
+  if (v <= min) return 30; // best
+  if (v >= max) return 0;  // worst
 
-  if (clamped <= avg) { // min..avg -> 30..15
-    const t = (clamped - min) / (avg - min);
+  if (v <= avg) { // min..avg -> 30..15
+    const t = (v - min) / (avg - min);
     return Math.round(30 - 15 * t);
   } else { // avg..max -> 15..0
-    const t = (clamped - avg) / (max - avg);
+    const t = (v - avg) / (max - avg);
     return Math.round(15 - 15 * t);
   }
 }
@@ -104,3 +107,5 @@ export function computeProvisional(basePoints: number) {
 export function finalizeWithReceipt(basePoints: number) {
   return basePoints * 5; // 500% of base, replaces provisional
 }
+
+    

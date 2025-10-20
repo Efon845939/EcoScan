@@ -129,13 +129,20 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
           
           let finalPoints = 0;
           const penaltyThreshold = 30; // Global penalty threshold
+          // This penalty logic needs to be more robust, as pointed out in bug reports.
+          // For now, we calculate a simple penalty if the footprint is high.
           const penalty = analysisResults.estimatedFootprintKg > penaltyThreshold ? -Math.round((analysisResults.estimatedFootprintKg - penaltyThreshold) / 2) : 0;
 
-          if (penalty < 0) {
-            finalPoints = Math.max(-10, penalty);
+          // A high footprint SHOULD result in negative points.
+          // A score of 0 from pointsFromKgRegionAware means the footprint is at or above the regional max.
+          if (calculatedBasePoints <= 0) {
+            // Apply a simple penalty for being over the max. This should be refined.
+            finalPoints = -10;
           } else {
+             // If not getting a penalty, award provisional points
             finalPoints = computeProvisional(calculatedBasePoints);
           }
+
 
           if (userProfileRef && userProfile) {
             const currentPoints = userProfile.totalPoints || 0;
@@ -380,5 +387,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     </Card>
   );
 }
+
+    
 
     
