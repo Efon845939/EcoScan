@@ -25,7 +25,7 @@ import { identifyMaterialWithBarcode } from '@/ai/flows/confidence-based-assista
 import { processReceipt, ReceiptOutput } from '@/ai/flows/receipt-ocr-flow';
 import { verifyDisposalAction, VerifyDisposalActionOutput } from '@/ai/flows/verify-disposal-action';
 import { verifySustainabilityAction } from '@/ai/flows/verify-sustainability-action';
-import { CarbonFootprintOutput } from '@/ai/flows/carbon-footprint-analysis';
+import { CarbonFootprintOutput, analyzeCarbonFootprint } from '@/ai/flows/carbon-footprint-analysis';
 
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
@@ -81,6 +81,12 @@ const AppContainerWithTranslations = () => {
             setLanguage(savedLanguage);
         }
     }, []);
+    
+    useEffect(() => {
+        document.documentElement.lang = language;
+        document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    }, [language]);
+
 
     const handleLanguageChange = (newLanguage: string) => {
         setLanguage(newLanguage);
@@ -838,9 +844,9 @@ function AppContainer({ onLanguageChange, currentLanguage }: { onLanguageChange:
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="tr">Türkçe</SelectItem>
                     <SelectItem value="ar">العربية</SelectItem>
+                    <SelectItem value="ja">日本語</SelectItem>
                     <SelectItem value="de">Deutsch</SelectItem>
                     <SelectItem value="es">Español</SelectItem>
-                    <SelectItem value="ja">日本語</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
