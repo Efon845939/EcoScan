@@ -27,7 +27,7 @@ import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
-import { computePointsFromKgRegionAware, RegionKey } from '@/lib/carbon-calculator';
+import { pointsFromKgRegionAware, RegionKey, computeProvisional, finalizeWithReceipt } from '@/lib/carbon-calculator';
 
 type CarbonFootprintSurveyProps = {
   onBack: () => void;
@@ -57,6 +57,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [basePoints, setBasePoints] = useState(0);
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -77,17 +78,14 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   };
 
   const handleVerifyWithReceipt = () => {
-    if (!results || !receiptResult || !receiptResult.isValidReceipt) return;
+    if (!results || !receiptResult || !receiptResult.isValidReceipt || basePoints === 0) return;
 
-    // Calculate base points from sustainability score (not provisional points)
-    const basePoints = Math.round(results.sustainabilityScore * 2.5);
-    const bonusPoints = basePoints * 5; // 500% bonus
+    const bonusPoints = finalizeWithReceipt(basePoints);
+    const provisionalPoints = computeProvisional(basePoints);
 
      if (userProfileRef && userProfile) {
-        // Add the bonus points to the user's total.
-        // We subtract the provisional points that were already added.
-        const provisionalPoints = surveyPoints;
         const currentPoints = userProfile.totalPoints || 0;
+        // Revert provisional points and add the full bonus
         const newPoints = Math.max(0, currentPoints - provisionalPoints + bonusPoints);
         updateDocumentNonBlocking(userProfileRef, {
             totalPoints: newPoints,
@@ -111,18 +109,24 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     startTransition(() => {
       analyzeCarbonFootprint({ ...formData, location: region, language })
         .then((analysisResults) => {
-          const regionKey = region.split(',')[0].toLowerCase().replace(' ', '_') as RegionKey;
-          const points = computePointsFromKgRegionAware(analysisResults.estimatedFootprintKg, regionKey);
+          const regionKey = region.split(',')[0].toLowerCase().replace(/[\s,]/g, '_') as RegionKey;
           
+          const calculatedBasePoints = pointsFromKgRegionAware(analysisResults.estimatedFootprintKg, regionKey);
+          setBasePoints(calculatedBasePoints);
+          
+          const points = surveyPoints < 0 ? surveyPoints : computeProvisional(calculatedBasePoints);
+          const penalty = analysisResults.estimatedFootprintKg > 85 ? -10 : 0;
+          const finalPoints = penalty !== 0 ? penalty : points;
+
           if (userProfileRef && userProfile) {
             const currentPoints = userProfile.totalPoints || 0;
-            const newPoints = currentPoints + points;
+            const newPoints = currentPoints + finalPoints;
             updateDocumentNonBlocking(userProfileRef, {
               totalPoints: newPoints,
               lastCarbonSurveyDate: serverTimestamp(),
             });
           }
-          onSurveyComplete(points, analysisResults);
+          onSurveyComplete(finalPoints, analysisResults);
         })
         .catch((err) => {
           console.error(err);

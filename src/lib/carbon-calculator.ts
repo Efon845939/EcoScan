@@ -1,4 +1,5 @@
 
+
 // Neutral baseline factors (pre-region scale)
 const TRANSPORT_KG = {
   car_gasoline: 28, // daily heavy-use proxy
@@ -18,7 +19,7 @@ const DRINK_KG = {
   drink_coffee_milk: 2.0,
   drink_bottled: 1.5,
   drink_alcohol: 2.5,
-  drink_water_tea: 0.4 // Merged plant-based/homemade with tap water/tea
+  drink_water_tea: 0.4,
 };
 
 
@@ -28,7 +29,7 @@ const ENERGY_KG = {
   high: 20,
 };
 
-const REGIONS = {
+export const REGIONS = {
   turkey: { min: 5, avg: 10, max: 25 },
   germany: { min: 8, avg: 20, max: 40 },
   usa: { min: 15, avg: 40, max: 60 },
@@ -37,7 +38,7 @@ const REGIONS = {
   united_kingdom: { min: 8, avg: 20, max: 40 },
   japan: { min: 8, avg: 22, max: 38 },
   default: { min: 10, avg: 25, max: 45 },
-};
+} as const;
 
 export type RegionKey = keyof typeof REGIONS;
 export type Transport = keyof typeof TRANSPORT_KG;
@@ -77,25 +78,27 @@ export function computeCarbonKgDeterministic(
   return Number(kg.toFixed(1));
 }
 
-export function computePointsFromKgRegionAware(kg: number, region: RegionKey): number {
-    const regionData = REGIONS[region] || REGIONS['default'];
-    const { min, avg, max } = regionData;
-    const penaltyThreshold = max;
+export function pointsFromKgRegionAware(kg: number, region: RegionKey): number {
+  const regionData = REGIONS[region] || REGIONS.default;
+  const { min, avg, max } = regionData;
+  const clamped = Math.max(min, Math.min(kg, max));
 
-    // 1. High Footprint Penalty
-    if (kg > penaltyThreshold) {
-        const penalty = -Math.round((kg - penaltyThreshold) / 2);
-        return Math.max(-10, penalty); // Cap penalty at -10
-    }
-    
-    // 2. Provisional reward (based on a sustainability score proxy)
-    // This is a simplified proxy. A real implementation might use a more complex score.
-    // We'll simulate a score based on how close the user is to the minimum.
-    const range = max - min;
-    if (range <= 0) return 5; // Avoid division by zero, give neutral points
-    
-    const scoreFraction = 1 - ((kg - min) / range); // 1.0 for min, 0.0 for max
-    const sustainabilityScore = Math.max(1, Math.min(10, scoreFraction * 10));
+  if (clamped <= min) return 30; // best
+  if (clamped >= max) return 0;  // worst
 
-    return Math.round(sustainabilityScore * 0.5);
+  if (clamped <= avg) { // min..avg -> 30..15
+    const t = (clamped - min) / (avg - min);
+    return Math.round(30 - 15 * t);
+  } else { // avg..max -> 15..0
+    const t = (clamped - avg) / (max - avg);
+    return Math.round(15 - 15 * t);
+  }
+}
+
+export function computeProvisional(basePoints: number) {
+  return Math.floor(basePoints * 0.10);
+}
+
+export function finalizeWithReceipt(basePoints: number) {
+  return basePoints * 5; // 500% of base, replaces provisional
 }
