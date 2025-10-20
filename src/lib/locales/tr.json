@@ -46,7 +46,7 @@
   "survey_description": "Bugünkü karbon ayak izinizin bir tahminini almak için birkaç soruyu yanıtlayın. Yemeğinizden sonra fişinizi almayı ve karbon ayak izinizi onaylamayı unutmayın.",
   "survey_q1": "Bugün nasıl dolaştınız?",
   "survey_q1_options": {
-    "car_gas": "Araba (Benzinli)",
+    "car_gasoline": "Araba (Benzinli)",
     "ev": "Elektrikli Araç",
     "public_transport": "Otobüs veya Tren",
     "walk_bike": "Bisiklet veya Yürüyüş"
@@ -54,9 +54,9 @@
   "survey_q2": "Bugün diyetiniz nasıldı?",
   "survey_q2_options": {
     "red_meat": "Kırmızı et ağırlıklı",
-    "poultry_fish": "Beyaz et/Balık, kırmızı et yok",
-    "vegetarian": "Vejetaryen",
-    "vegan": "Vegan"
+    "white_meat_fish": "Beyaz et / Balık",
+    "vegetarian_vegan": "Vejetaryen / Vegan",
+    "carb_based": "Karbonhidrat ağırlıklı"
   },
   "survey_q3": "Evdeki enerji kullanımınız nasıldı?",
   "survey_q3_placeholder": "Örn: Klima kullandım, ışıkları açık bıraktım...",

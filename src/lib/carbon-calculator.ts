@@ -9,8 +9,9 @@ const TRANSPORT_KG = {
 
 const DIET_KG = {
   red_meat: 20,
-  poultry_fish: 8,
-  vegetarian: 5,
+  white_meat_fish: 8,
+  vegetarian_vegan: 5,
+  carb_based: 10,
   vegan: 3,
 };
 

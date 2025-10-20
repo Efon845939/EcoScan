@@ -46,17 +46,17 @@
   "survey_description": "Answer a few questions to get an estimate of your carbon footprint for today. Don't forget your receipt after your meal to confirm your carbon footprint.",
   "survey_q1": "How did you get around today?",
   "survey_q1_options": {
-    "car_gas": "Car (Gasoline)",
+    "car_gasoline": "Car (Gasoline)",
     "ev": "Electric Vehicle",
     "public_transport": "Bus or Train",
     "walk_bike": "Bike or Walk"
   },
   "survey_q2": "What was your diet like today?",
   "survey_q2_options": {
-    "red_meat": "Heavy on red meat",
-    "poultry_fish": "Poultry/Fish, no red meat",
-    "vegetarian": "Vegetarian",
-    "vegan": "Vegan"
+    "red_meat": "Red meat heavy",
+    "white_meat_fish": "White meat / Fish",
+    "vegetarian_vegan": "Vegetarian / Vegan",
+    "carb_based": "Carb-based / High-carb"
   },
   "survey_q3": "How was your energy use at home?",
   "survey_q3_placeholder": "e.g., Used the AC, kept lights on...",
