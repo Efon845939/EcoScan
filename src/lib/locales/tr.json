@@ -100,11 +100,11 @@
   "guide_survey_description": "Geçici puanlar almak için günlük bir anketi tamamlayın. Büyük bir bonus için bir fişle doğrulayın!",
   "guide_survey_items": {
     "item1": { "title": "Yüksek Ayak İzi Cezası", "desc": "(Bölgesel ortalamanın üzerindeyse)", "points": "-1 ila -10 Puan" },
-    "item2": { "title": "Geçici Ödül", "desc": "(1-10 sürdürülebilirlik puanına göre)", "points": "5 Puana kadar" },
-    "item3": { "title": "Fiş Doğrulama Bonusu", "desc": "(Gününüzü doğrulamak için bir fiş tarayın)", "points": "+%500 Bonus" },
+    "item2": { "title": "Geçici Ödül", "desc": "(Fiş doğrulaması olmadan)", "points": "Temel Puanların %10'u" },
+    "item3": { "title": "Fiş Doğrulama Bonusu", "desc": "(Geçici puanların yerini alır)", "points": "Temel Puanlar x 5" },
     "item4": { "title": "İkinci Şans Bonusu", "desc": "(Harekete geçerek bir cezayı geri alın)", "points": "+15 Puan" }
   },
-  "guide_survey_footer": "Geçici ödül formülü `sürdürülebilirlik Puanı * 0.5`'dir. Ceza, ayak izinizin bölgesel ortalamayı ne kadar aştığına bağlı olarak değişen bir ölçektir.",
+  "guide_survey_footer": "Sistem, anketinizden bir 'temel puan' değeri hesaplar. Fiş olmadan, bunun %10'unu alırsınız. Fişle, temel puanların 5 katını alırsınız.",
   "guide_redemption_title": "Ödül Kullanımı",
   "guide_redemption_description": "Zor kazanılan puanlarınızı ortaklarımızdan gerçek dünya indirimleri ve ödülleri almak için kullanın.",
   "guide_rules_title": "Genel Kurallar ve Adil Oyun",
@@ -127,7 +127,7 @@
   "guide_howto_footprint_step2": "İlk analiziniz ve geçici puanlarınız gösterilecektir.",
   "guide_howto_footprint_step3": "Kamerayı açmak için '{button}' butonuna dokunun.",
   "guide_howto_footprint_step4": "Bugünden bir fiş tarayın (örn. market/ulaşım).",
-  "guide_howto_footprint_step5": "Fiş doğrulanırsa, geçici puanlarınız tam puan + %500 bonus ile güncellenir.",
+  "guide_howto_footprint_step5": "Fiş doğrulanırsa, geçici puanlarınız tam puan + 5 kat bonus ile güncellenir.",
   "settings_title": "Ayarlar",
   "settings_description": "Uygulama ayarlarınızı ve tercihlerinizi yönetin.",
   "settings_guide_button": "Uygulama Rehberi ve Kurallar",

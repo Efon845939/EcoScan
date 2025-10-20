@@ -100,11 +100,11 @@
   "guide_survey_description": "Complete una encuesta diaria para obtener puntos provisionales. ¡Verifique con un recibo para obtener una bonificación masiva!",
   "guide_survey_items": {
     "item1": { "title": "Penalización por huella alta", "desc": "(Si la huella > promedio regional)", "points": "-1 a -10 {points}" },
-    "item2": { "title": "Recompensa provisional", "desc": "(Basado en una puntuación de sostenibilidad de 1 a 10)", "points": "Hasta 5 {points}" },
-    "item3": { "title": "Bonificación por verificación de recibo", "desc": "(Escanee un recibo para verificar su día)", "points": "+500% de bonificación" },
+    "item2": { "title": "Recompensa provisional", "desc": "(Sin verificación de recibo)", "points": "10% de los puntos base" },
+    "item3": { "title": "Bonificación por verificación de recibo", "desc": "(Reemplaza los puntos provisionales)", "points": "Puntos base x 5" },
     "item4": { "title": "Bonificación de segunda oportunidad", "desc": "(Revierta una penalización tomando medidas)", "points": "+15 {points}" }
   },
-  "guide_survey_footer": "La fórmula de recompensa provisional es `puntuación de sostenibilidad * 0.5`. La penalización es una escala móvil basada en cuánto excede su huella el promedio regional.",
+  "guide_survey_footer": "El sistema calcula un valor de 'puntos base' a partir de su encuesta. Sin un recibo, obtiene el 10% de eso. Con un recibo, obtiene 5 veces los puntos base.",
   "guide_redemption_title": "Canje de recompensas",
   "guide_redemption_description": "Use sus puntos ganados con esfuerzo para obtener descuentos y recompensas del mundo real de nuestros socios.",
   "guide_rules_title": "Reglas generales y juego limpio",
@@ -127,7 +127,7 @@
   "guide_howto_footprint_step2": "Reciba su análisis inicial y puntos provisionales.",
   "guide_howto_footprint_step3": "Toque el botón '{button}' para abrir la cámara.",
   "guide_howto_footprint_step4": "Escanee un recibo de hoy que refleje sus actividades diarias (p. ej., comestibles, boletos de transporte).",
-  "guide_howto_footprint_step5": "Si se valida el recibo, sus puntos provisionales serán reemplazados por los puntos completos más una bonificación del 500%.",
+  "guide_howto_footprint_step5": "Si se valida el recibo, sus puntos provisionales serán reemplazados por los puntos completos más una bonificación del 5x.",
   "settings_title": "Configuración",
   "settings_description": "Administre la configuración y las preferencias de su aplicación.",
   "settings_guide_button": "Guía y reglas de la aplicación",

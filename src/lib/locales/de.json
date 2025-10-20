@@ -100,11 +100,11 @@
   "guide_survey_description": "Füllen Sie eine tägliche Umfrage aus, um vorläufige Punkte zu erhalten. Verifizieren Sie mit einem Beleg für einen riesigen Bonus!",
   "guide_survey_items": {
     "item1": { "title": "Strafe für hohen Fußabdruck", "desc": "(Wenn Fußabdruck > regionaler Durchschnitt)", "points": "-1 bis -10 {points}" },
-    "item2": { "title": "Vorläufige Belohnung", "desc": "(Basierend auf einer Nachhaltigkeitsbewertung von 1-10)", "points": "Bis zu 5 {points}" },
-    "item3": { "title": "Belegverifizierungsbonus", "desc": "(Scannen Sie einen Beleg, um Ihren Tag zu verifizieren)", "points": "+500% Bonus" },
+    "item2": { "title": "Vorläufige Belohnung", "desc": "(Ohne Belegverifizierung)", "points": "10% der Basispunkte" },
+    "item3": { "title": "Belegverifizierungsbonus", "desc": "(Ersetzt vorläufige Punkte)", "points": "Basispunkte x 5" },
     "item4": { "title": "Zweite-Chance-Bonus", "desc": "(Heben Sie eine Strafe auf, indem Sie Maßnahmen ergreifen)", "points": "+15 {points}" }
   },
-  "guide_survey_footer": "Die vorläufige Belohnungsformel lautet `Nachhaltigkeitsbewertung * 0.5`. Die Strafe ist eine gleitende Skala, die darauf basiert, wie stark Ihr Fußabdruck den regionalen Durchschnitt überschreitet.",
+  "guide_survey_footer": "Das System berechnet aus Ihrer Umfrage einen „Basispunktwert“. Ohne Beleg erhalten Sie 10% davon. Mit Beleg erhalten Sie das Fünffache der Basispunkte.",
   "guide_redemption_title": "Belohnungseinlösung",
   "guide_redemption_description": "Verwenden Sie Ihre hart verdienten Punkte, um echte Rabatte und Belohnungen von unseren Partnern zu erhalten.",
   "guide_rules_title": "Allgemeine Regeln & Fairplay",
@@ -127,7 +127,7 @@
   "guide_howto_footprint_step2": "Erhalten Sie Ihre erste Analyse und vorläufige Punkte.",
   "guide_howto_footprint_step3": "Tippen Sie auf die Schaltfläche '{button}', um die Kamera zu öffnen.",
   "guide_howto_footprint_step4": "Scannen Sie einen Beleg von heute, der Ihre täglichen Aktivitäten widerspiegelt (z. B. Lebensmittel, Fahrkarten).",
-  "guide_howto_footprint_step5": "Wenn der Beleg validiert wird, werden Ihre vorläufigen Punkte durch die vollen Punkte plus einen 500%igen Bonus ersetzt!",
+  "guide_howto_footprint_step5": "Wenn der Beleg validiert wird, werden Ihre vorläufigen Punkte durch die vollen Punkte plus einen 5x-Bonus ersetzt!",
   "settings_title": "Einstellungen",
   "settings_description": "Verwalten Sie Ihre Anwendungseinstellungen und Präferenzen.",
   "settings_guide_button": "App-Anleitung & Regeln",
