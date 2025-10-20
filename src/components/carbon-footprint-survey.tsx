@@ -48,7 +48,7 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   const { user } = useUser();
   const { t } = useTranslation();
 
-  const [formData, setFormData] = useState<Omit<CarbonFootprintInput, 'language' | 'location'> & { location?: string }>({
+  const [formData, setFormData] = useState<Omit<CarbonFootprintInput, 'language' | 'location'>>({
     transport: [],
     diet: [],
     energy: '',

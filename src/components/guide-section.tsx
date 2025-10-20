@@ -121,7 +121,7 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                     <span>
                       {t(`rewards.${reward.id}.title`)}{' '}
                       <small className="text-muted-foreground">
-                        ({reward.partner})
+                        ({t(`rewards.${reward.id}.partner`)})
                       </small>
                     </span>
                     <span className="font-bold text-primary">{reward.points} {t('header_points')}</span>

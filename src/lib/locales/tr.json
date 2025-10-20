@@ -91,12 +91,12 @@
   "guide_survey_title": "Karbon Ayak İzi Anketi",
   "guide_survey_description": "Geçici puanlar almak için günlük bir anketi tamamlayın. Büyük bir bonus için bir fişle doğrulayın!",
   "guide_survey_items": {
-    "item1": { "title": "Yüksek Ayak İzi Cezası", "desc": "(Ayak izi > 30kg CO₂ ise)", "points": "-1 ila -10 Puan" },
+    "item1": { "title": "Yüksek Ayak İzi Cezası", "desc": "(Bölgesel ortalamanın üzerindeyse)", "points": "-1 ila -10 Puan" },
     "item2": { "title": "Geçici Ödül", "desc": "(1-10 sürdürülebilirlik puanına göre)", "points": "5 Puana kadar" },
     "item3": { "title": "Fiş Doğrulama Bonusu", "desc": "(Gününüzü doğrulamak için bir fiş tarayın)", "points": "+%500 Bonus" },
     "item4": { "title": "İkinci Şans Bonusu", "desc": "(Harekete geçerek bir cezayı geri alın)", "points": "+15 Puan" }
   },
-  "guide_survey_footer": "Geçici ödül formülü `sürdürülebilirlik Puanı * 0.5`'dir. Ceza, ayak izinizin 30kg'ı ne kadar aştığına bağlı olarak değişen bir ölçektir.",
+  "guide_survey_footer": "Geçici ödül formülü `sürdürülebilirlik Puanı * 0.5`'dir. Ceza, ayak izinizin bölgesel ortalamayı ne kadar aştığına bağlı olarak değişen bir ölçektir.",
   "guide_redemption_title": "Ödül Kullanımı",
   "guide_redemption_description": "Zor kazanılan puanlarınızı ortaklarımızdan gerçek dünya indirimleri ve ödülleri almak için kullanın.",
   "guide_rules_title": "Genel Kurallar ve Adil Oyun",
@@ -135,7 +135,7 @@
   "toast_region_updated_title": "Bölge Güncellendi",
   "toast_region_updated_description": "Bölgeniz {region} olarak ayarlandı.",
   "toast_language_updated_title": "Dil Güncellendi",
-  "toast_language_updated_description": "Dil ayarlandı. Uygulama bir sonraki yenilemede güncellenecektir.",
+  "toast_language_updated_description": "Dil ayarlandı.",
   "toast_identification_failed_title": "Tanımlama Başarısız",
   "toast_identification_failed_description": "Malzeme tanımlanamadı. Lütfen tekrar deneyin.",
   "toast_receipt_failed_title": "Fiş İşleme Başarısız",

@@ -96,7 +96,7 @@
     "item3": { "title": "Receipt Verification Bonus", "desc": "(Scan a receipt to verify your day)", "points": "+500% Bonus" },
     "item4": { "title": "Second Chance Bonus", "desc": "(Reverse a penalty by taking action)", "points": "+15 {points}" }
   },
-  "guide_survey_footer": "The provisional reward formula is `sustainabilityScore * 0.5`. The penalty is a sliding scale based on how much your footprint exceeds 30kg.",
+  "guide_survey_footer": "The provisional reward formula is `sustainabilityScore * 0.5`. The penalty is a sliding scale based on how much your footprint exceeds the regional average.",
   "guide_redemption_title": "Reward Redemption",
   "guide_redemption_description": "Use your hard-earned points to get real-world discounts and rewards from our partners.",
   "guide_rules_title": "General Rules & Fair Play",
@@ -135,7 +135,7 @@
   "toast_region_updated_title": "Region Updated",
   "toast_region_updated_description": "Your region has been set to {region}.",
   "toast_language_updated_title": "Language Updated",
-  "toast_language_updated_description": "Language has been set. The app will update on the next refresh.",
+  "toast_language_updated_description": "Language has been set.",
   "toast_identification_failed_title": "Identification Failed",
   "toast_identification_failed_description": "Could not identify the material. Please try again.",
   "toast_receipt_failed_title": "Receipt Processing Failed",

@@ -26,20 +26,31 @@ This logic is located in `src/lib/points.ts`.
 
 ## 2. Carbon Footprint Survey Points
 
-Points from the daily carbon footprint survey are calculated based on a `sustainabilityScore` (from 1 to 10) and an `estimatedFootprintKg` provided by the AI analysis. The system is designed to provide a small provisional reward, with a large bonus for verifying with a receipt.
+Points from the daily carbon footprint survey are calculated based on a `sustainabilityScore` (from 1 to 10) and an `estimatedFootprintKg` provided by the AI analysis. The system is designed to provide a small provisional reward, with a large bonus for verifying with a receipt. This logic is located in `src/components/carbon-footprint-survey.tsx`.
 
-This logic is located in `src/components/carbon-footprint-survey.tsx`.
+### Regional Benchmarks
+
+To ensure fairness, penalties and rewards are scaled based on regional daily CO₂ averages.
+
+| Region      | Avg (kg/day) | Penalty Threshold (kg/day) |
+|-------------|--------------|------------------------------|
+| Turkey      | 24           | 30                           |
+| Germany     | 27           | 35                           |
+| USA         | 45           | 55                           |
+| UAE (Dubai) | 55           | 65                           |
+| Kuwait      | 70           | 80                           |
+| *Default*   | 25           | 30                           |
 
 ### Point Calculation Rules:
 
 1.  **High Footprint Penalty (Sliding Scale):**
-    *   If `estimatedFootprintKg` is **greater than 30 kg**, the user starts losing points.
-    *   **Formula:** `Penalty = -round((estimatedFootprintKg - 30) / 2)`
-    *   The penalty is capped at a maximum of **-10 points** (which occurs at 50kg or more).
-    *   *Example: 34kg -> -2 points. 40kg -> -5 points. 50kg -> -10 points.*
+    *   If `estimatedFootprintKg` is **greater than the region's Penalty Threshold**, the user starts losing points.
+    *   **Formula:** `Penalty = -round((estimatedFootprintKg - PenaltyThreshold) / 2)`
+    *   The penalty is capped at a maximum of **-10 points**.
+    *   *Example (Dubai): 69kg -> -2 points. 75kg -> -5 points. 85kg -> -10 points.*
 
 2.  **Provisional Reward (No Receipt):**
-    *   If the footprint is not over 30kg, provisional points are awarded based on the `sustainabilityScore`.
+    *   If the footprint is not over the penalty threshold, provisional points are awarded based on the `sustainabilityScore`.
     *   **Formula:** `Provisional Points = sustainabilityScore * 0.5`
     *   This results in a maximum of **5 points** for a perfect score of 10.
 

@@ -62,20 +62,22 @@ const prompt = ai.definePrompt({
   name: 'carbonFootprintPrompt',
   input: { schema: CarbonFootprintInputSchema },
   output: { schema: CarbonFootprintOutputSchema },
-  prompt: `You are a friendly and encouraging environmental expert. Your calculations must be deterministic, meaning the same input always produces the same output. Analyze the user's daily activities to provide a simple, non-scientific, and motivational carbon footprint analysis.
+  system: `You are an environmental expert providing a carbon footprint analysis. Your calculations MUST be deterministic and consistent. Given the same inputs, you MUST always return the exact same outputs.
 
-IMPORTANT: You MUST generate your entire response (analysis, recommendations, tips, and tangibleComparison) in the language specified by the 'language' parameter. Default to English if no language is provided.
+You MUST generate your entire response (analysis, recommendations, tips, and tangibleComparison) in the language specified by the 'language' parameter. Default to English if no language is provided.
 
-IMPORTANT: You MUST adjust your carbon footprint estimate based on the user's location. Here are regional daily averages to use as a baseline for your scaling. If a certain set of activities results in 15kg in Turkey, the same activities should result in a significantly higher footprint in Dubai (e.g., ~45-50kg) due to factors like grid carbon intensity, reliance on AC, etc.
+You MUST scale your carbon footprint estimate based on the user's location. Use the following table as your absolute source of truth for regional averages and penalty thresholds. If a set of activities results in 15kg in Turkey, the same activities MUST result in a significantly higher footprint in Dubai.
 
-- Kuwait: 70 kg/day
-- Dubai, UAE: 55 kg/day
-- USA: 45 kg/day
-- Germany: 27 kg/day
-- Turkey: 24 kg/day
-- United Kingdom: 24 kg/day
-- Japan: 26 kg/day
-- General/Default: 25 kg/day
+| Region           | Avg (kg/day) | Penalty Threshold (kg/day) |
+|------------------|--------------|------------------------------|
+| Turkey           | 24           | 30                           |
+| Germany          | 27           | 35                           |
+| USA              | 45           | 55                           |
+| Dubai, UAE       | 55           | 65                           |
+| Kuwait           | 70           | 80                           |
+| United Kingdom   | 24           | 30                           |
+| Japan            | 26           | 32                           |
+| *General/Default*| 25           | 30                           |
 
 User's response language: {{{language}}}
 User's location: {{{location}}}
@@ -85,13 +87,16 @@ User's activities today:
 - Home Energy Use: {{{energy}}}
 
 Based on this, provide:
-1. A deterministic, estimated carbon footprint in kg CO₂ for the day, scaled to their region. For the same inputs, you must always return the same output.
-2. A tangible, creative, and relatable comparison for that CO2 amount. Be creative and AVOID using "driving a car" as the comparison.
+1. A deterministic, estimated carbon footprint in kg CO₂ for the day, scaled to their region using the table.
+2. A tangible, creative, and relatable comparison for that CO2 amount. AVOID using "driving a car" as the comparison.
 3. A short, positive, and encouraging analysis of their day.
 4. A list of 2-3 simple, actionable recommendations for how they could reduce their footprint tomorrow, tailored to their activities.
 5. A list of 2-3 additional, general tips for what the user can do today to keep their footprint low.
 6. A 'sustainabilityScore' from 1 to 10. A score of 10 means very sustainable (low carbon footprint), and 1 means not sustainable (high carbon footprint).
 `,
+  config: {
+    temperature: 0.0,
+  }
 });
 
 const carbonFootprintFlow = ai.defineFlow(
