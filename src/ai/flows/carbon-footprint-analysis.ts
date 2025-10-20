@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -13,20 +12,12 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import {
-  computeCarbonKgDeterministic,
-  RegionKey,
-  Transport,
-  Diet,
-  Drink,
-  Energy,
-} from '@/lib/carbon-calculator';
 
 const CarbonFootprintInputSchema = z.object({
   location: z.string().describe('The user\'s current location (e.g., "Dubai, UAE", "Istanbul, Turkey") to adjust for regional emission averages.'),
   transport: z
     .array(z.string())
-    .describe('Keys representing modes of transportation used today (e.g., "car_gas", "ev", "public_transport", "walk_bike").'),
+    .describe('Keys representing modes of transportation used today (e.g., "car_gasoline", "ev", "public_transport", "walk_bike").'),
   diet: z
     .array(z.string())
     .describe('Keys representing the primary diet today (e.g., "red_meat", "poultry_fish", "vegetarian", "vegan").'),
@@ -62,82 +53,73 @@ const CarbonFootprintOutputSchema = z.object({
     .min(1)
     .max(10)
     .describe('An integer score from 1 (very high impact) to 10 (very low impact) based on the sustainability of the day\'s activities. A lower carbon footprint should result in a higher score.'),
+  points: z.number().describe('The base points awarded for the survey, before any bonuses.'),
 });
 export type CarbonFootprintOutput = z.infer<typeof CarbonFootprintOutputSchema>;
 
-// Helper to map form inputs to the calculator's enum-like keys
-function getPrimaryInput<T>(inputs: string[], defaultValue: T): T {
-    // A simple heuristic: assume the "heaviest" impact item is the primary one if multiple are selected.
-    // This could be made more sophisticated later.
-    return (inputs[0] as T) || defaultValue;
-}
 
 export async function analyzeCarbonFootprint(
   input: CarbonFootprintInput
 ): Promise<CarbonFootprintOutput> {
-  const regionKey = (input.location.split(',')[0].toLowerCase().replace(' ', '_')) as RegionKey;
-  
-  // Map form data to the stricter types required by the deterministic calculator.
-  // We'll take the first selection as the primary mode for calculation.
-  const transportMode = getPrimaryInput<Transport>(input.transport, 'walk_bike');
-  const dietMode = getPrimaryInput<Diet>(input.diet, 'vegetarian_vegan');
-  const drinkMode = getPrimaryInput<Drink>(input.drink, 'drink_water_tea');
-  
-  // A simple mapping for energy text input to a category.
-  const energyText = input.energy.toLowerCase();
-  let energyMode: Energy = 'medium';
-  if (energyText.includes('low') || energyText.includes('few') || energyText.includes('unplugged')) {
-    energyMode = 'low';
-  } else if (energyText.includes('high') || energyText.includes('all day') || energyText.includes('ac')) {
-    energyMode = 'high';
-  }
 
-  // 1. Calculate the footprint using the deterministic rule-engine
-  const deterministicFootprint = computeCarbonKgDeterministic(
-    regionKey,
-    transportMode,
-    dietMode,
-    drinkMode,
-    energyMode
-  );
-
-  // 2. Use the AI for qualitative analysis based on the deterministic result.
+  // 1. Use the AI for qualitative analysis based on the deterministic result.
   const { output } = await ai.generate({
-    prompt: `You are an environmental expert providing a carbon footprint analysis.
-Your primary role is to provide engaging, qualitative feedback based on a pre-calculated, deterministic carbon footprint.
-You MUST NOT calculate the carbon footprint yourself. Use the number provided.
+    prompt: `SYSTEM PROMPT:
+You are an environmental data analyst.
+You must produce a JSON response that estimates daily CO₂ emissions (kg) based on user inputs.
 
-You MUST generate your entire response (analysis, recommendations, tips, and tangibleComparison) in the language specified by the 'language' parameter. Default to English if no language is provided.
+You are NOT allowed to output any text outside JSON.
 
-**INPUT DATA:**
-- **Deterministic Carbon Footprint:** ${deterministicFootprint.toFixed(1)} kg CO₂
-- **User's response language:** ${input.language || 'en'}
-- **User's location:** ${input.location}
-- **User's activities today:**
-  - Transportation: ${input.transport.join(', ')}
-  - Diet: ${input.diet.join(', ')}
-  - Drink: ${input.drink.join(', ')}
-  - Home Energy Use: ${input.energy}
+USER INPUT:
+- Language: ${input.language || 'en'}
+- Location: ${input.location}
+- Transport: ${input.transport.join(', ')}
+- Diet: ${input.diet.join(', ')}
+- Drink: ${input.drink.join(', ')}
+- Energy: ${input.energy}
 
-**YOUR TASKS:**
-Based on the provided deterministic footprint and user activities, generate the following:
-1.  **Tangible Comparison:** A tangible, creative, and relatable comparison for the given CO2 amount (${deterministicFootprint.toFixed(1)} kg). AVOID using "driving a car" as the comparison.
-2.  **Analysis:** A short, positive, and encouraging analysis of their day, contextualized by the provided footprint number.
-3.  **Recommendations:** A list of 2-3 simple, actionable recommendations for how they could reduce their footprint tomorrow, tailored to their activities.
-4.  **Extra Tips:** A list of 2-3 additional, general tips for what the user can do today to keep their footprint low.
-5.  **Sustainability Score:** A 'sustainabilityScore' from 1 to 10. A score of 10 means very sustainable (low carbon footprint), and 1 means not sustainable (high carbon footprint). This score should be directly and consistently derived from the provided ${deterministicFootprint.toFixed(1)} kg number relative to their region (${input.location}).
+TASK:
+Generate a JSON object with the following fields: "estimatedFootprintKg", "sustainabilityScore", "points", "tangibleComparison", "analysis", "recommendations", "extraTips".
+
+Use this logic:
+1. Use the following region benchmarks:
+   Turkey {min:5, avg:10, max:25},
+   Germany {min:8, avg:20, max:40},
+   USA {min:15, avg:40, max:60},
+   United Kingdom {min:8, avg:20, max:40},
+   Dubai, UAE {min:20, avg:50, max:70},
+   Kuwait {min:25, avg:65, max:85},
+   Japan {min:6, avg:15, max:35}.
+   Default to {min:10, avg:25, max:45} if the location does not match.
+2. Compute estimatedFootprintKg using normalized averages:
+   - Assign base emission factors (kg):
+     transport: car_gasoline=28, ev=10, public_transport=8, walk_bike=0
+     diet: red_meat=20, white_meat_fish=8, vegetarian_vegan=5, carb_based=10
+     drink: drink_coffee_milk=2, drink_bottled=1.5, drink_alcohol=2.5, drink_water_tea=0.4
+     energy: none=0, low=6, medium=12, high=20
+   - Take the first item from each user input array as the primary choice.
+   - Sum all categories.
+   - Multiply by (region.avg / 20) to scale for region intensity.
+   - Clamp result between region.min and region.max.
+   - Round to one decimal.
+3. Compute sustainabilityScore (1–10): inversely proportional to footprint position between min and max. A score of 10 for min, 1 for max.
+4. Compute points (before receipt bonus) using this piecewise linear rule:
+   - min footprint → 30 pts, avg footprint → 15 pts, max footprint → 0 pts
+5. Generate 'tangibleComparison', 'analysis', 'recommendations', and 'extraTips' in the requested language. The analysis should be encouraging. The recommendations should be actionable.
 `,
     output: {
       schema: z.object({
+        estimatedFootprintKg: CarbonFootprintOutputSchema.shape.estimatedFootprintKg,
         tangibleComparison: CarbonFootprintOutputSchema.shape.tangibleComparison,
         analysis: CarbonFootprintOutputSchema.shape.analysis,
         recommendations: CarbonFootprintOutputSchema.shape.recommendations,
         extraTips: CarbonFootprintOutputSchema.shape.extraTips,
         sustainabilityScore: CarbonFootprintOutputSchema.shape.sustainabilityScore,
+        points: CarbonFootprintOutputSchema.shape.points,
       }),
     },
     config: {
-      temperature: 0.2, // A little creativity in text is fine, the number is fixed.
+      temperature: 0.1, 
     },
   });
 
@@ -145,13 +127,6 @@ Based on the provided deterministic footprint and user activities, generate the 
     throw new Error('AI analysis failed to generate a response.');
   }
 
-  // Combine the deterministic number with the AI's qualitative output.
-  return {
-    estimatedFootprintKg: deterministicFootprint,
-    tangibleComparison: output.tangibleComparison,
-    analysis: output.analysis,
-    recommendations: output.recommendations,
-    extraTips: output.extraTips,
-    sustainabilityScore: output.sustainabilityScore,
-  };
+  // The AI now returns the fully computed, deterministic results.
+  return output;
 }

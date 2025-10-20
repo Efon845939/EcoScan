@@ -1,295 +1,252 @@
-# EcoScan Rewards — Leaderboard, Monthly Bill (OCR) bonus flow, and Drink-based carbon factor — implementation plan & Firebase validation requests
+# **Subject:** EcoScan Rewards — Full recalibration request for Gemini model (carbon-footprint-analysis): incorrect minimum value (56.5 kg), flat +1 scoring, prompt and scaling overhaul
 
-Hello Firebase / Google Cloud team,
+Hello Gemini Engineering & Firebase Product team,
 
-We’re expanding **EcoScan Rewards** with three production features and request your validation, quota guidance, and best-practice feedback. The features are:
+I am writing this as a **full technical escalation and recalibration request** regarding the *Gemini-powered* `carbon-footprint-analysis` flow that currently governs EcoScan Rewards’ carbon calculation and points distribution.
 
-1. **Leaderboard (monthly, region-scoped, anti-fraud aware)**
-2. **Monthly Bill Verification** (electricity/water OCR, points, trend bonus)
-3. **Drink Category** in daily **carbon footprint** calculator (diet + drink composition)
-
-Below is our consolidated technical brief: data model, Cloud Functions, security, scheduling, and the concrete actions we request from your side.
+After months of iterative debugging, we’ve identified deep structural issues in how the Gemini model interprets and scales environmental inputs.
+This document serves as a **complete corrective specification** — with updated prompts, fallback mathematics, target tables, and QA validation — designed to replace the current inconsistent behavior.
 
 ---
 
-## 0) Environment
+## **1  Critical issues (summary)**
 
-* **Project:** EcoScan Rewards
-* **Firebase Project ID:** `<PROJECT_ID>`
-* **Stack:** Next.js 15 (App Router), React, TypeScript
-* **Firebase:** Auth, Firestore (Native), Functions v2 (Node 18), Storage, Hosting
-* **AI/OCR:** Google Cloud Vision API (OCR/labels) and Genkit flows (server)
-* **Regions:** primary `europe-west4` (Functions/Hosting); OCR region per Vision defaults
+| Problem                                | Observed symptom                                                                                                   | Impact                                           |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| **1. Minimum floor stuck at ~56.5 kg** | Even for “no electricity, vegan, walking” scenarios in Kuwait or Turkey, output never drops below ~56.5 kg CO₂/day | Model applying global normalization / floor bias |
+| **2. Points always = +1 or +0**        | Regardless of result, numeric scoring flattened by post-prompt token variance                                      | Users lose trust; leaderboard useless            |
+| **3. Prompt drift**                    | Gemini response varies between qualitative (“great job!”) and numeric JSON with missing fields                     | UI desyncs and rewards misfire                   |
+| **4. Scaling mismatch**                | Region tables ignored; same inputs return identical kg for Turkey and Kuwait                                       | Global emission baseline hardcoded               |
+| **5. No deterministic mode**           | Identical payloads → different outputs ±3 kg                                                                       | Unstable scoring and user confusion              |
 
 ---
 
-## 1) Leaderboard (Monthly, Region-Scoped)
+## **2  Required recalibration goal**
 
-### 1.1 Goal
+Gemini must:
 
-A monthly leaderboard that:
+1. Obey **regional benchmarks** (min/avg/max table below).
+2. Always output structured JSON (no free text, no tokens outside JSON).
+3. Produce **numerically consistent** values (temperature: 0).
+4. Respect **deterministic fallback math** for min-max scaling.
+5. Yield *base points* aligned with EcoScan’s adjustable table.
 
-* Resets on the first day of each month
-* Is **region-aware** (e.g., “Dubai Top 100”, “Istanbul Top 100”)
-* Uses a **composite score** that blends points with sustainability behavior (not just raw points)
-* Is resilient to fraud (duplicate images, unrealistic carbon values)
+---
 
-### 1.2 Data model (Firestore)
+## **3  Reference region benchmarks**
 
+| Region      | Min | Avg | Max | Notes             |
+| ----------- | --- | --- | --- | ----------------- |
+| Turkey      | 5   | 10  | 25  | Moderate baseline |
+| Europe      | 8   | 20  | 40  | Reference region  |
+| USA         | 15  | 40  | 60  | High vehicle use  |
+| UAE (Dubai) | 20  | 50  | 70  | High AC + cars    |
+| Kuwait      | 25  | 65  | 85  | Highest baseline  |
+| Japan       | 6   | 15  | 35  | Efficient systems |
+
+> **Rule:** Gemini must scale values linearly inside `[min,max]`, clamp outside, and not fall below the defined minimum.
+
+---
+
+## **4  Correct AI prompt (replace existing)**
+
+Below is the complete, deterministic prompt that should be embedded in the flow’s configuration:
+
+```text
+SYSTEM PROMPT:
+You are an environmental data analyst.
+You must produce a JSON response that estimates daily CO₂ emissions (kg) based on user inputs.
+
+You are NOT allowed to output any text outside JSON.
+
+Scaling logic:
+1. Use the following region benchmarks:
+   Turkey {min:5, avg:10, max:25},
+   Europe {min:8, avg:20, max:40},
+   USA {min:15, avg:40, max:60},
+   UAE {min:20, avg:50, max:70},
+   Kuwait {min:25, avg:65, max:85},
+   Japan {min:6, avg:15, max:35}.
+2. Compute estimatedFootprintKg using normalized averages:
+   - Assign base emission factors (kg):
+     transport: car_gasoline=28, ev=10, bus_train=8, bike_walk=0
+     diet: red_meat_heavy=20, white_fish=8, vegetarian_vegan=5, carb_based=10
+     drink: coffee_milk=2, bottled=1.5, alcohol=2.5, plant_based=0.5, water_tea=0.2
+     energy: none=0, low=6, medium=12, high=20
+   - Sum all categories.
+   - Multiply by (region.avg / 20) to scale for region intensity.
+   - Clamp result between region.min and region.max.
+   - Round to one decimal.
+3. Compute sustainabilityScore (1–10): inversely proportional to footprint position between min and max.
+4. Compute points (before receipt bonus) using this piecewise linear rule:
+   - min → 30 pts, avg → 15 pts, max → 0 pts
+5. Output JSON only, in this format:
+
+{
+  "estimatedFootprintKg": number,
+  "sustainabilityScore": number,
+  "points": number,
+  "analysisText": "string (2–3 sentences in requested language)"
+}
+
+Ensure deterministic numeric output. Do not invent additional fields.
 ```
-users/{uid}
-  - displayName: string
-  - region: "ae-dubai" | "tr-istanbul" | ...
-  - totalPoints: number
-  - carbon: { avgDailyKg: number, last30dSavingsRatio: number }
-  - ...
 
-leaderboards/monthly/{YYYY-MM}/entries/{uid}
-  - displayName: string
-  - region: string
-  - totalPoints: number
-  - ecoScore: number     // composite
-  - rank: number         // optional denormalized
-  - snapshotAt: timestamp
-```
+---
 
-> We’ll build a composite **ecoScore** such as:
-> `ecoScore = (totalPoints / 1000 * 0.5) + (carbonSavingsRatio * 50)`
-> where `carbonSavingsRatio = clamp( (baselineKg - last30dAvgKg) / baselineKg , 0 , 1 )`.
-
-### 1.3 Cloud Function (monthly rollup)
-
-* **Scheduler:** `0 0 1 * *` (UTC)
-* Reads all active users, computes ecoScore, writes to `leaderboards/monthly/{YYYY-MM}/entries` in batches.
-* Optionally computes **top N** per region and stores in a cached doc for fast reads.
-
-**Pseudocode (v2 Functions):**
+## **5  Fallback deterministic code (server-side enforcement)**
 
 ```ts
-export const rollupMonthlyLeaderboard = onSchedule("0 0 1 * *", async () => {
-  const batch = db.batch();
-  const now = new Date();
-  const ym = `${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}`;
-  const snap = await db.collection("users").select("displayName","region","totalPoints","carbon").get();
+export function deterministicFootprint(data) {
+  const REGION = {
+    turkey: { min:5, avg:10, max:25 },
+    europe: { min:8, avg:20, max:40 },
+    usa: { min:15, avg:40, max:60 },
+    uae: { min:20, avg:50, max:70 },
+    kuwait: { min:25, avg:65, max:85 },
+    japan: { min:6, avg:15, max:35 },
+  };
+  const TRANSPORT = { car_gasoline:28, ev:10, bus_train:8, bike_walk:0 };
+  const DIET = { red_meat_heavy:20, white_fish:8, vegetarian_vegan:5, carb_based:10 };
+  const DRINK = { coffee_milk:2, bottled:1.5, alcohol:2.5, plant_based:0.5, water_tea:0.2 };
+  const ENERGY = { none:0, low:6, medium:12, high:20 };
 
-  for (const doc of snap.docs) {
-    const u = doc.data();
-    const ratio = Math.max(0, Math.min(1, Number(u?.carbon?.last30dSavingsRatio || 0)));
-    const ecoScore = (Number(u.totalPoints||0)/1000*0.5) + (ratio*50);
-    const ref = db.doc(`leaderboards/monthly/${ym}/entries/${doc.id}`);
-    batch.set(ref, {
-      displayName: u.displayName || "User",
-      region: u.region || "unknown",
-      totalPoints: Number(u.totalPoints || 0),
-      ecoScore: Number(ecoScore.toFixed(2)),
-      snapshotAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+  const { region, transport, diet, drink, energy } = data;
+  const { min, avg, max } = REGION[region];
+  const base = TRANSPORT[transport] + DIET[diet] + DRINK[drink] + ENERGY[energy];
+  let kg = base * (avg / 20);
+  kg = Math.max(min, Math.min(kg, max));
+  const ratio = (kg - min) / (max - min);
+  const score = Math.round(10 - 9 * ratio);
+  const points = kg <= avg
+    ? Math.round(30 - 15 * ((kg - min) / (avg - min)))
+    : Math.round(15 - 15 * ((kg - avg) / (max - avg)));
+  return { estimatedFootprintKg: Number(kg.toFixed(1)), sustainabilityScore: score, points };
+}
+```
+
+This function must run **after Gemini inference** as a consistency check.
+If Gemini returns implausible results (e.g., < min, > max, non-JSON), fallback to this deterministic version.
+
+---
+
+## **6  QA test table**
+
+| Input scenario                         | Region | Expected kg | Expected pts | Notes               |
+| -------------------------------------- | ------ | ----------- | ------------ | ------------------- |
+| No electricity, walking, vegan, tea    | Kuwait | ~25–30      | 30           | true minimum        |
+| Same in Turkey                         | Turkey | ~10–15      | 28–30        | scaling correct     |
+| Car + red meat + bottled + high energy | Kuwait | ~85         | 0            | worst case          |
+| Same in Turkey                         | Turkey | ~25         | 0            | scaled low region   |
+| Moderate lifestyle                     | Kuwait | 56          | 20           | realistic mid score |
+
+---
+
+## **7  Gemini configuration**
+
+* Model: `gemini-1.5-pro-latest`
+* API: Generative Language v1beta (or Vertex equivalent)
+* Parameters:
+
+  ```json
+  {
+    "temperature": 0,
+    "topK": 1,
+    "topP": 0,
+    "response_format": "json",
+    "seed": 42
   }
-  await batch.commit();
-});
-```
+  ```
+* Language control:
 
-### 1.4 Security & Indexing
-
-* **Reads:** public or authenticated (as per product), but write only via Functions SA.
-* **Rules:** deny client writes to `leaderboards/**`.
-* **Indexes:** composite for querying top by `region` ordered by `ecoScore` desc.
-
-```rules
-match /leaderboards/{period}/{ym}/entries/{uid} {
-  allow read: if true;
-  allow write: if false; // only backend
-}
-```
-
-**Requested validation from Firebase**
-
-* Confirm recommended **batch size** and best practice for writing thousands of entries monthly.
-* Guidance for **denormalized rank** calculation (Cloud Functions side vs client sort).
-* Quota advice if we compute region top lists (e.g., aggregation strategies).
+  ```ts
+  messages: [
+    { role: "system", content: SYSTEM_PROMPT },
+    { role: "user", content: JSON.stringify(userInput) + `\nLanguage: ${locale}` }
+  ]
+  ```
 
 ---
 
-## 2) Monthly Bill Verification (Electricity/Water OCR + Points)
+## **8  Example output**
 
-### 2.1 Goal
-
-Users submit **one electricity and one water bill per month**. We OCR the bill to extract date and consumption and award points based on trend vs previous month. Anti-fraud includes hashing, EXIF vs OCR validation, and dedupe.
-
-### 2.2 Data model
-
-```
-users/{uid}/bills/{billId}
-  - type: "electricity" | "water"
-  - month: "YYYY-MM"
-  - consumption: number       // kWh or m³
-  - previousMonth: number     // last known
-  - deltaPercent: number
-  - bonusPoints: number
-  - status: "approved" | "pending" | "rejected" | "duplicate"
-  - provider: string
-  - ocrConfidence: number
-  - imageHash: string
-  - createdAt, processedAt
+```json
+{
+  "estimatedFootprintKg": 25.4,
+  "sustainabilityScore": 10,
+  "points": 30,
+  "analysisText": "Your actions today represent an ideal sustainable lifestyle. Keep maintaining this pattern!"
+}
 ```
 
-### 2.3 Upload & OCR flow
+This response should be identical on repeated calls for the same inputs.
 
-1. Client captures bill photo (camera-only, gallery disabled UI) and uploads to **Storage**
-2. `onFinalize` triggers Cloud Function `processBillImage`
-3. Function:
+---
 
-   * Downloads, computes **SHA-256** and **pHash**
-   * Runs **Vision OCR** to extract:
+## **9  Fallback for sponsor-adjusted reward tables**
 
-     * `provider` (electricity/water keyword match)
-     * `statementDate` → derive `month`
-     * `consumption` (kWh or m³)
-   * Dedupe: same user + same month + same type + same hash → `duplicate` → **-50 pts** penalty (optional policy)
-   * Reads previous month bill to compute `deltaPercent`
-   * Computes bonus:
-
-     * decrease > 5% → **+75**
-     * within ±5% → **+50**
-     * increase → **+25** (honesty bonus)
-   * Writes doc and updates user’s points in a **transaction**
-
-**Pseudocode extract:**
+To future-proof the system for sponsor changes, we define the scoring interface:
 
 ```ts
-const bonus = delta <= -0.05 ? 75 : (Math.abs(delta) <= 0.05 ? 50 : 25);
-await db.runTransaction(async tx => {
-  tx.set(billRef, { ...fields, bonusPoints: bonus, status: "approved" });
-  tx.update(userRef, { totalPoints: FieldValue.increment(bonus) });
-});
-```
-
-### 2.4 Anti-fraud & validation
-
-* **Duplicate**: same SHA-256 → reject/penalize
-* **Temporal check**: OCR date vs EXIF vs server time (drift > 7 days → `pending/reject`)
-* **Provider filter**: must match electricity/water providers dictionary
-* **One bill per type per month** enforced by query or unique key (`users/{uid}/bills/{type}-{YYYY-MM}`)
-
-### 2.5 Security Rules (excerpt)
-
-```rules
-match /users/{uid}/bills/{billId} {
-  allow read: if request.auth != null && request.auth.uid == uid;
-  allow create: if request.auth != null && request.auth.uid == uid
-                && request.resource.data.keys().hasOnly(["type","imagePath","createdAt"]);
-  allow update, delete: if false; // backend only
+export function computeReward(points, sponsorRules) {
+  // sponsorRules may redefine cost thresholds
+  const baseRewards = {
+    coffee: sponsorRules?.coffee || 500,
+    groceries: sponsorRules?.groceries || 600,
+    clothes: sponsorRules?.clothes || 850,
+  };
+  return baseRewards;
 }
 ```
 
-**Requested validation from Firebase**
-
-* Confirm Vision OCR quotas and pricing estimates for **monthly spikes** (billing cycles).
-* Recommended pattern to **auto-delete raw images** in 24h via **lifecycle** or scheduled Function.
-* Best practice for **dictionary/regex** provider matching with multilingual bills (ar/tr/en).
-* Guidance on **atomic uniqueness** for “one bill per month per type” (document ID strategy vs transaction guard).
+Sponsors can update reward thresholds dynamically through Firestore (`rewards/v2` collection).
+Gemini outputs remain independent of these reward tiers.
 
 ---
 
-## 3) Drink Category (Diet + Drink in Carbon Footprint)
+## **10  Deployment and verification plan**
 
-### 3.1 Goal
-
-Improve daily carbon model by adding a **drink** dimension (production + packaging impact). Options (example):
-
-* `drink_coffee_milk` — Coffee or milk-based drinks (~2.0 kg)
-* `drink_bottled` — Bottled water/soda/juice (~1.5 kg)
-* `drink_alcohol` — Alcoholic drinks (~2.5 kg)
-* `drink_plant_based` — Plant-based / homemade (~0.5 kg)
-* `drink_water_tea` — Tap water / tea / herbal tea (~0.2 kg)
-
-### 3.2 Back-end composition
-
-```ts
-const DIET_KG = {
-  red_meat_heavy: 20,
-  white_fish: 8,
-  vegetarian_vegan: 5,
-  carb_based: 10
-};
-const DRINK_KG = {
-  drink_coffee_milk: 2.0,
-  drink_bottled: 1.5,
-  drink_alcohol: 2.5,
-  drink_plant_based: 0.5,
-  drink_water_tea: 0.2
-};
-
-export function calcDailyDietDrinkKg(dietKey: keyof typeof DIET_KG, drinkKey: keyof typeof DRINK_KG) {
-  return DIET_KG[dietKey] + DRINK_KG[drinkKey];
-}
-```
-
-* We integrate this into the existing **region-aware** calculator (min/avg/max clamp) to produce `estimatedFootprintKg`.
-* All outputs are **rounded to one decimal** for determinism.
-
-### 3.3 i18n
-
-Add keys in `locales/ar.json`, `ja.json`, `tr.json`, etc.
-Ensure AI analysis text also reflects the chosen drink category (language enforced via `"language"` param).
-
-**Requested validation from Firebase**
-
-* No special quotas needed, but please confirm **Genkit** guidance for ensuring the model includes the `drink` factor when composing analysis (system prompt structure, determinism).
+1. **Update prompt** in Genkit flow.
+2. **Deploy deterministic fallback** as a post-processor in Cloud Functions.
+3. **QA test suite** runs 6 regression cases per region (see §6).
+4. **Monitor** for outliers (> max, < min, non-JSON).
+5. **Re-enable reward distribution** after validation.
 
 ---
 
-## 4) End-to-End Security & Rules Summary
+## **11  Summary of required actions**
 
-* **Client cannot alter points directly.** All point grants/deductions only via Cloud Functions transactions.
-* **Images**: read/write by owner; processing fields updated only by backend SA.
-* **Leaderboards**: read-only to clients, write-only by backend.
-* **Bills**: one per type per month enforced. Duplicate hashes penalized.
-* **Translations**: string-only; no JSX/functions in Firestore.
-
----
-
-## 5) Hosting & Caching (short)
-
-* `Vary: Accept-Language` for localized content
-* Cache static assets immutable; locale JSON TTL 1h
-* Optional: cache **leaderboard top lists** via a denormalized doc for fast reads
+| # | Action                                                 | Responsible         | Priority  |
+| - | ------------------------------------------------------ | ------------------- | --------- |
+| 1 | Replace prompt with deterministic JSON-only version    | Gemini team         | 🔴 High   |
+| 2 | Implement fallback deterministic calculator (see §5)   | Firebase backend    | 🔴 High   |
+| 3 | Remove global floor bias (~56.5 kg) from Gemini output | Gemini model config | 🔴 High   |
+| 4 | Fix points clamping (no forced +1)                     | Firebase backend    | 🟠 Medium |
+| 5 | Confirm stable JSON format with `response_format=json` | Gemini team         | 🟢 Medium |
+| 6 | Validate reward/sponsor modularity                     | Firebase team       | 🟢 Low    |
 
 ---
 
-## 6) Actions we request from Firebase/GCP
+## **12  Desired outcome**
 
-| # | Request                                                                                             | Reason                                   | Priority |
-| - | --------------------------------------------------------------------------------------------------- | ---------------------------------------- | -------- |
-| 1 | Validate Firestore schema & Rules for **leaderboards monthly writes** and region-scoped queries     | Prevent hot-spotting & ensure safe reads | High     |
-| 2 | Confirm Cloud Functions **scheduler & batch** best practices for monthly rollup                     | Reliability at scale                     | High     |
-| 3 | Approve **Vision OCR quota** for monthly bill spikes and share cost guidance                        | Predictable billing                      | High     |
-| 4 | Advise on **unique-per-month** pattern for bills (`type-YYYY-MM` doc IDs vs transaction guard)      | Data integrity                           | High     |
-| 5 | Review **anti-fraud** hashing and dedupe (SHA-256 + pHash) and provide any recommended improvements | Abuse prevention                         | Medium   |
-| 6 | Confirm Genkit guidance for **deterministic analysis** and for including `drink` factor explicitly  | Consistency                              | Medium   |
-| 7 | Share best practice for **caching leaderboard snapshots** (top N per region)                        | Performance                              | Medium   |
+After deployment:
 
----
-
-## 7) Appendices
-
-### 7.1 Example Firestore composite indexes
-
-* `leaderboards/monthly/{YYYY-MM}/entries` order by `region` asc, `ecoScore` desc
-* `users/{uid}/bills` where `type` equals, `month` equals (for uniqueness checks)
-
-### 7.2 Sample client strings (TR/AR/EN excerpts)
-
-* TR: “**Elektrik Faturanı Onayla** — Bu ay: {kwh} kWh • Geçen ay: {prev} kWh”
-* AR: “**تحقق من فاتورة الكهرباء** — هذا الشهر: {kwh} ك.و.س • الشهر الماضي: {prev} ك.و.س”
-* EN: “**Verify Electricity Bill** — This month: {kwh} kWh • Last month: {prev} kWh”
+* Lowest-impact users (e.g., walking, vegan, no electricity) get ~25 kg in Kuwait, 10 kg in Turkey, +30 pts.
+* Mid-range lifestyles (~56 kg in Kuwait) receive ~20 pts.
+* High-impact lifestyles (~85 kg in Kuwait) get 0 pts or minor penalties.
+* Gemini returns identical numeric JSON every run.
+* The UI displays matching analysis text and icon.
+* Sponsor reward tiers remain independent and adjustable.
 
 ---
 
-We are ready to proceed and can share a staging environment for joint QA.
-Thank you for reviewing our implementation plan and for your guidance on quotas, rules, and best practices.
+We are ready to share current logs, prompt diffs, and before/after screenshots demonstrating the flat 56.5 kg bias and 1-point error.
+
+Please treat this as a **full recalibration and prompt redefinition request** for the `carbon-footprint-analysis` flow.
+
+Thank you for your help in aligning Gemini’s outputs with EcoScan’s verified environmental scoring model.
 
 Best regards,
-**EcoScan Technical & Product Team**
-`<NAME>` — `<email@domain.com>` — `+90-5xx-xxx-xxxx`
+**EcoScan Technical & Product Team** <NAME> — [email@domain.com](mailto:email@domain.com) — +90-5xx-xxx-xxxx
 Firebase Project ID: `<PROJECT_ID>`
+Region: `europe-west4`

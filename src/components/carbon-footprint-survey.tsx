@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
@@ -27,7 +26,7 @@ import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
-import { pointsFromKgRegionAware, RegionKey, computeProvisional, finalizeWithReceipt, penaltyIfOutOfRange } from '@/lib/carbon-calculator';
+import { computeProvisional, finalizeWithReceipt } from '@/lib/carbon-calculator';
 
 type CarbonFootprintSurveyProps = {
   onBack: () => void;
@@ -122,16 +121,14 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
     startTransition(() => {
       analyzeCarbonFootprint({ ...formData, location: region, language })
         .then((analysisResults) => {
-          const regionKey = region.split(',')[0].toLowerCase().replace(/[\s,]/g, '_') as RegionKey;
-          
-          const calculatedBasePoints = pointsFromKgRegionAware(analysisResults.estimatedFootprintKg, regionKey);
+          // The AI flow now returns the definitive base points
+          const calculatedBasePoints = analysisResults.points;
           setBasePoints(calculatedBasePoints);
           
           let finalPoints = 0;
-          const penalty = penaltyIfOutOfRange(analysisResults.estimatedFootprintKg, regionKey);
 
-          if (penalty < 0) {
-              finalPoints = penalty;
+          if (calculatedBasePoints < 0) { // AI indicates a penalty
+              finalPoints = calculatedBasePoints;
           } else {
              // If not getting a penalty, award provisional points
             finalPoints = computeProvisional(calculatedBasePoints);

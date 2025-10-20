@@ -1,7 +1,6 @@
-
 // Neutral baseline factors (pre-region scale)
 const TRANSPORT_KG = {
-  car_gasoline: 28, // daily heavy-use proxy
+  car_gasoline: 28,
   ev: 10,
   public_transport: 8,
   walk_bike: 0,
@@ -15,10 +14,10 @@ const DIET_KG = {
 };
 
 const DRINK_KG = {
-    drink_coffee_milk: 2.0,
-    drink_bottled: 1.5,
-    drink_alcohol: 2.5,
-    drink_water_tea: 0.4,
+  drink_coffee_milk: 2.0,
+  drink_bottled: 1.5,
+  drink_alcohol: 2.5,
+  drink_water_tea: 0.4,
 };
 
 
@@ -36,7 +35,7 @@ export const REGIONS = {
   dubai_uae: { min: 20, avg: 50, max: 70 },
   kuwait: { min: 25, avg: 65, max: 85 },
   united_kingdom: { min: 8, avg: 20, max: 40 },
-  japan: { min: 8, avg: 22, max: 38 },
+  japan: { min: 6, avg: 15, max: 35 },
   default: { min: 10, avg: 25, max: 45 },
 } as const;
 
@@ -67,10 +66,9 @@ export function computeCarbonKgDeterministic(
     (ENERGY_KG[energy] || 0);
 
   // 2. Apply regional scaling (anchor: neutral avg = 20)
-  const neutralAvg = 20;
   const regionData = REGIONS[region] || REGIONS['default'];
   const { min, avg, max } = regionData;
-  const scale = avg / neutralAvg;
+  const scale = avg / 20; // Europe avg = 20 baseline
   let kg = base * scale;
 
   // 3. Clamp and round in one step
@@ -100,14 +98,18 @@ export function pointsFromKgRegionAware(kg: number, region: RegionKey): number {
 
 export function penaltyIfOutOfRange(rawKg: number, region: RegionKey) {
     const { max } = REGIONS[region] || REGIONS.default;
-    return rawKg > max * 1.05 ? -10 : 0;
+    if (rawKg > max * 1.05) {
+        return -Math.round((rawKg - max) / 2);
+    }
+    return 0;
 }
 
 
 export function computeProvisional(basePoints: number) {
+  if (basePoints <= 0) return 0;
   return Math.floor(basePoints * 0.10);
 }
 
 export function finalizeWithReceipt(basePoints: number) {
-  return basePoints * 3; // 300% of base, replaces provisional
+  return basePoints * 3;
 }
