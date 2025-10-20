@@ -65,8 +65,7 @@
     "drink_coffee_milk": "ミルク入りコーヒーまたは乳飲料",
     "drink_bottled": "ボトルウォーター/ソーダ/ジュース",
     "drink_alcohol": "アルコール飲料",
-    "drink_plant_based": "植物性ミルク/自家製ドリンク",
-    "drink_water_tea": "水道水/お茶"
+    "drink_water_tea": "水道水、お茶、または植物性/自家製ドリンク"
   },
   "survey_calculate_button": "フットプリントを計算",
   "survey_results_title": "毎日のフットプリント結果",

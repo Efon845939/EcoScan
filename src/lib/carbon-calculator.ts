@@ -1,3 +1,4 @@
+
 // Neutral baseline factors (pre-region scale)
 const TRANSPORT_KG = {
   car_gasoline: 28, // daily heavy-use proxy
@@ -17,8 +18,7 @@ const DRINK_KG = {
   drink_coffee_milk: 2.0,
   drink_bottled: 1.5,
   drink_alcohol: 2.5,
-  drink_plant_based: 0.5,
-  drink_water_tea: 0.2
+  drink_water_tea: 0.4 // Merged plant-based/homemade with tap water/tea
 };
 
 
@@ -47,7 +47,9 @@ export type Energy = keyof typeof ENERGY_KG;
 
 
 export function calcDailyDietDrinkKg(dietKey: Diet, drinkKey: Drink) {
-  return DIET_KG[dietKey] + DRINK_KG[drinkKey];
+  const dietValue = DIET_KG[dietKey] || 0;
+  const drinkValue = DRINK_KG[drinkKey] || 0;
+  return dietValue + drinkValue;
 }
 
 export function computeCarbonKgDeterministic(
@@ -58,7 +60,9 @@ export function computeCarbonKgDeterministic(
   energy: Energy
 ): number {
   const base =
-    TRANSPORT_KG[transport] + calcDailyDietDrinkKg(diet, drink) + ENERGY_KG[energy];
+    (TRANSPORT_KG[transport] || 0) +
+    calcDailyDietDrinkKg(diet, drink) +
+    (ENERGY_KG[energy] || 0);
 
   // Scale to region average relative to a neutral anchor (here: Germany avg=20)
   const neutralAvg = 20; // anchor

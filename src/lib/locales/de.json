@@ -1,3 +1,4 @@
+
 {
   "header_title": "EcoScan Belohnungen",
   "header_points": "Punkte",
@@ -64,8 +65,7 @@
     "drink_coffee_milk": "Kaffee mit Milch oder Milchgetränke",
     "drink_bottled": "Flaschenwasser / Limonade / Saft",
     "drink_alcohol": "Alkoholische Getränke",
-    "drink_plant_based": "Pflanzliche Milch / Hausgemachte Getränke",
-    "drink_water_tea": "Leitungswasser / Tee"
+    "drink_water_tea": "Leitungswasser, Tee oder pflanzliche/hausgemachte Getränke"
   },
   "survey_calculate_button": "Meinen Fußabdruck berechnen",
   "survey_results_title": "Ergebnisse Ihres täglichen Fußabdrucks",
