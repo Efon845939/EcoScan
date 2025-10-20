@@ -53,8 +53,8 @@ This logic is located in `src/components/carbon-footprint-survey.tsx`.
 
 
 3. **Receipt Verification Bonus:**
-    * If a user successfully scans a receipt to verify their daily activities, they receive a **100% bonus** on top of the base points (not the provisional points).
-    * **Example:** A score of 8 gives a base of `8 * 2.5 = 20` points. The bonus is `20 * 1 = 20` points. The provisional points are replaced.
+    * If a user successfully scans a receipt to verify their daily activities, they receive a **500% bonus** on top of the base points (not the provisional points).
+    * **Example:** A score of 8 gives a base of `8 * 2.5 = 20` points. The bonus is `20 * 5 = 100` points. The provisional points are replaced.
     
 4. **Second Chance Bonus:**
     * If a user receives a penalty, they can perform one of the AI-recommended actions and submit photo proof.

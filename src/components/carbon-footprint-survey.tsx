@@ -42,19 +42,19 @@ type CarbonFootprintSurveyProps = {
 };
 
 export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSurveyComplete, onSecondChance, results, surveyPoints, receiptResult, region, language }: CarbonFootprintSurveyProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const { firestore } = useFirebase();
   const { user } = useUser();
   const { t } = useTranslation();
 
-  const [formData, setFormData] = useState<Omit<CarbonFootprintInput, 'language'>>({
-    location: region,
+  const [formData, setFormData] = useState<Omit<CarbonFootprintInput, 'language' | 'location'> & { location?: string }>({
     transport: [],
     diet: [],
     energy: '',
   });
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -79,12 +79,14 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
 
     // Calculate base points from sustainability score (not provisional points)
     const basePoints = Math.round(results.sustainabilityScore * 2.5);
-    const bonusPoints = basePoints * 1; // 100% bonus
+    const bonusPoints = basePoints * 5; // 500% bonus
 
      if (userProfileRef && userProfile) {
         // Add the bonus points to the user's total.
+        // We subtract the provisional points that were already added.
+        const provisionalPoints = Math.round(results.sustainabilityScore * 0.5);
         const currentPoints = userProfile.totalPoints || 0;
-        const newPoints = Math.max(0, currentPoints + bonusPoints);
+        const newPoints = Math.max(0, currentPoints - provisionalPoints + bonusPoints);
         updateDocumentNonBlocking(userProfileRef, {
             totalPoints: newPoints,
         });
@@ -96,21 +98,16 @@ export function CarbonFootprintSurvey({ onBack, onScanReceipt, userProfile, onSu
   }
 
   useEffect(() => {
-    if (receiptResult) {
+    if (receiptResult && results) {
         handleVerifyWithReceipt();
     }
-  }, [receiptResult, results, userProfileRef, userProfile]);
-
-  // Update formData location when region prop changes
-  useEffect(() => {
-    setFormData(prev => ({ ...prev, location: region }));
-  }, [region]);
+  }, [receiptResult, results]);
 
 
   const handleSubmit = () => {
     setIsLoading(true);
     startTransition(() => {
-      analyzeCarbonFootprint({ ...formData, language })
+      analyzeCarbonFootprint({ ...formData, location: region, language })
         .then((analysisResults) => {
           let points = 0;
           if (analysisResults.estimatedFootprintKg > 30) {

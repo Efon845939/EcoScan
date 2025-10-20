@@ -14,14 +14,12 @@ import { useTranslation } from '@/hooks/use-translation';
 export const rewards = [
   {
     id: "free_coffee",
-    partner: 'The Daily Grind',
     points: 250,
     imageId: 'reward-partner-1',
     icon: Ticket,
   },
   {
     id: "groceries_5_off",
-    partner: 'Green Grocer',
     points: 600,
     imageId: 'reward-partner-2',
     icon: ShoppingBasket,
@@ -29,21 +27,18 @@ export const rewards = [
 
   {
     id: "clothes_10_off",
-    partner: 'Eco Threads',
     points: 850,
     imageId: 'reward-partner-3',
     icon: Shirt,
   },
   {
     id: "movie_ticket",
-    partner: 'Cineplex Green',
     points: 1200,
     imageId: 'reward-partner-4',
     icon: Film,
   },
   {
     id: "shoes_15_off",
-    partner: 'Sustainable Soles',
     points: 1500,
     imageId: 'reward-partner-5',
     icon: FootprintsIcon,
@@ -124,6 +119,7 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
           const partnerImage = PlaceHolderImages.find((p) => p.id === reward.imageId);
           const canRedeem = userPoints >= reward.points;
           const rewardTitle = t(`rewards.${reward.id}.title`);
+          const partnerName = t(`rewards.${reward.id}.partner`);
 
           return (
             <div
@@ -143,7 +139,7 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
                 )}
                 <div>
                   <p className="font-semibold">{rewardTitle}</p>
-                  <p className="text-sm text-muted-foreground">{reward.partner}</p>
+                  <p className="text-sm text-muted-foreground">{partnerName}</p>
                 </div>
               </div>
               <Button onClick={() => handleRedeem(reward)} disabled={!canRedeem}>
