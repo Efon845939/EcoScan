@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition, useEffect } from 'react';
+import { useState, useRef, ChangeEvent, useTransition, useEffect } from 'react';
 import Image from 'next/image';
 import {
   Camera,
@@ -19,7 +19,6 @@ import {
 } from '@/ai/flows/material-identification-from-scan';
 import { identifyMaterialWithBarcode } from '@/ai/flows/confidence-based-assistance';
 import { verifyDisposalAction, VerifyDisposalActionOutput } from '@/ai/flows/verify-disposal-action';
-import { useRouter } from 'next/navigation';
 
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
@@ -43,25 +42,50 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from '@/hooks/use-translation';
+import { TranslationProvider, useTranslation } from '@/hooks/use-translation';
 import { MaterialIcon } from './material-icon';
 import { RewardsSection } from './rewards-section';
 import { GuideSection } from './guide-section';
 import { VerificationCenter } from './verification-center';
-import { CarbonFootprintSurvey } from './carbon-footprint-survey';
 import { cn } from '@/lib/utils';
 import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
 import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { getPointsForMaterial } from '@/lib/points';
 import SurveyButton from './survey-button';
-import { CarbonFootprintOutput } from '@/ai/flows/carbon-footprint-analysis';
-import { ReceiptOutput } from '@/ai/flows/receipt-ocr-flow';
 
 
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey' | 'surveyResults';
+export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify';
+
+const AppContainerWithTranslations = ({ initialStep }: { initialStep?: Step }) => {
+    const [language, setLanguage] = useState('en');
+
+    useEffect(() => {
+        const savedLanguage = localStorage.getItem('app-language');
+        if (savedLanguage) {
+            setLanguage(savedLanguage);
+        }
+    }, []);
+    
+    useEffect(() => {
+        document.documentElement.lang = language;
+        document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    }, [language]);
 
 
-export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
+    const handleLanguageChange = (newLanguage: string) => {
+        setLanguage(newLanguage);
+        localStorage.setItem('app-language', newLanguage);
+    };
+    
+    return (
+        <TranslationProvider language={language}>
+            <AppContainer onLanguageChange={handleLanguageChange} currentLanguage={language} initialStep={initialStep} />
+        </TranslationProvider>
+    )
+}
+
+
+function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' }: { onLanguageChange: (lang: string) => void, currentLanguage: string, initialStep?: Step}) {
   const [step, setStep] = useState<Step>(initialStep);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [barcodeNumber, setBarcodeNumber] = useState('');
@@ -77,20 +101,13 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(
     null
   );
-  
-  // State for survey results
-  const [surveyResults, setSurveyResults] = useState<CarbonFootprintOutput | null>(null);
-  const [surveyPoints, setSurveyPoints] = useState(0);
-  const [receiptResult, setReceiptResult] = useState<ReceiptOutput | null>(null);
-
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const router = useRouter();
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
-  const { t, setLanguage, language } = useTranslation();
+  const { t } = useTranslation();
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -116,7 +133,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   };
 
   const handleLanguageChange = (newLanguage: string) => {
-    setLanguage(newLanguage);
+    onLanguageChange(newLanguage);
     toast({
       title: t('toast_language_updated_title'),
       description: t('toast_language_updated_description'),
@@ -193,12 +210,8 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
     setScannedImage(null);
     setBarcodeNumber('');
     setIdentifiedMaterial(null);
-    setSurveyResults(null);
-    setSurveyPoints(0);
-    setReceiptResult(null);
     setIsLoading(false);
     setHasCameraPermission(null);
-    router.push('/');
   };
   
   const processImage = (dataUri: string) => {
@@ -293,7 +306,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
             setAnimatePoints(`+${pointsAwarded}`);
             
             if (userProfileRef && userProfile) {
-              const newPoints = (userProfile.totalPoints || 0) + pointsAwarded;
+              const newPoints = (userProfile.totalPoints ?? 0) + pointsAwarded;
               updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
             }
             toast({
@@ -312,7 +325,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
             if (result.reason.toLowerCase().includes('duplicate') || result.reason.toLowerCase().includes('generated')) {
               setAnimatePoints('-50');
               if (userProfileRef && userProfile) {
-                 const newPoints = Math.max(0, (userProfile.totalPoints || 0) - 50);
+                 const newPoints = Math.max(0, (userProfile.totalPoints ?? 0) - 50);
                  updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
               }
             }
@@ -341,13 +354,6 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   const handleOpenSettings = () => {
     setShowSettingsModal(true);
   }
-
-  const handleSurveyComplete = (points: number, results: CarbonFootprintOutput) => {
-    setSurveyPoints(points);
-    setSurveyResults(results);
-    setStep('surveyResults');
-  };
-
 
   const renderContent = () => {
     if (isUserLoading || isProfileLoading) {
@@ -517,23 +523,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
       case 'guide':
         return <GuideSection onBack={() => setStep('scan')} />;
       case 'verify':
-        return <VerificationCenter onBack={resetState} />;
-      case 'survey':
-      case 'surveyResults':
-         return (
-          <CarbonFootprintSurvey
-            onBack={resetState}
-            onScanReceipt={() => router.push('/verify')}
-            userProfile={userProfile}
-            onSurveyComplete={handleSurveyComplete}
-            onSecondChance={() => router.push('/verify')}
-            results={surveyResults}
-            surveyPoints={surveyPoints}
-            receiptResult={receiptResult}
-            region={region}
-            language={language}
-          />
-        );
+        return <VerificationCenter onBack={() => setStep('scan')} />;
       default:
         return null;
     }
@@ -606,7 +596,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
                   <BookCopy className="mr-2" />
                   {t('settings_guide_button')}
                </Button>
-               <Button variant="outline" className="justify-start" onClick={() => { router.push('/verify'); setShowSettingsModal(false); }}>
+               <Button variant="outline" className="justify-start" onClick={() => { setStep('verify'); setShowSettingsModal(false); }}>
                   <ShieldCheck className="mr-2" />
                   Verification Center
                </Button>
@@ -635,7 +625,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
                     <Languages />
                    {t('settings_language_label')}
                 </Label>
-                <Select value={language} onValueChange={handleLanguageChange}>
+                <Select value={currentLanguage} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a language" />
                   </SelectTrigger>
@@ -659,3 +649,5 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
     </div>
   );
 }
+
+export { AppContainerWithTranslations as AppContainer };

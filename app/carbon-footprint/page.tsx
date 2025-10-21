@@ -97,7 +97,7 @@ export default function CarbonFootprintPage() {
         if (userProfileRef && user?.uid && userProfile) {
             const userRef = doc(firestore, 'users', user.uid);
             // Revert provisional and add the full bonus
-            const newPoints = Math.max(0, (userProfile.totalPoints || 0) - provisionalPoints + bonusPoints);
+            const newPoints = Math.max(0, (userProfile.totalPoints ?? 0) - provisionalPoints + bonusPoints);
             updateDocumentNonBlocking(userRef, {
                 totalPoints: newPoints,
             });
@@ -135,7 +135,7 @@ export default function CarbonFootprintPage() {
 
             // 4. Update user profile with ONLY provisional points
             if (userProfileRef && userProfile) {
-              const currentPoints = userProfile.totalPoints || 0;
+              const currentPoints = userProfile.totalPoints ?? 0;
               const regionData = REGION[regionKey] || REGION.europe; // Fallback to europe
               const penaltyThreshold = regionData.max * 1.05;
               const pointsChange = deterministicKg > penaltyThreshold ? -10 : provisional;
