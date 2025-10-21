@@ -30,6 +30,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking, useDoc } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { REGION, computeKgDeterministic, pointsFromKgRegionAware, computeProvisional, finalizeWithReceipt, getRegionKey } from '@/lib/carbon-calculator';
+import { DIET_KG, DRINK_KG, ENERGY_KG, TRANSPORT_KG } from '@/lib/carbon-calculator';
 
 export default function CarbonFootprintPage() {
     const [isPending, startTransition] = useTransition();
@@ -121,10 +122,10 @@ export default function CarbonFootprintPage() {
           try {
             const regionKey = getRegionKey(region);
             // 1. Ensure single values from form
-            const transport = formData.transport[0] as any;
-            const diet = formData.diet[0] as any;
-            const drink = formData.drink[0] as any;
-            const energy = (isNoEnergy ? "none" : formData.energy) as any;
+            const transport = formData.transport[0] as keyof typeof TRANSPORT_KG;
+            const diet = formData.diet[0] as keyof typeof DIET_KG;
+            const drink = formData.drink[0] as keyof typeof DRINK_KG;
+            const energy = (isNoEnergy ? "none" : formData.energy) as keyof typeof ENERGY_KG;
             
             // 2. Run our own deterministic calculation
             const deterministicKg = computeKgDeterministic(regionKey, transport, diet, drink, energy);
@@ -392,5 +393,3 @@ export default function CarbonFootprintPage() {
     </main>
   );
 }
-
-    

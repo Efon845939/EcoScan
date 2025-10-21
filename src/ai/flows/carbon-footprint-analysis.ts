@@ -26,7 +26,7 @@ const CarbonFootprintInputSchema = z.object({
     .describe('Keys representing the primary drink consumption today (e.g., "drink_coffee_milk", "drink_bottled").'),
   energy: z
     .string()
-    .describe('Energy usage habits at home (e.g., used AC/heater, lights on all day).'),
+    .describe('Energy usage habits at home (e.g., used AC/heater, lights on all day). Can be "none".'),
   language: z
     .string()
     .optional()
@@ -62,13 +62,10 @@ export async function analyzeCarbonFootprint(
   input: CarbonFootprintInput
 ): Promise<CarbonFootprintOutput> {
 
-  // 1. Use the AI for qualitative analysis based on the deterministic result.
   const { output } = await ai.generate({
     prompt: `SYSTEM PROMPT:
-You are an environmental data analyst.
-You must produce a JSON response that estimates daily CO₂ emissions (kg) based on user inputs.
-
-You are NOT allowed to output any text outside JSON.
+You are an environmental data analyst. Your role is to provide qualitative analysis based on pre-calculated data. You do not perform calculations yourself.
+You must produce a JSON response. You are NOT allowed to output any text outside the JSON.
 
 USER INPUT:
 - Language: ${input.language || 'en'}
@@ -79,47 +76,23 @@ USER INPUT:
 - Energy: ${input.energy}
 
 TASK:
-Generate a JSON object with the following fields: "estimatedFootprintKg", "sustainabilityScore", "points", "tangibleComparison", "analysis", "recommendations", "extraTips".
-
-Use this logic:
-1. Use the following region benchmarks:
-   Turkey {min:5, avg:10, max:25},
-   Germany {min:8, avg:20, max:40},
-   USA {min:15, avg:40, max:60},
-   United Kingdom {min:8, avg:20, max:40},
-   Dubai, UAE {min:20, avg:50, max:70},
-   Kuwait {min:25, avg:65, max:85},
-   Japan {min:6, avg:15, max:35}.
-   Default to {min:10, avg:25, max:45} if the location does not match.
-2. Compute estimatedFootprintKg using normalized averages:
-   - Assign base emission factors (kg):
-     transport: car_gasoline=28, ev=10, public_transport=8, walk_bike=0
-     diet: red_meat=20, white_meat_fish=8, vegetarian_vegan=5, carb_based=10
-     drink: drink_coffee_milk=2, drink_bottled=1.5, drink_alcohol=2.5, drink_water_tea=0.4
-     energy: none=0, low=6, medium=12, high=20
-   - Take the first item from each user input array as the primary choice.
-   - Sum all categories.
-   - Multiply by (region.avg / 20) to scale for region intensity.
-   - Clamp result between region.min and region.max.
-   - Round to one decimal.
-3. Compute sustainabilityScore (1–10): inversely proportional to footprint position between min and max. A score of 10 for min, 1 for max.
-4. Compute points (before receipt bonus) using this piecewise linear rule:
-   - min footprint → 30 pts, avg footprint → 15 pts, max footprint → 0 pts
-5. Generate 'tangibleComparison', 'analysis', 'recommendations', and 'extraTips' in the requested language. The analysis should be encouraging. The recommendations should be actionable.
+Generate a JSON object with the following fields: "tangibleComparison", "analysis", "recommendations", "extraTips".
+- The "analysis" should be an encouraging, brief analysis of the user's activities.
+- The "tangibleComparison" should be a creative, relatable comparison for a CO2 footprint (e.g., 'equivalent to charging a smartphone 500 times'). Do not use driving a car.
+- The "recommendations" should be a list of 2 actionable tips to improve.
+- The "extraTips" should be a list of 2 general tips for sustainability.
+- All text must be in the requested language: ${input.language || 'en'}.
 `,
     output: {
       schema: z.object({
-        estimatedFootprintKg: CarbonFootprintOutputSchema.shape.estimatedFootprintKg,
         tangibleComparison: CarbonFootprintOutputSchema.shape.tangibleComparison,
         analysis: CarbonFootprintOutputSchema.shape.analysis,
         recommendations: CarbonFootprintOutputSchema.shape.recommendations,
         extraTips: CarbonFootprintOutputSchema.shape.extraTips,
-        sustainabilityScore: CarbonFootprintOutputSchema.shape.sustainabilityScore,
-        points: CarbonFootprintOutputSchema.shape.points,
       }),
     },
     config: {
-      temperature: 0.1, 
+      temperature: 0.2, 
     },
   });
 
@@ -127,6 +100,11 @@ Use this logic:
     throw new Error('AI analysis failed to generate a response.');
   }
 
-  // The AI now returns the fully computed, deterministic results.
-  return output;
+  // Return AI text combined with dummy numeric values that will be overwritten by the client.
+  return {
+    ...output,
+    estimatedFootprintKg: 0,
+    sustainabilityScore: 0,
+    points: 0,
+  };
 }

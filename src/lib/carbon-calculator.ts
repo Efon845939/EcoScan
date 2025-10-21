@@ -25,8 +25,8 @@ export function getRegionKey(displayName: string): keyof typeof REGION {
 }
 
 
-export const TRANSPORT_KG = { car_gasoline:28, ev:10, bus_train:8, bike_walk:0 } as const;
-export const DIET_KG      = { red_meat_heavy:20, white_fish:8, vegetarian_vegan:5, carb_based:10 } as const;
+export const TRANSPORT_KG = { car_gasoline:28, ev:10, public_transport:8, walk_bike:0 } as const;
+export const DIET_KG      = { red_meat:20, poultry_fish:8, vegetarian:5, vegan:5 } as const;
 export const DRINK_KG     = { drink_coffee_milk:2.0, drink_bottled:1.5, drink_alcohol:2.5, drink_plant_based:0.5, drink_water_tea:0.2 } as const;
 export const ENERGY_KG    = { none:0, low:6, medium:12, high:20 } as const;
 
@@ -44,8 +44,17 @@ export function computeKgDeterministic(
   drink: keyof typeof DRINK_KG,
   energy: keyof typeof ENERGY_KG
 ) {
-  const { min, avg, max } = REGION[region];
-  const base = TRANSPORT_KG[transport] + DIET_KG[diet] + DRINK_KG[drink] + ENERGY_KG[energy];
+  const regionData = REGION[region];
+  if (!regionData) {
+    throw new Error(`Invalid region key provided: ${region}`);
+  }
+  const { min, avg, max } = regionData;
+  const transportVal = TRANSPORT_KG[transport] ?? 0;
+  const dietVal = DIET_KG[diet] ?? 0;
+  const drinkVal = DRINK_KG[drink] ?? 0;
+  const energyVal = (ENERGY_KG as Record<string, number>)[energy] ?? 0;
+
+  const base = transportVal + dietVal + drinkVal + energyVal;
 
   // Referans ölçek: Europe avg = 20
   const scale = avg / 20;
@@ -75,6 +84,9 @@ export function pointsFromKgRegionAware(kg: number, region: RegionKey) {
 export function computeProvisional(base: number) {
   return Math.floor(base * 0.10);
 }
+
 export function finalizeWithReceipt(base: number) {
-  return base * 5; // 500%
+  // From docs: The “always +1” bug is eliminated: provisional = floor(base*0.10) and receipt replaces provisional with base*5
+  // The document `docs/points-logic.md` was later updated to be a 3x multiplier.
+  return base * 3;
 }
