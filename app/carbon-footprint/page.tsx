@@ -391,3 +391,5 @@ export default function CarbonFootprintPage() {
     </main>
   );
 }
+
+    
