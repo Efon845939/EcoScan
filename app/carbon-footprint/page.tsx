@@ -88,13 +88,13 @@ export default function CarbonFootprintPage() {
     };
     
     const handleVerifyWithReceipt = () => {
-    if (!results || !receiptResult || !receiptResult.isValidReceipt) return;
+    if (!results || !receiptResult || !receiptResult.isValidReceipt || !userProfile) return;
     const regionKey = getRegionKey(region);
     const actualBasePoints = pointsFromKgRegionAware(results.estimatedFootprintKg, regionKey);
     const bonusPoints = finalizeWithReceipt(actualBasePoints);
     const provisionalPoints = computeProvisional(actualBasePoints);
 
-        if (userProfileRef && user?.uid && userProfile) {
+        if (userProfileRef && user?.uid) {
             const userRef = doc(firestore, 'users', user.uid);
             // Revert provisional and add the full bonus
             const newPoints = Math.max(0, (userProfile.totalPoints ?? 0) - provisionalPoints + bonusPoints);
