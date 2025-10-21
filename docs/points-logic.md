@@ -1,3 +1,4 @@
+
 # EcoScan Rewards: Points System Logic
 
 This document outlines the mathematical calculations and logic used for awarding, deducting, and redeeming points within the EcoScan Rewards application.

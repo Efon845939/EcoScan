@@ -111,11 +111,7 @@ export default function SurveyResultsCard({
           <SentimentIcon className={sentiment === "good" ? "text-green-600 h-4 w-4"
             : sentiment === "mid" ? "text-amber-500 h-4 w-4" : "text-red-600 h-4 w-4"} />
           <AlertTitle>
-            {sentiment === "good"
-              ? (t("analysis_good_title") || "Great choices today")
-              : sentiment === "mid"
-              ? (t("analysis_mid_title") || "Decent, but room to improve")
-              : (t("analysis_bad_title") || "High impact — needs improvement")}
+            {t(sentiment === "good" ? "analysis_good_title" : sentiment === "mid" ? "analysis_mid_title" : "analysis_bad_title")}
           </AlertTitle>
           <AlertDescription>
             {analysisText || t(analysisKey)}
@@ -125,7 +121,7 @@ export default function SurveyResultsCard({
         {/* 3 recommendations */}
         {top3.length > 0 && (
             <div>
-            <h3 className="font-semibold mb-2">{t("survey_recommendations_title") || "3 ways to improve"}</h3>
+            <h3 className="font-semibold mb-2">{t("survey_recommendations_title")}</h3>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 {top3.map((rec, i) => (
                 <li key={i}>{rec}</li>
@@ -140,7 +136,7 @@ export default function SurveyResultsCard({
             <Separator />
             <div>
               <h3 className="font-semibold mb-2">
-                {t("survey_recovery_title") || "Regain points today"}
+                {t("survey_recovery_title")}
               </h3>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 {recovery3.map((rec, i) => (
@@ -173,3 +169,5 @@ function carbonMetaphor(kg: number, t: (key: string, options?: any) => string): 
   if (kg <= 70) return t("metaphor_high");
   return t("metaphor_very_high");
 }
+
+    

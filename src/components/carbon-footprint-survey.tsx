@@ -282,3 +282,5 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
     </Card>
   );
 }
+
+    

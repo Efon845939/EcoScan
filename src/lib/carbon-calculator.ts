@@ -96,3 +96,5 @@ export function calculatePoints(
 
     return { basePoints: Math.round(basePoints), penaltyPoints: 0 };
 }
+
+    
