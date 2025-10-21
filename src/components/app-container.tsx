@@ -287,7 +287,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
             setAnimatePoints(`+${pointsAwarded}`);
             
             if (userProfileRef && userProfile) {
-              const newPoints = (userProfile.totalPoints ?? 0) + pointsAwarded;
+              const newPoints = (userProfile.totalPoints || 0) + pointsAwarded;
               updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
             }
             toast({
@@ -306,7 +306,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
             if (result.reason.toLowerCase().includes('duplicate') || result.reason.toLowerCase().includes('generated')) {
               setAnimatePoints('-50');
               if (userProfileRef && userProfile) {
-                 const newPoints = Math.max(0, (userProfile.totalPoints ?? 0) - 50);
+                 const newPoints = Math.max(0, (userProfile.totalPoints || 0) - 50);
                  updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
               }
             }
@@ -616,10 +616,6 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
                <Button variant="outline" className="justify-start" onClick={() => { setStep('guide'); setShowSettingsModal(false); }}>
                   <BookCopy className="mr-2" />
                   {t('settings_guide_button')}
-               </Button>
-               <Button variant="outline" className="justify-start" onClick={() => { setStep('verify'); setShowSettingsModal(false); }}>
-                  <ShieldCheck className="mr-2" />
-                  Verification Center
                </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
