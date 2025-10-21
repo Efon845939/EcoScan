@@ -56,8 +56,8 @@ To ensure fairness, penalties and rewards are scaled based on regional daily COâ
 
 3.  **Receipt Verification Bonus:**
     *   If a user successfully scans a receipt, their provisional points are replaced by a larger bonus.
-    *   **Formula:** `Final Points = Base Points * 5`
-    *   This is a 5x multiplier on the initial `Base Points`, not the provisional ones.
+    *   **Formula:** `Final Points = Base Points * 3`
+    *   This is a 3x multiplier on the initial `Base Points`, not the provisional ones.
 
 4.  **Second Chance Bonus:**
     *   If a user receives a penalty, they can perform one of the AI-recommended actions and submit photo proof.

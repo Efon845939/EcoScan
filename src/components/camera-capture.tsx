@@ -11,9 +11,10 @@ interface CameraCaptureProps {
   label: string;
   category: string;
   apiUrl: string;
+  onCapture?: () => void;
 }
 
-export function CameraCapture({ label, category, apiUrl }: CameraCaptureProps) {
+export function CameraCapture({ label, category, apiUrl, onCapture }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isBusy, setIsBusy] = useState(false);
@@ -82,6 +83,7 @@ export function CameraCapture({ label, category, apiUrl }: CameraCaptureProps) {
           title: 'Submission Successful',
           description: 'Your verification has been submitted and is being processed.',
         });
+        if (onCapture) onCapture();
       } else {
         throw new Error(j.error || 'Unknown error');
       }
@@ -94,7 +96,7 @@ export function CameraCapture({ label, category, apiUrl }: CameraCaptureProps) {
     } finally {
       setIsBusy(false);
     }
-  }, [apiUrl, category, hasCameraPermission, toast]);
+  }, [apiUrl, category, hasCameraPermission, toast, onCapture]);
 
   return (
     <div className="space-y-3">

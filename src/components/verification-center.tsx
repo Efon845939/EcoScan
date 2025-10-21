@@ -15,9 +15,25 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './
 
 type VerificationCenterProps = {
   onBack: () => void;
+  isSecondChance?: boolean;
+  onVerified?: () => void;
 };
 
-export function VerificationCenter({ onBack }: VerificationCenterProps) {
+export function VerificationCenter({ onBack, isSecondChance, onVerified }: VerificationCenterProps) {
+
+  const handleDone = () => {
+    if (onVerified) {
+      onVerified();
+    } else {
+      onBack();
+    }
+  }
+
+  const title = isSecondChance ? "Second Chance Verification" : "Verify Your Footprint";
+  const description = isSecondChance 
+    ? "Perform one of the recommended actions and submit live photo proof to reverse your penalty and earn bonus points."
+    : "Submit proof of your daily activities to get a 3x point bonus. Gallery uploads are disabled; all photos must be live.";
+
 
   return (
     <Card className="w-full">
@@ -29,18 +45,18 @@ export function VerificationCenter({ onBack }: VerificationCenterProps) {
             className="absolute left-0"
             onClick={onBack}
           >
-            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Main Menu
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back
           </Button>
           <CardTitle className="font-headline text-2xl">
-            Verification Center
+            {title}
           </CardTitle>
         </div>
         <CardDescription className="text-center pt-2">
-          Submit live photos to verify your daily sustainable actions and earn bonus points. Gallery uploads are not supported.
+          {description}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" defaultValue='transport'>
           <AccordionItem value="transport">
             <AccordionTrigger>
               <div className="flex items-center gap-3">
@@ -50,6 +66,7 @@ export function VerificationCenter({ onBack }: VerificationCenterProps) {
             </AccordionTrigger>
             <AccordionContent className="pt-4">
               <CameraCapture
+                onCapture={handleDone}
                 label="Capture a photo of your transport method (e.g., on a bus, your bike, walking path)."
                 category="transport_photo"
                 apiUrl="/api/verify/transport"
@@ -66,14 +83,10 @@ export function VerificationCenter({ onBack }: VerificationCenterProps) {
             </AccordionTrigger>
             <AccordionContent className="pt-4 space-y-6">
                <CameraCapture
+                onCapture={handleDone}
                 label="Capture your meal receipt for OCR verification."
                 category="meal_receipt"
                 apiUrl="/api/verify/meal-receipt"
-              />
-               <CameraCapture
-                label="Capture a photo of yourself eating your meal."
-                category="meal_photo"
-                apiUrl="/api/verify/meal-photo"
               />
             </AccordionContent>
           </AccordionItem>
@@ -87,14 +100,10 @@ export function VerificationCenter({ onBack }: VerificationCenterProps) {
             </AccordionTrigger>
             <AccordionContent className="pt-4 space-y-6">
               <CameraCapture
+                onCapture={handleDone}
                 label="Capture your drink receipt for OCR verification."
                 category="drink_receipt"
                 apiUrl="/api/verify/drink-receipt"
-              />
-               <CameraCapture
-                label="Capture a photo of your drink."
-                category="drink_photo"
-                apiUrl="/api/verify/drink-photo"
               />
             </AccordionContent>
           </AccordionItem>
@@ -108,6 +117,7 @@ export function VerificationCenter({ onBack }: VerificationCenterProps) {
             </AccordionTrigger>
             <AccordionContent className="pt-4">
                <CameraCapture
+                onCapture={handleDone}
                 label="Capture your monthly electricity or water bill."
                 category="utility_bill"
                 apiUrl="/api/verify/utility-bill"
@@ -121,7 +131,7 @@ export function VerificationCenter({ onBack }: VerificationCenterProps) {
         </Accordion>
       </CardContent>
        <CardFooter>
-        <Button variant="outline" className="w-full" onClick={onBack}>Done</Button>
+        <Button variant="outline" className="w-full" onClick={onBack}>Cancel</Button>
       </CardFooter>
     </Card>
   );

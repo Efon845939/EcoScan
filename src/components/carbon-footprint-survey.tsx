@@ -22,7 +22,7 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from './ui/textarea';
 import { useTranslation } from '@/hooks/use-translation';
-import { useFirebase, useUser, updateDocumentNonBlocking, serverTimestamp } from '@/firebase';
+import { useFirebase, useUser, updateDocumentNonBlocking, serverTimestamp, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import {
   computeKg,
@@ -64,6 +64,12 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   const [basePoints, setBasePoints] = useState(0);
   const [penaltyPoints, setPenaltyPoints] = useState(0);
 
+  const userProfileRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+
   const handleCheckboxChange = <T extends string>(
     setter: React.Dispatch<React.SetStateAction<T[]>>,
     option: T,
@@ -86,9 +92,8 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
     setBasePoints(basePoints);
     setPenaltyPoints(penaltyPoints);
     
-    const userProfileRef = user && firestore ? doc(firestore, 'users', user.uid) : null;
-    if (userProfileRef && user) {
-      const currentPoints = userProfile?.totalPoints ?? 0;
+    if (userProfileRef && userProfile) {
+      const currentPoints = userProfile.totalPoints ?? 0;
       if (penaltyPoints < 0) {
         // Apply penalty
         updateDocumentNonBlocking(userProfileRef, { 
@@ -112,12 +117,9 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
       // For now, this just applies the bonus. Later it will involve camera.
       const bonusPoints = basePoints * 3;
       const provisionalPoints = Math.floor(basePoints * 0.1);
-      const userProfileRef = user && firestore ? doc(firestore, 'users', user.uid) : null;
-      const { user, isUserLoading, isProfileLoading } = useUser();
-      const userProfile = useDoc(userProfileRef);
 
-       if(userProfileRef && user && !isUserLoading && !isProfileLoading && userProfile.data) {
-          const currentPoints = userProfile.data.totalPoints ?? 0;
+       if(userProfileRef && userProfile) {
+          const currentPoints = userProfile.totalPoints ?? 0;
           const newPoints = Math.max(0, currentPoints - provisionalPoints + bonusPoints);
           updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
 
@@ -135,12 +137,9 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
       const pointsToReverse = Math.abs(penaltyPoints);
       const bonus = 15;
       const totalAward = pointsToReverse + bonus;
-      const userProfileRef = user && firestore ? doc(firestore, 'users', user.uid) : null;
-      const { user, isUserLoading, isProfileLoading } = useUser();
-      const userProfile = useDoc(userProfileRef);
 
-       if(userProfileRef && user && !isUserLoading && !isProfileLoading && userProfile.data) {
-          const currentPoints = userProfile.data.totalPoints ?? 0;
+       if(userProfileRef && userProfile) {
+          const currentPoints = userProfile.totalPoints ?? 0;
           updateDocumentNonBlocking(userProfileRef, { totalPoints: currentPoints + totalAward });
           
            toast({
@@ -210,12 +209,12 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
           {hasPenalty ? (
-             <Button className="w-full" onClick={handleSecondChance}>
+             <Button className="w-full" onClick={() => setStep('secondChance')}>
                 <Camera className="mr-2" />
                 {t('survey_second_chance_button')}
              </Button>
           ) : (
-             <Button className="w-full" onClick={handleScanReceipt}>
+             <Button className="w-full" onClick={() => setStep('scanReceipt')}>
                 <Camera className="mr-2" />
                 {t('survey_scan_receipt_button')}
             </Button>
@@ -226,6 +225,13 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
         </CardFooter>
       </Card>
     );
+  }
+  
+  if (step === 'scanReceipt' || step === 'secondChance') {
+    return <VerificationCenter onBack={() => setStep('results')} isSecondChance={step === 'secondChance'} onVerified={() => {
+      if (step === 'scanReceipt') handleScanReceipt();
+      else handleSecondChance();
+    }}/>
   }
 
   return (
