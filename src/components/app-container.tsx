@@ -652,3 +652,5 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
 }
 
 export { AppContainerWithTranslations as AppContainer };
+
+    
