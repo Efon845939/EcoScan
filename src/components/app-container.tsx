@@ -12,7 +12,6 @@ import {
   BookCopy,
   Languages,
   Globe,
-  ShieldCheck,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -53,6 +52,7 @@ import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlockin
 import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { getPointsForMaterial } from '@/lib/points';
 import SurveyButton from './survey-button';
+import { useRouter } from 'next/navigation';
 
 
 export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify';
@@ -109,6 +109,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
   const { t } = useTranslation();
+  const router = useRouter();
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -380,7 +381,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                 <Camera className="mr-2" />
                 {t('scan_card_scan_button')}
               </Button>
-              <SurveyButton cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} />
+              <SurveyButton onClick={() => router.push('/carbon-footprint')} cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} />
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
                <Button variant="link" onClick={() => setStep('rewards')}>
@@ -596,10 +597,6 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                <Button variant="outline" className="justify-start" onClick={() => { setStep('guide'); setShowSettingsModal(false); }}>
                   <BookCopy className="mr-2" />
                   {t('settings_guide_button')}
-               </Button>
-               <Button variant="outline" className="justify-start" onClick={() => { setStep('verify'); setShowSettingsModal(false); }}>
-                  <ShieldCheck className="mr-2" />
-                  Verification Center
                </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
