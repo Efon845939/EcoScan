@@ -1,19 +1,16 @@
+
 'use server';
 
 /**
- * @fileOverview Analyzes user's daily activities to estimate their carbon footprint and provide recommendations.
- * This flow now uses a deterministic rule-engine for the core CO2 calculation to ensure consistency
- * and relies on the AI for qualitative analysis and recommendations based on that deterministic number.
- *
- * - analyzeCarbonFootprint - A function that handles the carbon footprint analysis.
- * - CarbonFootprintInput - The input type for the analyzeCarbonFootprint function.
- * - CarbonFootprintOutput - The return type for the analyzeCarbonFootprint function.
+ * @fileOverview Analyzes user's daily activities to provide qualitative feedback.
+ * The core CO2 and points calculations are performed deterministically on the client-side.
+ * This flow is only responsible for generating textual analysis and recommendations based on user inputs.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const CarbonFootprintInputSchema = z.object({
+export const CarbonFootprintInputSchema = z.object({
   location: z.string().describe('The user\'s current location (e.g., "Dubai, UAE", "Istanbul, Turkey") to adjust for regional emission averages.'),
   transport: z
     .array(z.string())
@@ -34,10 +31,10 @@ const CarbonFootprintInputSchema = z.object({
 });
 export type CarbonFootprintInput = z.infer<typeof CarbonFootprintInputSchema>;
 
-const CarbonFootprintOutputSchema = z.object({
+export const CarbonFootprintOutputSchema = z.object({
   estimatedFootprintKg: z
     .number()
-    .describe('A deterministic, estimated daily carbon footprint in kilograms of CO2 equivalent, scaled for the user\'s region.'),
+    .describe('This value is calculated on the client. The AI does not provide it.'),
   tangibleComparison: z
     .string()
     .describe("A tangible, creative, and relatable comparison for the estimated CO2 footprint (e.g., 'equivalent to powering a TV for 20 hours', 'what 5 trees absorb in a day'). Do not use driving a car as a comparison."),
@@ -48,19 +45,14 @@ const CarbonFootprintOutputSchema = z.object({
   extraTips: z
     .array(z.string())
     .describe('A list of 2-3 extra, general tips for keeping carbon footprint low today.'),
-  sustainabilityScore: z
-    .number()
-    .min(1)
-    .max(10)
-    .describe('An integer score from 1 (very high impact) to 10 (very low impact) based on the sustainability of the day\'s activities. A lower carbon footprint should result in a higher score.'),
-  points: z.number().describe('The base points awarded for the survey, before any bonuses.'),
+  points: z.number().describe('This value is calculated on the client. The AI does not provide it.'),
 });
 export type CarbonFootprintOutput = z.infer<typeof CarbonFootprintOutputSchema>;
 
 
 export async function analyzeCarbonFootprint(
   input: CarbonFootprintInput
-): Promise<CarbonFootprintOutput> {
+): Promise<Omit<CarbonFootprintOutput, 'estimatedFootprintKg' | 'points'>> {
 
   const { output } = await ai.generate({
     prompt: `SYSTEM PROMPT:
@@ -100,11 +92,6 @@ Generate a JSON object with the following fields: "tangibleComparison", "analysi
     throw new Error('AI analysis failed to generate a response.');
   }
 
-  // Return AI text combined with dummy numeric values that will be overwritten by the client.
-  return {
-    ...output,
-    estimatedFootprintKg: 0,
-    sustainabilityScore: 0,
-    points: 0,
-  };
+  // Return ONLY the AI-generated text. All numbers will be handled on the client.
+  return output;
 }

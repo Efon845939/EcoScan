@@ -29,8 +29,7 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking, useDoc } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
-import { REGION, computeKgDeterministic, pointsFromKgRegionAware, computeProvisional, finalizeWithReceipt, getRegionKey } from '@/lib/carbon-calculator';
-import { DIET_KG, DRINK_KG, ENERGY_KG, TRANSPORT_KG } from '@/lib/carbon-calculator';
+import { REGION, computeKgDeterministic, pointsFromKgRegionAware, computeProvisional, finalizeWithReceipt, getRegionKey, DIET_KG, DRINK_KG, ENERGY_KG, TRANSPORT_KG } from '@/lib/carbon-calculator';
 
 export default function CarbonFootprintPage() {
     const [isPending, startTransition] = useTransition();
