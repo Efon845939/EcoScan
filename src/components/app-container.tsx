@@ -1,16 +1,18 @@
-
 "use client";
 
-import { useState, useRef, ChangeEvent, useTransition, useEffect } from 'react';
+import { useState, useRef, useTransition, useEffect } from 'react';
 import Image from 'next/image';
 import {
   Camera,
   Loader2,
   ChevronLeft,
   Sparkles,
+  Award,
   BookCopy,
   Languages,
   Globe,
+  ShieldCheck,
+  Footprints,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -43,13 +45,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { TranslationProvider, useTranslation } from '@/hooks/use-translation';
 import { MaterialIcon } from './material-icon';
+import { RewardsSection } from './rewards-section';
 import { GuideSection } from './guide-section';
+import { VerificationCenter } from './verification-center';
 import { cn } from '@/lib/utils';
-import { useFirebase, useUser, initiateAnonymousSignIn } from '@/firebase';
-import { useRouter } from 'next/navigation';
+import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
+import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { getPointsForMaterial } from '@/lib/points';
+import SurveyButton from './survey-button';
+import { CarbonFootprintSurvey } from './carbon-footprint-survey';
 
-
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'guide';
+export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey';
 
 const AppContainerWithTranslations = ({ initialStep }: { initialStep?: Step }) => {
     const [language, setLanguage] = useState('en');
@@ -92,6 +98,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   const [loadingMessage, setLoadingMessage] = useState('Identifying material...');
   const [isPending, startTransition] = useTransition();
   const [showLowConfidenceModal, setShowLowConfidenceModal] = useState(false);
+  const [animatePoints, setAnimatePoints] = useState<string | false>(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(
     null
   );
@@ -99,11 +106,15 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
-  const { auth } = useFirebase();
+  const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
   const { t } = useTranslation();
-  const router = useRouter();
 
+  const userProfileRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
   const [region, setRegion] = useState('Dubai, UAE');
 
   useEffect(() => {
@@ -170,6 +181,28 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
       initiateAnonymousSignIn(auth);
     }
   }, [isUserLoading, user, auth]);
+  
+  useEffect(() => {
+    if (isUserLoading || isProfileLoading || !user || !userProfileRef) {
+      return;
+    }
+  
+    // Create a new profile if the user is authenticated but doesn't have one
+    if (user && !userProfile && !isProfileLoading) {
+      const newProfile = {
+        email: user.email || '',
+        displayName: user.displayName || 'Anonymous User',
+        totalPoints: 0,
+        createdAt: serverTimestamp(),
+      };
+      setDocumentNonBlocking(userProfileRef, newProfile, { merge: false });
+    }
+  }, [user, userProfile, isUserLoading, isProfileLoading, userProfileRef]);
+
+
+  const lastSurveyTimestamp = userProfile?.lastCarbonSurveyDate as Timestamp | undefined;
+
+  const userPoints = userProfile?.totalPoints ?? 0;
   
   const resetState = () => {
     setStep('scan');
@@ -268,9 +301,16 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
       })
         .then((result: VerifyDisposalActionOutput) => {
           if (result.isValid) {
+            const pointsAwarded = getPointsForMaterial(identifiedMaterial.material);
+            setAnimatePoints(`+${pointsAwarded}`);
+            
+            if (userProfileRef) {
+              const newPoints = userPoints + pointsAwarded;
+              updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
+            }
             toast({
               title: t('toast_verification_complete_title'),
-              description: "Thank you for recycling correctly.",
+              description: t('toast_verification_complete_description', {points: pointsAwarded}),
             });
             setStep('disposed');
           } else {
@@ -280,6 +320,14 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
               title: t('toast_verification_failed_title'),
               description: result.reason,
             });
+
+            if (result.reason.toLowerCase().includes('duplicate') || result.reason.toLowerCase().includes('generated')) {
+              setAnimatePoints('-50');
+              if (userProfileRef) {
+                 const newPoints = Math.max(0, userPoints - 50);
+                 updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
+              }
+            }
              setStep('scan'); // Or back to confirm step
           }
         })
@@ -293,6 +341,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
         })
         .finally(() => {
           setIsLoading(false);
+          setTimeout(() => setAnimatePoints(false), 2000);
         });
     });
   };
@@ -306,7 +355,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   }
 
   const renderContent = () => {
-    if (isUserLoading) {
+    if (isUserLoading || isProfileLoading) {
         return (
             <div className="flex flex-col items-center justify-center p-8">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -324,12 +373,22 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                 {t('scan_card_description')}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-               <Button size="lg" onClick={() => setStep('camera')} className="h-20 text-base md:h-24 w-full">
+            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+               <Button size="lg" onClick={() => setStep('camera')} className="h-20 text-base md:h-24">
                 <Camera className="mr-2" />
                 {t('scan_card_scan_button')}
               </Button>
+              <SurveyButton 
+                  cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} 
+                  onClick={() => setStep('survey')}
+              />
             </CardContent>
+            <CardFooter className="flex-col gap-2 pt-6">
+               <Button variant="link" onClick={() => setStep('rewards')}>
+                <Award className="mr-2" />
+                {t('scan_card_rewards_link')} ({userPoints} {t('header_points')})
+              </Button>
+            </CardFooter>
           </Card>
         );
       case 'camera':
@@ -433,6 +492,14 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
       case 'disposed':
         return (
           <Card className="text-center relative overflow-hidden">
+             {animatePoints && (
+              <div className={cn(
+                "animate-point-burst absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold",
+                animatePoints.includes('-') ? 'text-destructive' : 'text-primary'
+                )}>
+                {animatePoints}
+              </div>
+            )}
             <CardHeader>
               <Sparkles className="mx-auto h-12 w-12 text-yellow-400" />
               <CardTitle className="font-headline text-3xl">{t('disposed_card_title')}</CardTitle>
@@ -440,15 +507,27 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                 {t('disposed_card_description')}
               </CardDescription>
             </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-bold font-headline text-primary">{userPoints} {t('header_points')}</p>
+            </CardContent>
             <CardFooter className="flex-col gap-4">
               <Button size="lg" onClick={resetState}>
                 {t('disposed_card_scan_another_button')}
               </Button>
+              <Button variant="link" onClick={() => setStep('rewards')}>
+                {t('disposed_card_rewards_link')}
+              </Button>
             </CardFooter>
           </Card>
         );
+      case 'rewards':
+        return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
       case 'guide':
         return <GuideSection onBack={() => setStep('scan')} />;
+      case 'verify':
+        return <VerificationCenter onBack={() => setStep('scan')} />;
+      case 'survey':
+        return <CarbonFootprintSurvey onBack={() => setStep('scan')} region={region}/>;
       default:
         return null;
     }
@@ -462,15 +541,19 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
             currentLoadingMessage = t('loading_barcode');
         } else if (loadingMessage === 'Verifying your disposal...') {
             currentLoadingMessage = t('loading_disposal');
+        } else if (loadingMessage === 'Verifying your action...') {
+            currentLoadingMessage = t('loading_action');
+        } else if (loadingMessage === 'Processing receipt...') {
+            currentLoadingMessage = t('loading_receipt');
         }
     }
 
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header onNavigate={setStep} onShowSettings={handleOpenSettings} />
+      <Header points={userPoints} onNavigate={setStep} onShowSettings={handleOpenSettings} />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        <div className={cn('w-full max-w-2xl transition-all duration-300', (isLoading || isUserLoading) && 'opacity-50 pointer-events-none')}>
+        <div className={cn('w-full max-w-2xl transition-all duration-300', (isLoading || isUserLoading || isProfileLoading) && 'opacity-50 pointer-events-none')}>
           {renderContent()}
         </div>
         
@@ -484,9 +567,9 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
         <Dialog open={showLowConfidenceModal} onOpenChange={setShowLowConfidenceModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-headline">{t('confirm_card_title')}</DialogTitle>
+              <DialogTitle className="font-headline">{t('low_confidence_title')}</DialogTitle>
               <DialogDescription>
-                {t('confirm_card_description')}
+                {t('low_confidence_description')}
               </DialogDescription>
             </DialogHeader>
             <Input
@@ -498,7 +581,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
             <DialogFooter>
               <Button onClick={handleBarcodeSubmit} disabled={isPending || !barcodeNumber}>
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Submit Barcode
+                {t('low_confidence_submit_button')}
               </Button>
             </DialogFooter>
           </DialogContent>
