@@ -70,18 +70,48 @@
   "survey_calculate_button": "フットプリントを計算",
   "survey_results_title": "毎日のフットプリント結果",
   "survey_results_estimated": "推定フットプリント：",
+  "survey_range_hint": "地域の範囲：最小{min}、平均{avg}、最大{max} kg",
   "survey_penalty_title": "高いフットプリントのペナルティ",
   "survey_penalty_description": "毎日のフットプリントが高かったため、{points}ポイントが差し引かれました。以下のアクションの1つを実行し、写真で確認することで、これを取り消すことができます。",
   "survey_provisional_title": "仮ポイントが付与されました！",
   "survey_provisional_description": "{points}ポイントの仮ポイントを獲得しました。その日のレシートをスキャンしてフットプリントを確認し、3倍のポイントボーナスを獲得してください！",
-  "survey_base_points_hint": "あなたのベーススコアは{base}ポイントです。ボーナスはこのスコアから計算されます。",
-  "survey_analysis_title": "分析",
-  "survey_recommendations_title": "明日を改善する方法：",
-  "survey_extra_tips_title": "今日のニーズの1つを実行してください：",
-  "survey_second_chance_button": "ペナルティを取り消すために行動を起こす",
-  "survey_scan_receipt_button": "レシートをスキャンして確認＆ボーナスを獲得",
-  "survey_bonus_applied_button": "ボーナスが適用されました！",
-  "survey_back_button": "メインメニューに戻る",
+  "survey_base_points_hint": "あなたのベーススコアは{base}ポイントです。",
+  "survey_bonus_hint": "レシートボーナス：x{x}",
+  "analysis_good_title": "今日の素晴らしい選択",
+  "analysis_mid_title": "まずまずですが、改善の余地あり",
+  "analysis_bad_title": "影響大 - 改善が必要",
+  "survey_recommendations_title": "改善するための3つの方法",
+  "survey_recovery_title": "今日ポイントを取り戻す",
+  "metaphor_low": "これは、成熟した木2本が1年で吸収するCO₂のようなものです。",
+  "metaphor_medium_low": "短い市内ドライブ（約100〜150 km）に似ています。",
+  "metaphor_medium": "家庭でのエネルギー使用量の多い日に相当します。",
+  "metaphor_high": "運転とエアコンの使用が多い日に似ています。",
+  "metaphor_very_high": "これは、大量の輸送とエネルギー消費による影響の大きいレベルです。",
+  "default_analysis_good": "今日のあなたの選択は、影響が少なかったです。これらの習慣を続ければ、ポイントはすぐに増えます。",
+  "default_analysis_mid": "あなたは平均的な影響レベルにいます。小さな変更が大きな違いを生むことがあります。",
+  "default_analysis_bad": "あなたのCO₂フットプリントは高いようです。今日はいくつかの的を絞った動きでこれを下げることができます。",
+  "improvements_low": [
+    "公共交通機関をもう一歩進めてみましょう。1回の移動を徒歩/自転車に置き換えてください。",
+    "水道水/お茶を選び、ボトル飲料を減らしましょう。",
+    "夜は壁のコンセントからデバイスの電源を切りましょう。"
+  ],
+  "improvements_medium": [
+    "今日は赤身の肉を避け、白身の肉または植物由来のものを選択してください。",
+    "短距離は車を使わず、20〜30分の散歩を加えましょう。",
+    "照明をLEDに限定し、不要な照明は消しましょう。"
+  ],
+  "improvements_high": [
+    "可能であれば今日は車を使わず、公共交通機関に切り替えましょう。",
+    "家を1〜2℃暖かく/涼しく設定し、エアコンの使用を制限しましょう。",
+    "ボトル飲料やコーヒー/牛乳飲料を減らしましょう。"
+  ],
+  "recovery_actions": [
+    "食事のレシートをライブ写真で確認して、ポイントボーナスを獲得しましょう。",
+    "飲み物またはそのレシートを写真に撮って、追加の証拠を提出しましょう。",
+    "短い散歩/サイクリングをして、写真で確認しましょう。"
+  ],
+  "go_to_verify": "確認センターに移動",
+  "back_to_lobby": "ロビーに戻る",
   "guide_title": "アプリガイドとルール",
   "guide_description": "ポイントの獲得方法、リワードの利用方法、フェアプレーについて学びます。",
   "guide_recycling_title": "リサイクルポイント",
@@ -101,24 +131,22 @@
   "guide_survey_title": "二酸化炭素排出量調査",
   "guide_survey_description": "毎日の調査を完了して仮ポイントを獲得します。レシートで確認して、莫大なボーナスを獲得してください！",
   "guide_survey_items_list": [
-    "<b>高いフットプリントのペナルティ:</b> フットプリントが地域平均を超えると、ポイントが失われます（<span class='text-destructive'>-1</span>〜<span class='text-destructive'>-10</span>）。",
-    "<b>仮リワード:</b> レシートがない場合、ベーススコアの10％が切り捨てで付与されます。",
-    "<b>レシート確認ボーナス:</b> レシートで確認すると、仮ポイントが完全な<b>ベースポイント<span class='text-primary'>x 3</span></b>に置き換えられます。",
-    "<b>セカンドチャンスボーナス:</b> 確認済みの持続可能なアクションを実行して、ペナルティを取り消し、<span class='text-primary'>+10ポイント</span>を獲得します。"
+    "<b>高いフットプリントのペナルティ:</b> フットプリントが地域平均を超えると、<span style='color:hsl(var(--destructive))'>-10ポイント</span>を失います。",
+    "<b>仮リワード:</b> レシートがない場合、ベーススコアの10％が付与されます（例：30ポイントが<span style='color:hsl(var(--primary))'>+3</span>になります）。",
+    "<b>レシート確認ボーナス:</b> レシートで確認すると、仮ポイントが完全な<b>ベースポイント<span style='color:hsl(var(--primary))'>x 3</span></b>に置き換えられます。",
+    "<b>セカンドチャンスボーナス:</b> 確認済みの持続可能なアクションを実行して、ペナルティを取り消し、<span style='color:hsl(var(--primary))'>失ったポイント+ 10ボーナスポイント</span>を獲得します。"
   ],
-  "guide_survey_footer": "システムは、調査から「ベースポイント」値を計算します。レシートがない場合は、その10％が付与されます。レシートがある場合は、ベースポイントの<span class='text-primary'>3倍</span>が付与されます。",
+  "guide_survey_footer": "システムは、調査から「ベースポイント」値を計算します。レシートがない場合は、その10％が付与されます。レシートがある場合は、ベースポイントの<span style='color:hsl(var(--primary))'>3倍</span>が付与されます。",
   "guide_verification_title": "検証センターとフェアプレー",
   "guide_verification_description": "コミュニティを公正に保ち、報酬を意味のあるものにするために、ポイントを獲得するすべてのアクションには検証が必要です。システムを操作しようとすると、ポイントペナルティが発生します。",
   "guide_verification_items_list": [
-    "<b>ライブ写真のみ:</b> すべての検証は、アプリを介して撮影されたライブ写真である必要があります。ギャラリーのアップロード、スクリーンショット、AIが生成した画像は無効になり、拒否されます。",
+    "<b>ライブ写真のみ:</b> すべての検証は、アプリを介して撮影されたライブ写真である必要があります。ギャラリーのアップロードとスクリーンショットは無効になっています。",
     "<b>リサイクル:</b> スキャンしたアイテムを正しいゴミ箱に入れている自分（または自分の手）の写真。",
     "<b>カーボンアクション:</b> 持続可能なアクションの写真（バスのチケット、自転車、自家製の食事など）。",
-    "<b>重複ペナルティ:</b> 同じアクションを複数回送信すると、<span class='text-destructive'>-50ポイント</span>のペナルティが発生します。",
-    "<b>詐欺ペナルティ:</b> 明らかに偽物またはAIが生成した画像を送信すると、<span class='text-destructive'>-200ポイント</span>のペナルティが発生し、アカウントが停止される場合があります。"
+    "<b>同じ写真のペナルティ:</b> 同じ写真を複数回送信すると、<span style='color:hsl(var(--destructive))'>-50ポイント</span>のペナルティが発生します。",
+    "<b>詐欺ペナルティ:</b> 明らかに偽物またはAIが生成した画像を送信すると、<span style='color:hsl(var(--destructive))'>-200ポイント</span>のペナルティが発生し、アカウントが停止される場合があります。"
   ],
   "guide_verification_footer": "AIモデレーションシステムが各提出を確認します。ペナルティは自動的に適用されます。",
-  "guide_redemption_title": "リワードの利用",
-  "guide_redemption_description": "苦労して獲得したポイントを、提携パートナーからの実際の割引やリワードに利用してください。",
   "guide_howto_title": "ハウツーガイド",
   "guide_howto_recycle_title": "リサイクルして稼ぐ方法：",
   "guide_howto_recycle_steps": [
@@ -128,12 +156,13 @@
     "アイテムをリサイクル箱に入れている自分の鮮明な写真を撮ります。",
     "AIがあなたのアクションを確認します。確認が成功するとポイントが即座に付与されます！"
   ],
+  "guide_howto_footprint_title": "カーボン調査の使用方法：",
   "guide_howto_footprint_steps": [
     "メインメニューから「二酸化炭素排出量を見る」ボタンをタップし、毎日の調査を完了します。",
     "初期分析と仮ポイントを取得します。",
-    "カメラを開くには「レシートをスキャンして確認＆ボーナスを獲得」ボタンをタップします。",
+    "結果画面で「確認センターに移動」ボタンをタップします。",
     "あなたの活動のライブ写真の証拠を提出してください（例：バス乗車、ベジタリアン料理）。",
-    "アクションが確認されると、仮ポイントが全ポイントと<span class='text-primary'>3倍</span>のボーナスに置き換えられます！"
+    "アクションが確認されると、仮ポイントが全ポイントと<span style='color:hsl(var(--primary))'>3倍</span>のボーナスに置き換えられます！"
   ],
   "settings_title": "設定",
   "settings_description": "アプリケーションの設定と設定を管理します。",
@@ -149,7 +178,7 @@
   "loading_barcode": "バーコードで素材を再特定しています...",
   "loading_disposal": "廃棄を確認しています...",
   "loading_action": "アクションを確認しています...",
-  "loading_receipt": "レシートを処理しています...",
+  "loading_receipt": "調査を処理しています...",
   "toast_region_updated_title": "地域が更新されました",
   "toast_region_updated_description": "地域が{region}に設定されました。",
   "toast_language_updated_title": "言語が更新されました",
@@ -174,5 +203,3 @@
   "toast_reward_redeemed_title": "リワードを利用しました！",
   "toast_reward_redeemed_description": "「{title}」を正常に利用しました。"
 }
-
-    

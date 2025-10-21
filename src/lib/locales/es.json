@@ -70,18 +70,48 @@
   "survey_calculate_button": "Calcular mi huella",
   "survey_results_title": "Resultados de su huella diaria",
   "survey_results_estimated": "Huella estimada:",
+  "survey_range_hint": "Rango de la región: mín. {min}, prom. {avg}, máx. {max} kg",
   "survey_penalty_title": "Penalización por huella alta",
   "survey_penalty_description": "Su huella diaria fue alta, por lo que se han deducido {points} puntos. Puede revertir esto realizando una de las acciones a continuación y verificando con una foto.",
   "survey_provisional_title": "¡Puntos provisionales otorgados!",
   "survey_provisional_description": "Ha ganado {points} puntos provisionales. ¡Escanee un recibo de su día para verificar su huella y obtener un bono de puntos del 3x!",
-  "survey_base_points_hint": "Su puntaje base es de {base} puntos. El bono se calcula a partir de este puntaje.",
-  "survey_analysis_title": "Análisis",
-  "survey_recommendations_title": "Cómo mejorar mañana:",
-  "survey_extra_tips_title": "Haga una de las necesidades de hoy:",
-  "survey_second_chance_button": "Tomar medidas para revertir la penalización",
-  "survey_scan_receipt_button": "Escanear recibo para verificar y obtener bonificación",
-  "survey_bonus_applied_button": "¡Bonificación aplicada!",
-  "survey_back_button": "Volver al menú principal",
+  "survey_base_points_hint": "Su puntaje base es de {base} puntos.",
+  "survey_bonus_hint": "Bonificación por recibo: x{x}",
+  "analysis_good_title": "Grandes elecciones hoy",
+  "analysis_mid_title": "Decente, pero con margen de mejora",
+  "analysis_bad_title": "Alto impacto — necesita mejorar",
+  "survey_recommendations_title": "3 formas de mejorar",
+  "survey_recovery_title": "Recuperar puntos hoy",
+  "metaphor_low": "Eso es como el CO₂ absorbido por 2 árboles maduros en un año.",
+  "metaphor_medium_low": "Similar a un viaje corto en coche por la ciudad (≈100–150 km).",
+  "metaphor_medium": "Equivalente a un día de alto consumo de energía en el hogar.",
+  "metaphor_high": "Como un día de mucho conducir y usar el aire acondicionado combinado.",
+  "metaphor_very_high": "Este es un nivel de alto impacto por el transporte pesado y el consumo de energía.",
+  "default_analysis_good": "Sus elecciones de hoy resultaron en un bajo impacto. Siga con estos hábitos y sus puntos crecerán rápidamente.",
+  "default_analysis_mid": "Está en un nivel de impacto promedio. Pequeños cambios pueden marcar una gran diferencia.",
+  "default_analysis_bad": "Su huella de CO₂ parece alta. Podemos reducirla con algunos movimientos específicos hoy.",
+  "improvements_low": [
+    "Vaya un paso más allá en el transporte público: reemplace 1 viaje por una caminata/bicicleta.",
+    "Opte por agua del grifo/té; reduzca las bebidas embotelladas.",
+    "Apague los dispositivos en el enchufe de la pared por la noche."
+  ],
+  "improvements_medium": [
+    "Omita la carne roja hoy; opte por carne blanca o de origen vegetal.",
+    "Deje el coche para distancias cortas; agregue una caminata de 20 a 30 minutos.",
+    "Limite la iluminación a LED; apague las luces innecesarias."
+  ],
+  "improvements_high": [
+    "No use el coche hoy si es posible; cambie al transporte público.",
+    "Configure la casa 1-2 °C más cálida/fría; restrinja el uso del aire acondicionado.",
+    "Reduzca las bebidas embotelladas y las bebidas de café/leche."
+  ],
+  "recovery_actions": [
+    "Verifique un recibo de comida con una foto en vivo para obtener una bonificación de puntos.",
+    "Envíe una prueba adicional fotografiando una bebida o su recibo.",
+    "Dé un paseo corto/en bicicleta y verifíquelo con una foto."
+  ],
+  "go_to_verify": "Ir al Centro de Verificación",
+  "back_to_lobby": "Volver al vestíbulo",
   "guide_title": "Guía y reglas de la aplicación",
   "guide_description": "Aprenda a ganar puntos, canjear recompensas y jugar limpio.",
   "guide_recycling_title": "Puntos de reciclaje",
@@ -101,24 +131,22 @@
   "guide_survey_title": "Encuesta de huella de carbono",
   "guide_survey_description": "Complete una encuesta diaria para obtener puntos provisionales. ¡Verifique con un recibo para obtener una bonificación masiva!",
   "guide_survey_items_list": [
-    "<b>Penalización por huella alta:</b> Si su huella está por encima del promedio regional, pierde puntos (<span class='text-destructive'>-1</span> a <span class='text-destructive'>-10</span>).",
-    "<b>Recompensa provisional:</b> Sin un recibo, obtiene el 10 % de su puntaje base, redondeado hacia abajo.",
-    "<b>Bonificación por verificación de recibo:</b> La verificación con un recibo reemplaza sus puntos provisionales con sus <b>puntos base completos <span class='text-primary'>x 3</span></b>.",
-    "<b>Bonificación de segunda oportunidad:</b> Revierta una penalización y gane <span class='text-primary'>+10 puntos</span> al realizar una acción sostenible verificada."
+    "<b>Penalización por huella alta:</b> Si su huella está por encima del promedio regional, pierde <span style='color:hsl(var(--destructive))'>-10 puntos</span>.",
+    "<b>Recompensa provisional:</b> Sin un recibo, obtiene el 10 % de su puntaje base (p. ej., 30 puntos se convierten en <span style='color:hsl(var(--primary))'>+3</span>).",
+    "<b>Bonificación por verificación de recibo:</b> La verificación con un recibo reemplaza sus puntos provisionales con sus <b>puntos base completos <span style='color:hsl(var(--primary))'>x 3</span></b>.",
+    "<b>Bonificación de segunda oportunidad:</b> Revierta una penalización y gane <span style='color:hsl(var(--primary))'>los puntos que perdió + 10 puntos de bonificación</span> al realizar una acción sostenible verificada."
   ],
-  "guide_survey_footer": "El sistema calcula un valor de 'puntos base' a partir de su encuesta. Sin un recibo, obtiene el 10% de eso. Con un recibo, obtiene <span class='text-primary'>3 veces</span> los puntos base.",
+  "guide_survey_footer": "El sistema calcula un valor de 'puntos base' a partir de su encuesta. Sin un recibo, obtiene el 10% de eso. Con un recibo, obtiene <span style='color:hsl(var(--primary))'>3 veces</span> los puntos base.",
   "guide_verification_title": "Centro de verificación y juego limpio",
   "guide_verification_description": "Para mantener la comunidad justa y las recompensas significativas, todas las acciones para ganar puntos requieren verificación. Los intentos de manipular el sistema darán lugar a penalizaciones de puntos.",
   "guide_verification_items_list": [
-    "<b>Solo fotos en vivo:</b> Todas las verificaciones deben ser fotos en vivo tomadas a través de la aplicación. Las cargas de la galería, las capturas de pantalla y las imágenes generadas por IA están deshabilitadas y serán rechazadas.",
+    "<b>Solo fotos en vivo:</b> Todas las verificaciones deben ser fotos en vivo tomadas a través de la aplicación. Las cargas de la galería y las capturas de pantalla están deshabilitadas.",
     "<b>Reciclaje:</b> Una foto de usted (o su mano) colocando el artículo escaneado en el contenedor correcto.",
     "<b>Acciones de carbono:</b> Una foto de su acción sostenible (p. ej., su boleto de autobús, su bicicleta, su comida casera).",
-    "<b>Penalización por duplicado:</b> Enviar la misma acción varias veces dará lugar a una penalización de <span class='text-destructive'>-50 puntos</span>.",
-    "<b>Penalización por fraude:</b> Enviar imágenes claramente falsas o generadas por IA dará lugar a una penalización de <span class='text-destructive'>-200 puntos</span> y puede llevar a la suspensión de la cuenta."
+    "<b>Penalización por foto repetida:</b> Enviar la misma foto varias veces dará lugar a una penalización de <span style='color:hsl(var(--destructive))'>-50 puntos</span>.",
+    "<b>Penalización por fraude:</b> Enviar imágenes claramente falsas o generadas por IA dará lugar a una penalización de <span style='color:hsl(var(--destructive))'>-200 puntos</span> y puede llevar a la suspensión de la cuenta."
   ],
   "guide_verification_footer": "Nuestro sistema de moderación de IA verifica cada envío. Las penalizaciones se aplican automáticamente.",
-  "guide_redemption_title": "Canje de recompensas",
-  "guide_redemption_description": "Use sus puntos ganados con esfuerzo para obtener descuentos y recompensas del mundo real de nuestros socios.",
   "guide_howto_title": "Guías prácticas",
   "guide_howto_recycle_title": "Cómo reciclar y ganar:",
   "guide_howto_recycle_steps": [
@@ -128,12 +156,13 @@
     "Tome una foto clara de usted (o su mano) colocando el artículo en un contenedor de reciclaje.",
     "Nuestra IA verificará su acción. ¡Los puntos se otorgan instantáneamente después de una verificación exitosa!"
   ],
+  "guide_howto_footprint_title": "Cómo usar la encuesta de carbono:",
   "guide_howto_footprint_steps": [
     "Desde el menú principal, toque el botón 'Ver su huella de carbono' y complete la encuesta diaria.",
     "Reciba su análisis inicial y puntos provisionales.",
-    "Toque el botón 'Escanear recibo para verificar y obtener bonificación' para abrir el Centro de verificación.",
+    "Toque el botón 'Ir al Centro de Verificación' en la pantalla de resultados.",
     "Envíe una prueba de foto en vivo de sus actividades (p. ej., viaje en autobús, comida vegetariana).",
-    "Si se verifica su acción, sus puntos provisionales serán reemplazados por los puntos completos más una bonificación de <span class='text-primary'>3x</span>."
+    "Si se verifica su acción, sus puntos provisionales serán reemplazados por los puntos completos más una bonificación de <span style='color:hsl(var(--primary))'>3x</span>."
   ],
   "settings_title": "Configuración",
   "settings_description": "Administre la configuración y las preferencias de su aplicación.",
@@ -149,7 +178,7 @@
   "loading_barcode": "Reidentificando material con código de barras...",
   "loading_disposal": "Verificando su eliminación...",
   "loading_action": "Verificando su acción...",
-  "loading_receipt": "Procesando recibo...",
+  "loading_receipt": "Procesando su encuesta...",
   "toast_region_updated_title": "Región actualizada",
   "toast_region_updated_description": "Su región se ha establecido en {region}.",
   "toast_language_updated_title": "Idioma actualizado",
@@ -174,5 +203,3 @@
   "toast_reward_redeemed_title": "¡Recompensa canjeada!",
   "toast_reward_redeemed_description": "Ha canjeado con éxito '{title}'."
 }
-
-    

@@ -70,18 +70,48 @@
   "survey_calculate_button": "Meinen Fußabdruck berechnen",
   "survey_results_title": "Ergebnisse Ihres täglichen Fußabdrucks",
   "survey_results_estimated": "Geschätzter Fußabdruck:",
+  "survey_range_hint": "Bereich der Region: min {min}, avg {avg}, max {max} kg",
   "survey_penalty_title": "Strafe für hohen Fußabdruck",
   "survey_penalty_description": "Ihr täglicher Fußabdruck war hoch, daher wurden {points} Punkte abgezogen. Sie können dies rückgängig machen, indem Sie eine der folgenden Maßnahmen ergreifen und mit einem Foto verifizieren.",
   "survey_provisional_title": "Vorläufige Punkte vergeben!",
   "survey_provisional_description": "Sie haben vorläufig {points} Punkte verdient. Scannen Sie einen Beleg von Ihrem Tag, um Ihren Fußabdruck zu verifizieren und einen 3x-Punktebonus zu erhalten!",
-  "survey_base_points_hint": "Ihre Basispunktzahl beträgt {base} Punkte. Der Bonus wird aus dieser Punktzahl berechnet.",
-  "survey_analysis_title": "Analyse",
-  "survey_recommendations_title": "Wie Sie sich morgen verbessern können:",
-  "survey_extra_tips_title": "Erledigen Sie heute eine der Notwendigkeiten:",
-  "survey_second_chance_button": "Maßnahme ergreifen, um Strafe aufzuheben",
-  "survey_scan_receipt_button": "Beleg scannen, um zu verifizieren & Bonus zu erhalten",
-  "survey_bonus_applied_button": "Bonus angewendet!",
-  "survey_back_button": "Zurück zum Hauptmenü",
+  "survey_base_points_hint": "Ihre Basispunktzahl beträgt {base} Punkte.",
+  "survey_bonus_hint": "Belegbonus: x{x}",
+  "analysis_good_title": "Großartige Entscheidungen heute",
+  "analysis_mid_title": "Anständig, aber verbesserungsfähig",
+  "analysis_bad_title": "Hohe Auswirkung - verbesserungsbedürftig",
+  "survey_recommendations_title": "3 Wege zur Verbesserung",
+  "survey_recovery_title": "Punkte heute zurückgewinnen",
+  "metaphor_low": "Das ist wie der CO₂-Ausstoß, den 2 ausgewachsene Bäume in einem Jahr absorbieren.",
+  "metaphor_medium_low": "Ähnlich wie eine kurze Stadtfahrt (≈100–150 km).",
+  "metaphor_medium": "Entspricht einem anstrengenden Tag mit hohem Energieverbrauch zu Hause.",
+  "metaphor_high": "Wie ein anstrengender Tag mit Autofahren und Klimaanlagenutzung zusammen.",
+  "metaphor_very_high": "Dies ist ein hohes Auswirkungsniveau durch starken Transport und Energieverbrauch.",
+  "default_analysis_good": "Ihre heutigen Entscheidungen führten zu einer geringen Auswirkung. Behalten Sie diese Gewohnheiten bei und Ihre Punkte werden schnell wachsen.",
+  "default_analysis_mid": "Sie befinden sich auf einem durchschnittlichen Auswirkungsniveau. Kleine Änderungen können einen großen Unterschied machen.",
+  "default_analysis_bad": "Ihr CO₂-Fußabdruck scheint hoch zu sein. Wir können ihn heute mit ein paar gezielten Maßnahmen senken.",
+  "improvements_low": [
+    "Gehen Sie mit öffentlichen Verkehrsmitteln einen Schritt weiter: ersetzen Sie eine Fahrt durch einen Spaziergang/eine Radtour.",
+    "Wählen Sie Leitungswasser/Tee; reduzieren Sie Flaschengetränke.",
+    "Schalten Sie abends Geräte an der Steckdose aus."
+  ],
+  "improvements_medium": [
+    "Verzichten Sie heute auf rotes Fleisch; wählen Sie weißes Fleisch oder pflanzliche Produkte.",
+    "Lassen Sie das Auto für kurze Strecken stehen; fügen Sie einen 20–30-minütigen Spaziergang hinzu.",
+    "Beschränken Sie die Beleuchtung auf LEDs; schalten Sie unnötige Lichter aus."
+  ],
+  "improvements_high": [
+    "Benutzen Sie das Auto heute wenn möglich nicht; steigen Sie auf öffentliche Verkehrsmittel um.",
+    "Stellen Sie das Haus auf 1–2 °C wärmer/kühler ein; schränken Sie die Nutzung der Klimaanlage ein.",
+    "Reduzieren Sie Flaschengetränke und Kaffee-/Milchgetränke."
+  ],
+  "recovery_actions": [
+    "Überprüfen Sie eine Essensquittung mit einem Live-Foto, um einen Punktebonus zu erhalten.",
+    "Reichen Sie einen zusätzlichen Nachweis ein, indem Sie ein Getränk oder dessen Quittung fotografieren.",
+    "Machen Sie einen kurzen Spaziergang/eine Radtour und überprüfen Sie sie mit einem Foto."
+  ],
+  "go_to_verify": "Zum Verifizierungszentrum gehen",
+  "back_to_lobby": "Zurück zur Lobby",
   "guide_title": "App-Anleitung & Regeln",
   "guide_description": "Erfahren Sie, wie Sie Punkte sammeln, Belohnungen einlösen und fair spielen.",
   "guide_recycling_title": "Recycling-Punkte",
@@ -101,24 +131,22 @@
   "guide_survey_title": "CO2-Fußabdruck-Umfrage",
   "guide_survey_description": "Füllen Sie eine tägliche Umfrage aus, um vorläufige Punkte zu erhalten. Verifizieren Sie mit einem Beleg für einen riesigen Bonus!",
   "guide_survey_items_list": [
-    "<b>Strafe für hohen Fußabdruck:</b> Wenn Ihr Fußabdruck über dem regionalen Durchschnitt liegt, verlieren Sie Punkte (<span class='text-destructive'>-1</span> bis <span class='text-destructive'>-10</span>).",
-    "<b>Vorläufige Belohnung:</b> Ohne Beleg erhalten Sie 10 % Ihrer Basispunktzahl, abgerundet.",
-    "<b>Belegverifizierungsbonus:</b> Die Verifizierung mit einem Beleg ersetzt Ihre vorläufigen Punkte durch Ihre vollen <b>Basispunkte <span class='text-primary'>x 3</span></b>.",
-    "<b>Zweite-Chance-Bonus:</b> Heben Sie eine Strafe auf und verdienen Sie <span class='text-primary'>+10 Punkte</span>, indem Sie eine verifizierte nachhaltige Aktion durchführen."
+    "<b>Strafe für hohen Fußabdruck:</b> Wenn Ihr Fußabdruck über dem regionalen Durchschnitt liegt, verlieren Sie <span style='color:hsl(var(--destructive))'>-10 Punkte</span>.",
+    "<b>Vorläufige Belohnung:</b> Ohne Beleg erhalten Sie 10 % Ihrer Basispunktzahl (z. B. werden aus 30 Punkten <span style='color:hsl(var(--primary))'>+3</span>).",
+    "<b>Belegverifizierungsbonus:</b> Die Verifizierung mit einem Beleg ersetzt Ihre vorläufigen Punkte durch Ihre vollen <b>Basispunkte <span style='color:hsl(var(--primary))'>x 3</span></b>.",
+    "<b>Zweite-Chance-Bonus:</b> Heben Sie eine Strafe auf und verdienen Sie <span style='color:hsl(var(--primary))'>die verlorenen Punkte + 10 Bonuspunkte</span>, indem Sie eine verifizierte nachhaltige Aktion durchführen."
   ],
-  "guide_survey_footer": "Das System berechnet aus Ihrer Umfrage einen „Basispunktwert“. Ohne Beleg erhalten Sie 10% davon. Mit Beleg erhalten Sie das <span class='text-primary'>3-fache</span> der Basispunkte.",
+  "guide_survey_footer": "Das System berechnet aus Ihrer Umfrage einen „Basispunktwert“. Ohne Beleg erhalten Sie 10% davon. Mit Beleg erhalten Sie das <span style='color:hsl(var(--primary))'>3-fache</span> der Basispunkte.",
   "guide_verification_title": "Verifizierungszentrum & Fairplay",
   "guide_verification_description": "Um die Community fair zu halten und die Belohnungen sinnvoll zu gestalten, müssen alle punkteträchtigen Aktionen verifiziert werden. Versuche, das System zu manipulieren, führen zu Punktabzügen.",
   "guide_verification_items_list": [
-    "<b>Nur Live-Fotos:</b> Alle Verifizierungen müssen Live-Fotos sein, die über die App aufgenommen wurden. Galerie-Uploads, Screenshots und KI-generierte Bilder sind deaktiviert und werden abgelehnt.",
+    "<b>Nur Live-Fotos:</b> Alle Verifizierungen müssen Live-Fotos sein, die über die App aufgenommen wurden. Galerie-Uploads und Screenshots sind deaktiviert.",
     "<b>Recycling:</b> Ein Foto von Ihnen (oder Ihrer Hand), wie Sie den gescannten Artikel in den richtigen Behälter legen.",
     "<b>CO2-Aktionen:</b> Ein Foto Ihrer nachhaltigen Aktion (z. B. Ihr Busticket, Ihr Fahrrad, Ihr hausgemachtes Essen).",
-    "<b>Doppelbestrafung:</b> Das mehrfache Einreichen derselben Aktion führt zu einer Strafe von <span class='text-destructive'>-50 Punkten</span>.",
-    "<b>Betrugsstrafe:</b> Das Einreichen von offensichtlich gefälschten oder KI-generierten Bildern führt zu einer Strafe von <span class='text-destructive'>-200 Punkten</span> und kann zur Sperrung des Kontos führen."
+    "<b>Strafe für gleiches Foto:</b> Das mehrfache Einreichen desselben Fotos führt zu einer Strafe von <span style='color:hsl(var(--destructive))'>-50 Punkten</span>.",
+    "<b>Betrugsstrafe:</b> Das Einreichen von offensichtlich gefälschten oder KI-generierten Bildern führt zu einer Strafe von <span style='color:hsl(var(--destructive))'>-200 Punkten</span> und kann zur Sperrung des Kontos führen."
   ],
   "guide_verification_footer": "Unser KI-Moderationssystem überprüft jede Einreichung. Strafen werden automatisch angewendet.",
-  "guide_redemption_title": "Belohnungseinlösung",
-  "guide_redemption_description": "Verwenden Sie Ihre hart verdienten Punkte, um echte Rabatte und Belohnungen von unseren Partnern zu erhalten.",
   "guide_howto_title": "Anleitungen",
   "guide_howto_recycle_title": "Wie man recycelt & verdient:",
   "guide_howto_recycle_steps": [
@@ -128,12 +156,13 @@
     "Machen Sie ein klares Foto von sich (oder Ihrer Hand), wie Sie den Artikel in einen Recyclingbehälter legen.",
     "Unsere KI überprüft Ihre Aktion. Punkte werden sofort nach erfolgreicher Überprüfung gutgeschrieben!"
   ],
+  "guide_howto_footprint_title": "Wie man die CO2-Umfrage verwendet:",
   "guide_howto_footprint_steps": [
     "Tippen Sie im Hauptmenü auf die Schaltfläche 'Ihren CO2-Fußabdruck sehen' und füllen Sie die tägliche Umfrage aus.",
     "Erhalten Sie Ihre erste Analyse und vorläufige Punkte.",
-    "Tippen Sie auf die Schaltfläche 'Beleg scannen, um zu verifizieren & Bonus zu erhalten', um das Verifizierungszentrum zu öffnen.",
+    "Tippen Sie auf dem Ergebnisbildschirm auf die Schaltfläche 'Zum Verifizierungszentrum gehen'.",
     "Senden Sie einen Live-Fotonachweis Ihrer Aktivitäten (z. B. Busfahrt, vegetarisches Essen).",
-    "Wenn Ihre Aktion verifiziert wird, werden Ihre vorläufigen Punkte durch die vollen Punkte plus einen <span class='text-primary'>3x-Bonus</span> ersetzt!"
+    "Wenn Ihre Aktion verifiziert wird, werden Ihre vorläufigen Punkte durch die vollen Punkte plus einen <span style='color:hsl(var(--primary))'>3x-Bonus</span> ersetzt!"
   ],
   "settings_title": "Einstellungen",
   "settings_description": "Verwalten Sie Ihre Anwendungseinstellungen und Präferenzen.",
@@ -149,7 +178,7 @@
   "loading_barcode": "Material wird mit Barcode neu identifiziert...",
   "loading_disposal": "Ihre Entsorgung wird überprüft...",
   "loading_action": "Ihre Aktion wird überprüft...",
-  "loading_receipt": "Beleg wird verarbeitet...",
+  "loading_receipt": "Ihre Umfrage wird bearbeitet...",
   "toast_region_updated_title": "Region aktualisiert",
   "toast_region_updated_description": "Ihre Region wurde auf {region} gesetzt.",
   "toast_language_updated_title": "Sprache aktualisiert",
@@ -174,5 +203,3 @@
   "toast_reward_redeemed_title": "Belohnung eingelöst!",
   "toast_reward_redeemed_description": "Sie haben '{title}' erfolgreich eingelöst."
 }
-
-    

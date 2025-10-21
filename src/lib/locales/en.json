@@ -145,8 +145,6 @@
     "<b>Fraud Penalty:</b> Submitting clearly fake or AI-generated images will result in a <span style='color:hsl(var(--destructive))'>-200 point</span> penalty and may lead to account suspension."
   ],
   "guide_verification_footer": "Our AI moderation system verifies each submission. Penalties are applied automatically.",
-  "guide_redemption_title": "Reward Redemption",
-  "guide_redemption_description": "Use your hard-earned points to get real-world discounts and rewards from our partners.",
   "guide_howto_title": "How-To Guides",
   "guide_howto_recycle_title": "How to Recycle & Earn:",
   "guide_howto_recycle_steps": [

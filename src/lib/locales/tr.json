@@ -70,18 +70,48 @@
   "survey_calculate_button": "Ayak İzimi Hesapla",
   "survey_results_title": "Günlük Ayak İzi Sonuçları",
   "survey_results_estimated": "Tahmini Ayak İzi:",
+  "survey_range_hint": "Bölge aralığı: min {min}, ort {avg}, maks {max} kg",
   "survey_penalty_title": "Yüksek Ayak İzi Cezası",
   "survey_penalty_description": "Günlük ayak iziniz yüksekti, bu yüzden {points} puan düşüldü. Aşağıdaki eylemlerden birini yaparak ve bir fotoğrafla doğrulayarak bunu geri alabilirsiniz.",
   "survey_provisional_title": "Geçici Puanlar Verildi!",
   "survey_provisional_description": "{points} geçici puan kazandınız. Günlük ayak izinizi doğrulamak ve 3 kat puan bonusu kazanmak için gün içinden bir fiş tarayın!",
-  "survey_base_points_hint": "Temel puanınız {base} puandır. Bonus bu puandan hesaplanır.",
-  "survey_analysis_title": "Analiz",
-  "survey_recommendations_title": "Yarını iyileştirmek için:",
-  "survey_extra_tips_title": "Bugün yapılacak ihtiyaçlardan birini yapın:",
-  "survey_second_chance_button": "Cezayı Geri Almak İçin Harekete Geçin",
-  "survey_scan_receipt_button": "Doğrulamak ve Bonus Kazanmak İçin Fişi Tara",
-  "survey_bonus_applied_button": "Bonus Uygulandı!",
-  "survey_back_button": "Ana Menüye Geri Dön",
+  "survey_base_points_hint": "Temel puanınız {base} puandır.",
+  "survey_bonus_hint": "Fiş bonusu: x{x}",
+  "analysis_good_title": "Bugün harika seçimler",
+  "analysis_mid_title": "İyi, ama geliştirilebilir",
+  "analysis_bad_title": "Yüksek etki — iyileştirme gerekiyor",
+  "survey_recommendations_title": "İyileştirmek için 3 yol",
+  "survey_recovery_title": "Bugün puanları geri kazan",
+  "metaphor_low": "Bu, 2 yetişkin ağacın bir yılda emdiği CO₂ gibi.",
+  "metaphor_medium_low": "Kısa bir şehir içi araba yolculuğuna (≈100–150 km) benzer.",
+  "metaphor_medium": "Evde yoğun bir enerji kullanım gününe eşdeğer.",
+  "metaphor_high": "Yoğun bir sürüş ve klima kullanımının birleştiği bir gün gibi.",
+  "metaphor_very_high": "Bu, yoğun ulaşım ve enerji tüketiminden kaynaklanan yüksek etkili bir seviyedir.",
+  "default_analysis_good": "Bugünkü seçimleriniz düşük bir etkiyle sonuçlandı. Bu alışkanlıkları sürdürürseniz puanlarınız hızla artacaktır.",
+  "default_analysis_mid": "Ortalama bir etki seviyesindesiniz. Küçük değişiklikler büyük bir fark yaratabilir.",
+  "default_analysis_bad": "CO₂ ayak iziniz yüksek görünüyor. Bunu bugün birkaç hedefli hamle ile aşağı çekebiliriz.",
+  "improvements_low": [
+    "Toplu taşımayı bir adım öteye taşıyın: 1 yolculuğu yürüyüş/bisiklet ile değiştirin.",
+    "Musluk suyu/çay tercih edin; şişelenmiş içecekleri azaltın.",
+    "Akşamları cihazları prizden çekin."
+  ],
+  "improvements_medium": [
+    "Bugün kırmızı eti atlayın; beyaz et veya bitki bazlı tercih edin.",
+    "Kısa mesafeler için arabayı bırakın; 20-30 dakikalık bir yürüyüş ekleyin.",
+    "Aydınlatmayı LED'lerle sınırlayın; gereksiz ışıkları kapatın."
+  ],
+  "improvements_high": [
+    "Mümkünse bugün araba kullanmayın; toplu taşımaya geçin.",
+    "Evi 1-2°C daha sıcak/soğuk ayarlayın; klima kullanımını kısıtlayın.",
+    "Şişelenmiş içecekleri ve kahve/sütlü içecekleri azaltın."
+  ],
+  "recovery_actions": [
+    "Puan bonusu almak için bir yemek fişini canlı fotoğrafla doğrulayın.",
+    "Bir içeceği veya fişini fotoğraflayarak ekstra kanıt gönderin.",
+    "Kısa bir yürüyüş/bisiklet turu yapın ve bir fotoğrafla doğrulayın."
+  ],
+  "go_to_verify": "Doğrulama Merkezine Git",
+  "back_to_lobby": "Lobiye Dön",
   "guide_title": "Uygulama Rehberi ve Kurallar",
   "guide_description": "Puan kazanmayı, ödülleri kullanmayı ve adil oynamayı öğrenin.",
   "guide_recycling_title": "Geri Dönüşüm Puanları",
@@ -101,24 +131,22 @@
   "guide_survey_title": "Karbon Ayak İzi Anketi",
   "guide_survey_description": "Geçici puanlar almak için günlük bir anketi tamamlayın. Büyük bir bonus için bir fişle doğrulayın!",
   "guide_survey_items_list": [
-    "<b>Yüksek Ayak İzi Cezası:</b> Eğer ayak iziniz bölgesel ortalamanın üzerindeyse puan kaybedersiniz (<span class='text-destructive'>-1</span> ila <span class='text-destructive'>-10</span>).",
-    "<b>Geçici Ödül:</b> Fiş olmadan, temel puanınızın %10'unu alırsınız, aşağı yuvarlanır.",
-    "<b>Fiş Doğrulama Bonusu:</b> Fiş ile doğrulamak, geçici puanlarınızı tam <b>Temel Puan <span class='text-primary'>x 3</span></b> ile değiştirir.",
-    "<b>İkinci Şans Bonusu:</b> Bir cezayı tersine çevirin ve doğrulanmış bir sürdürülebilir eylem gerçekleştirerek <span class='text-primary'>+10 puan</span> kazanın."
+    "<b>Yüksek Ayak İzi Cezası:</b> Eğer ayak iziniz bölgesel ortalamanın üzerindeyse <span style='color:hsl(var(--destructive))'>-10 puan</span> kaybedersiniz.",
+    "<b>Geçici Ödül:</b> Fiş olmadan, temel puanınızın %10'unu alırsınız (ör. 30 puan <span style='color:hsl(var(--primary))'>+3</span> olur).",
+    "<b>Fiş Doğrulama Bonusu:</b> Fiş ile doğrulamak, geçici puanlarınızı tam <b>Temel Puan <span style='color:hsl(var(--primary))'>x 3</span></b> ile değiştirir.",
+    "<b>İkinci Şans Bonusu:</b> Bir cezayı tersine çevirin ve doğrulanmış bir sürdürülebilir eylem gerçekleştirerek <span style='color:hsl(var(--primary))'>kaybettiğiniz puanlar + 10 bonus puan</span> kazanın."
   ],
-  "guide_survey_footer": "Sistem, anketinizden bir 'temel puan' değeri hesaplar. Fiş olmadan, bunun %10'unu alırsınız. Fişle, temel puanların <span class='text-primary'>3 katını</span> alırsınız.",
+  "guide_survey_footer": "Sistem, anketinizden bir 'temel puan' değeri hesaplar. Fiş olmadan, bunun %10'unu alırsınız. Fişle, temel puanların <span style='color:hsl(var(--primary))'>3 katını</span> alırsınız.",
   "guide_verification_title": "Doğrulama Merkezi ve Adil Oyun",
   "guide_verification_description": "Topluluğu adil tutmak ve ödülleri anlamlı kılmak için, puan kazandıran tüm eylemlerin doğrulanması gerekir. Sistemi manipüle etme girişimleri puan cezalarıyla sonuçlanacaktır.",
   "guide_verification_items_list": [
-    "<b>Sadece Canlı Fotoğraflar:</b> Tüm doğrulamalar, uygulama üzerinden çekilen canlı fotoğraflar olmalıdır. Galeri yüklemeleri, ekran görüntüleri ve yapay zeka tarafından oluşturulan görüntüler devre dışı bırakılmıştır ve reddedilecektir.",
+    "<b>Sadece Canlı Fotoğraflar:</b> Tüm doğrulamalar, uygulama üzerinden çekilen canlı fotoğraflar olmalıdır. Galeri yüklemeleri ve ekran görüntüleri devre dışı bırakılmıştır.",
     "<b>Geri Dönüşüm:</b> Taranan öğeyi doğru kutuya koyarken sizin (veya elinizin) bir fotoğrafı.",
     "<b>Karbon Eylemleri:</b> Sürdürülebilir eyleminizin bir fotoğrafı (ör. otobüs biletiniz, bisikletiniz, ev yapımı yemeğiniz).",
-    "<b>Tekrar Cezas:</b> Aynı eylemi birden çok kez göndermek <span class='text-destructive'>-50 puan</span> cezasıyla sonuçlanacaktır.",
-    "<b>Sahtekarlık Cezası:</b> Açıkça sahte veya yapay zeka tarafından oluşturulmuş görüntüler göndermek <span class='text-destructive'>-200 puan</span> cezasıyla sonuçlanacak ve hesap askıya alınmasına neden olabilir."
+    "<b>Aynı Fotoğraf Cezası:</b> Aynı fotoğrafı birden çok kez göndermek <span style='color:hsl(var(--destructive))'>-50 puan</span> cezasıyla sonuçlanacaktır.",
+    "<b>Sahtekarlık Cezası:</b> Açıkça sahte veya yapay zeka tarafından oluşturulmuş görüntüler göndermek <span style='color:hsl(var(--destructive))'>-200 puan</span> cezasıyla sonuçlanacak ve hesap askıya alınmasına neden olabilir."
   ],
   "guide_verification_footer": "Yapay zeka denetim sistemimiz her gönderimi doğrular. Cezalar otomatik olarak uygulanır.",
-  "guide_redemption_title": "Ödül Kullanımı",
-  "guide_redemption_description": "Zor kazanılan puanlarınızı ortaklarımızdan gerçek dünya indirimleri ve ödülleri almak için kullanın.",
   "guide_howto_title": "Nasıl Yapılır Kılavuzları",
   "guide_howto_recycle_title": "Nasıl Geri Dönüşüm Yapılır ve Kazanılır:",
   "guide_howto_recycle_steps": [
@@ -128,12 +156,13 @@
     "Öğeyi geri dönüşüm kutusuna attığınız net bir fotoğraf çekin.",
     "Doğrulama başarılı olursa puanlar anında verilir!"
   ],
+  "guide_howto_footprint_title": "Karbon Anketini Nasıl Kullanılır:",
   "guide_howto_footprint_steps": [
     "Ana menüden 'Karbon Ayak İzinizi Görün' butonuna dokunun ve günlük anketi tamamlayın.",
     "İlk analiziniz ve geçici puanlarınız gösterilecektir.",
-    "Doğrulama Merkezi'ni açmak için 'Doğrulamak ve Bonus Kazanmak İçin Fişi Tara' butonuna dokunun.",
+    "Sonuç ekranındaki 'Doğrulama Merkezine Git' butonuna dokunun.",
     "Etkinliklerinizin canlı fotoğraf kanıtlarını gönderin (ör. otobüs yolculuğu, vejetaryen yemek).",
-    "Eyleminiz doğrulanırsa, geçici puanlarınız tam puan artı <span class='text-primary'>3x bonus</span> ile değiştirilecektir!"
+    "Eyleminiz doğrulanırsa, geçici puanlarınız tam puan artı <span style='color:hsl(var(--primary))'>3x bonus</span> ile değiştirilecektir!"
   ],
   "settings_title": "Ayarlar",
   "settings_description": "Uygulama ayarlarınızı ve tercihlerinizi yönetin.",
@@ -149,7 +178,7 @@
   "loading_barcode": "Barkod ile malzeme yeniden tanımlanıyor...",
   "loading_disposal": "Atığınız doğrulanıyor...",
   "loading_action": "Eyleminiz doğrulanıyor...",
-  "loading_receipt": "Fiş işleniyor...",
+  "loading_receipt": "Anketiniz işleniyor...",
   "toast_region_updated_title": "Bölge Güncellendi",
   "toast_region_updated_description": "Bölgeniz {region} olarak ayarlandı.",
   "toast_language_updated_title": "Dil Güncellendi",
@@ -174,5 +203,3 @@
   "toast_reward_redeemed_title": "Ödül Kullanıldı!",
   "toast_reward_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız."
 }
-
-    
