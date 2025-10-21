@@ -1,4 +1,3 @@
-
 export type TransportOption = 'car_gasoline' | 'ev' | 'public_transport' | 'walk_bike';
 export type DietOption = 'red_meat' | 'white_meat_fish' | 'vegetarian_vegan' | 'carb_based';
 export type DrinkOption = 'drink_coffee_milk' | 'drink_bottled' | 'drink_alcohol' | 'drink_water_tea';
@@ -87,8 +86,8 @@ export function calculatePoints(
     }
 
     // 2. If no penalty, calculate base points
-    // Scale points: max points for min footprint, 0 points for max footprint
-    const a = -30 / (region.max - region.min);
+    // Scale points: max points (30) for min footprint, low points (1) for footprint near penalty threshold
+    const a = (1 - 30) / (region.penaltyThreshold - region.min);
     const b = 30 - a * region.min;
     let basePoints = a * estimatedFootprintKg + b;
     
@@ -96,5 +95,3 @@ export function calculatePoints(
 
     return { basePoints: Math.round(basePoints), penaltyPoints: 0 };
 }
-
-    

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from "react";
@@ -13,12 +12,10 @@ import { useTranslation } from "@/hooks/use-translation";
 
 type Props = {
   region: RegionKey;
-  kg: number;                     // estimatedFootprintKg (deterministic)
-  basePoints: number;             // pointsFromKgRegionAware(kg, region)
-  provisionalPoints?: number;     // Now same as basePoints
-  bonusMultiplier?: number;       // default is 3
-  analysisText?: string;          // AI text (optional)
-  recommendations?: string[];     // 3 recommendations (optional)
+  kg: number;
+  basePoints: number;
+  provisionalPoints?: number;
+  bonusMultiplier?: number;
   onSecondChance: () => void;
 };
 
@@ -28,8 +25,6 @@ export default function SurveyResultsCard({
   basePoints,
   provisionalPoints,
   bonusMultiplier = 3,
-  analysisText,
-  recommendations = [],
   onSecondChance,
 }: Props) {
   const { t } = useTranslation();
@@ -38,29 +33,36 @@ export default function SurveyResultsCard({
   // 1) Sentiment/icon mapping
   const sentiment = useMemo(() => {
     if (basePoints >= 20) return "good";
-    if (basePoints >= 10) return "mid";
+    if (basePoints > 0) return "mid";
     return "bad";
   }, [basePoints]);
 
   const SentimentIcon = sentiment === "good" ? ThumbsUp : sentiment === "mid" ? Meh : ThumbsDown;
 
   // 2) Simple metaphor
-  const metaphor = useMemo(() => carbonMetaphor(kg, t), [kg, t]);
+  const metaphor = useMemo(() => {
+     if (kg <= 10) return t("metaphor_low");
+    if (kg <= 25) return t("metaphor_medium_low");
+    if (kg <= 50) return t("metaphor_medium");
+    if (kg <= 70) return t("metaphor_high");
+    return t("metaphor_very_high");
+  }, [kg, t]);
 
   // 3) Top 3 improvements
   const top3 = useMemo(() => {
-    if (recommendations && recommendations.length > 0) return recommendations;
     const fallbackKey = sentiment === 'good' ? 'improvements_low' : sentiment === 'mid' ? 'improvements_medium' : 'improvements_high';
     return t(fallbackKey, { returnObjects: true }) as string[];
-  }, [t, recommendations, sentiment]);
+  }, [t, sentiment]);
 
   // 4) Recovery actions if score is bad
   const recovery3 = useMemo(() => (sentiment === "bad" ? t("recovery_actions", { returnObjects: true }) as string[] : []), [sentiment, t]);
 
   const { min, avg, max } = REGIONS[region];
   const isPenalty = basePoints <= 0;
-
+  
   const analysisKey = sentiment === 'good' ? 'default_analysis_good' : sentiment === 'mid' ? 'default_analysis_mid' : 'default_analysis_bad';
+  const analysisTitleKey = sentiment === 'good' ? 'analysis_good_title' : sentiment === 'mid' ? 'analysis_mid_title' : 'analysis_bad_title';
+
 
   return (
     <Card>
@@ -100,7 +102,7 @@ export default function SurveyResultsCard({
             <AlertDescription>
               <span dangerouslySetInnerHTML={{ __html: t("survey_provisional_description", { points: provisionalPoints })}} />
               <div className="mt-1 text-xs text-muted-foreground">
-                 <span dangerouslySetInnerHTML={{ __html: t("survey_bonus_hint", { bonus: basePoints * bonusMultiplier, x: bonusMultiplier }) }} />
+                 <span dangerouslySetInnerHTML={{ __html: t("survey_bonus_hint", { bonus: (provisionalPoints || 0) * bonusMultiplier, x: bonusMultiplier }) }} />
               </div>
             </AlertDescription>
           </Alert>
@@ -111,10 +113,10 @@ export default function SurveyResultsCard({
           <SentimentIcon className={sentiment === "good" ? "text-green-600 h-4 w-4"
             : sentiment === "mid" ? "text-amber-500 h-4 w-4" : "text-red-600 h-4 w-4"} />
           <AlertTitle>
-            {t(sentiment === "good" ? "analysis_good_title" : sentiment === "mid" ? "analysis_mid_title" : "analysis_bad_title")}
+            {t(analysisTitleKey)}
           </AlertTitle>
           <AlertDescription>
-            {analysisText || t(analysisKey)}
+            {t(analysisKey)}
           </AlertDescription>
         </Alert>
 
@@ -160,14 +162,3 @@ export default function SurveyResultsCard({
     </Card>
   );
 }
-
-
-function carbonMetaphor(kg: number, t: (key: string, options?: any) => string): string {
-  if (kg <= 10) return t("metaphor_low");
-  if (kg <= 25) return t("metaphor_medium_low");
-  if (kg <= 50) return t("metaphor_medium");
-  if (kg <= 70) return t("metaphor_high");
-  return t("metaphor_very_high");
-}
-
-    

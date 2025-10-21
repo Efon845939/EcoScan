@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useTransition } from 'react';
 import {
@@ -34,7 +33,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { VerificationCenter } from './verification-center';
 import SurveyResultsCard from './SurveyResultsCard';
-import { analyzeFootprint, CarbonFootprintAnalysis } from '@/ai/flows/carbon-footprint-analysis';
 
 interface CarbonFootprintSurveyProps {
   onBack: () => void;
@@ -61,7 +59,6 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   const [otherInfo, setOtherInfo] = useState('');
 
   // Results state
-  const [analysisResults, setAnalysisResults] = useState<CarbonFootprintAnalysis | null>(null);
   const [estimatedFootprint, setEstimatedFootprint] = useState(0);
   const [basePoints, setBasePoints] = useState(0);
   const [penaltyPoints, setPenaltyPoints] = useState(0);
@@ -113,21 +110,7 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
         });
       }
 
-      // Also get AI analysis
-      analyzeFootprint({
-        transport,
-        diet,
-        drink,
-        energy: energyOption,
-        other: otherInfo,
-        region
-      }).then(setAnalysisResults).catch(e => {
-        console.error("Error getting AI analysis:", e);
-        // We can proceed without AI analysis
-        setAnalysisResults(null);
-      }).finally(() => {
-        setStep('results');
-      });
+      setStep('results');
     });
   };
   
@@ -170,8 +153,6 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
             basePoints={basePoints > 0 ? basePoints : penaltyPoints}
             provisionalPoints={provisionalPoints}
             bonusMultiplier={3}
-            analysisText={analysisResults?.analysis || undefined}
-            recommendations={analysisResults?.recommendations || []}
             onSecondChance={() => setStep('secondChance')}
         />
     )
@@ -282,5 +263,3 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
     </Card>
   );
 }
-
-    

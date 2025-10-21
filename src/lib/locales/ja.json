@@ -1,4 +1,3 @@
-
 {
   "header_title": "EcoScanリワード",
   "header_points": "ポイント",
@@ -33,6 +32,8 @@
   "rewards_title": "ポイントを利用",
   "rewards_description": "ポイントを使って提携店で割引を受けましょう。",
   "rewards_redeem_button": "利用する",
+  "rewards_redeemed_title": "リワードを利用しました！",
+  "rewards_redeemed_description": "「{title}」を正常に利用しました。",
   "rewards": {
     "free_coffee": { "title": "無料コーヒー", "partner": "ザ・デイリーグラインド" },
     "groceries_5_off": { "title": "食料品5ドル割引", "partner": "グリーン・グローサー" },
