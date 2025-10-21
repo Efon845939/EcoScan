@@ -27,7 +27,7 @@ This logic is located in `src/lib/points.ts`.
 
 ## 2. Carbon Footprint Survey Points
 
-Points from the daily carbon footprint survey are calculated based on a `sustainabilityScore` (from 1 to 10) and an `estimatedFootprintKg` provided by the AI analysis. The system is designed to provide a small provisional reward, with a large bonus for verifying with a receipt.
+Points from the daily carbon footprint survey are calculated based on a user's inputs and their region. The system awards a base score immediately, with a large bonus available for verifying activities with a receipt.
 
 ### Regional Benchmarks
 
@@ -35,30 +35,29 @@ To ensure fairness, penalties and rewards are scaled based on regional daily COâ
 
 | Region      | Avg (kg/day) | Penalty Threshold (kg/day) |
 |-------------|--------------|------------------------------|
-| Turkey      | 24           | 30                           |
-| Germany     | 27           | 35                           |
-| USA         | 45           | 55                           |
-| UAE (Dubai) | 55           | 65                           |
-| Kuwait      | 70           | 80                           |
-| *Default*   | 25           | 30                           |
+| Turkey      | 10           | 25                           |
+| Germany     | 20           | 40                           |
+| USA         | 40           | 60                           |
+| UAE (Dubai) | 50           | 70                           |
+| Kuwait      | 65           | 85                           |
+| *Default*   | 25           | 50                           |
 
 ### Point Calculation Rules:
 
-1.  **High Footprint Penalty (Sliding Scale):**
+1.  **Base Points (No Receipt):**
+    *   A user's survey inputs are calculated into a `basePoints` value, ranging from 0 (at the regional max kg) to 30 (at or below the regional min kg).
+    *   These points are awarded to the user's total immediately upon completing the survey.
+
+2.  **High Footprint Penalty (Sliding Scale):**
     *   If `estimatedFootprintKg` is **greater than the region's Penalty Threshold**, the user starts losing points.
     *   **Formula:** `Penalty = -round((estimatedFootprintKg - PenaltyThreshold) / 2)`
     *   The penalty is capped at a maximum of **-10 points**.
-    *   *Example (Dubai): 69kg -> -2 points. 75kg -> -5 points. 85kg -> -10 points.*
-
-2.  **Provisional Reward (No Receipt):**
-    *   If the footprint is not over the penalty threshold, a small provisional reward is given.
-    *   **Formula:** `Provisional Points = floor(Base Points * 0.10)`
-    *   This results in a small initial reward (e.g., 1-3 points).
+    *   *Example (Dubai): 74kg -> -2 points. 80kg -> -5 points. 90kg -> -10 points.*
 
 3.  **Receipt Verification Bonus:**
-    *   If a user successfully scans a receipt, their provisional points are replaced by a larger bonus.
-    *   **Formula:** `Final Points = Base Points * 3`
-    *   This is a 3x multiplier on the initial `Base Points`, not the provisional ones.
+    *   If a user successfully scans a receipt for one of their day's activities (e.g., a meal or drink), they receive a large bonus.
+    *   **Formula:** `Final Points = Base Points * 5`
+    *   This bonus replaces the initial base points. For example, if a user earned 11 base points, verifying with a receipt changes their total award for the survey to 55 points.
 
 4.  **Second Chance Bonus:**
     *   If a user receives a penalty, they can perform one of the AI-recommended actions and submit photo proof.
@@ -79,5 +78,3 @@ This logic is defined in `src/components/rewards-section.tsx`.
 | **$10 Off Clothes**   | Eco Threads           | 1200        |
 | **Free Movie Ticket** | Cineplex Green        | 1600        |
 | **$15 Off Shoes**     | Sustainable Soles     | 2000        |
-
-    

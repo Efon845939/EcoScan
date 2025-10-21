@@ -14,7 +14,6 @@ type Props = {
   region: RegionKey;
   kg: number;
   basePoints: number;
-  provisionalPoints?: number;
   bonusMultiplier?: number;
   onSecondChance: () => void;
   analysis?: string;
@@ -26,8 +25,7 @@ export default function SurveyResultsCard({
   region,
   kg,
   basePoints,
-  provisionalPoints,
-  bonusMultiplier = 3,
+  bonusMultiplier = 5,
   onSecondChance,
   analysis,
   recommendations,
@@ -36,12 +34,15 @@ export default function SurveyResultsCard({
   const { t } = useTranslation();
   const r = useRouter();
 
+  const isPenalty = basePoints < 0;
+
   // 1) Sentiment/icon mapping
   const sentiment = useMemo(() => {
+    if (isPenalty) return "bad";
     if (basePoints >= 20) return "good";
     if (basePoints >= 10) return "mid";
-    return "bad";
-  }, [basePoints]);
+    return "bad"; // Low points but not a penalty
+  }, [basePoints, isPenalty]);
 
   const SentimentIcon = sentiment === "good" ? ThumbsUp : sentiment === "mid" ? Meh : ThumbsDown;
 
@@ -55,14 +56,13 @@ export default function SurveyResultsCard({
   }, [kg, t]);
 
   const { min, avg, max } = REGIONS[region];
-  const isPenalty = basePoints <= 0;
   
   const analysisTitleKey = sentiment === 'good' ? 'analysis_good_title' : sentiment === 'mid' ? 'analysis_mid_title' : 'analysis_bad_title';
 
   const finalRecommendations = recommendations && recommendations.length > 0 ? recommendations : (t(sentiment === 'good' ? 'improvements_low' : sentiment === 'mid' ? 'improvements_medium' : 'improvements_high', { returnObjects: true }) as string[]);
   const finalRecoveryActions = recoveryActions && recoveryActions.length > 0 ? recoveryActions : (t("recovery_actions", { returnObjects: true }) as string[]);
   const finalAnalysis = analysis || t(sentiment === 'good' ? 'default_analysis_good' : sentiment === 'mid' ? 'default_analysis_mid' : 'default_analysis_bad');
-
+  const recoveryTitle = isPenalty ? t("survey_recovery_title") : t("survey_bonus_title");
 
   return (
     <Card>
@@ -94,14 +94,14 @@ export default function SurveyResultsCard({
             <AlertDescription dangerouslySetInnerHTML={{ __html: t("survey_penalty_description", { points: basePoints })}} />
           </Alert>
         ) : (
-          <Alert variant="default" className="border-yellow-400/50 text-center bg-yellow-50/50 dark:bg-yellow-900/10">
-            <Sparkles className="h-4 w-4 text-yellow-500" />
-            <AlertTitle className="text-yellow-600 dark:text-yellow-400">
-              {t("survey_provisional_title") || "Provisional points granted"}
+          <Alert variant="default" className="border-green-400/50 text-center bg-green-50/50 dark:bg-green-900/10">
+            <Sparkles className="h-4 w-4 text-green-500" />
+            <AlertTitle className="text-green-600 dark:text-green-400">
+              {t("survey_base_points_title")}
             </AlertTitle>
             <AlertDescription>
-                <span dangerouslySetInnerHTML={{ __html: t("survey_provisional_description_points", { points: provisionalPoints })}} />
-                <div className="mt-1 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t("survey_provisional_description_details", { base: basePoints, bonus: basePoints * bonusMultiplier, x: bonusMultiplier })}} />
+                <span dangerouslySetInnerHTML={{ __html: t("survey_base_points_description", { points: basePoints })}} />
+                <div className="mt-1 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t("survey_bonus_description_details", { bonus: basePoints * bonusMultiplier, x: bonusMultiplier })}} />
             </AlertDescription>
           </Alert>
         )}
@@ -130,13 +130,13 @@ export default function SurveyResultsCard({
             </div>
         )}
 
-        {/* If bad: 3 ways to recover points today */}
+        {/* Ways to recover/earn more points today */}
         {finalRecoveryActions.length > 0 && (
           <>
             <Separator />
             <div>
               <h3 className="font-semibold mb-2">
-                {isPenalty ? t("survey_recovery_title") : t("survey_bonus_title")}
+                {recoveryTitle}
               </h3>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 {finalRecoveryActions.map((rec, i) => (

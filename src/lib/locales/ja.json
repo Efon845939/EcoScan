@@ -73,9 +73,9 @@
   "survey_range_hint": "地域の範囲：最小{min}、平均{avg}、最大{max} kg",
   "survey_penalty_title": "高いフットプリントのペナルティ",
   "survey_penalty_description": "フットプリントが地域の上限を超えました。<span style='color:hsl(var(--destructive))'>{points}ポイントのペナルティ</span>が適用されました。",
-  "survey_provisional_title": "仮ポイントが付与されました！",
-  "survey_provisional_description_points": "今日の<b>仮</b>リワード：<b style='color:hsl(var(--primary))'>{points}</b>",
-  "survey_provisional_description_details": "今日の<b>基本</b>スコア：<b style='color:hsl(var(--primary))'>{base}</b> pts · レシートボーナス：<b style='color:hsl(var(--primary))'>x{x}</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> pts",
+  "survey_base_points_title": "基本ポイントが付与されました！",
+  "survey_base_points_description": "今日のスコアで<b style='color:hsl(var(--primary))'>{points}基本ポイント</b>を獲得しました。",
+  "survey_bonus_description_details": "レシートで確認して<b style='color:hsl(var(--primary))'>x{x}ボーナス</b>を獲得し、合計<b style='color:hsl(var(--primary))'>{bonus}</b>ポイントに！",
   "analysis_good_title": "今日の素晴らしい選択",
   "analysis_mid_title": "まずまずですが、改善の余地あり",
   "analysis_bad_title": "影響大 - 改善が必要",
@@ -130,14 +130,14 @@
     "unrecyclable": "リサイクル不可"
   },
   "guide_survey_title": "二酸化炭素排出量調査",
-  "guide_survey_description": "毎日の調査を完了して仮ポイントを獲得します。レシートで確認して、莫大なボーナスを獲得してください！",
+  "guide_survey_description": "毎日の調査を完了して基本ポイントを獲得します。レシートで確認して、莫大な5倍のボーナスを獲得してください！",
   "guide_survey_items_list": [
-    "<b>高いフットプリントのペナルティ:</b> フットプリントが地域平均を超えると、深刻度に応じて<span style='color:hsl(var(--destructive))'>-1から-10ポイント</span>を失います。",
-    "<b>仮リワード:</b> レシートがない場合、スコアに対して完全な<span style='color:hsl(var(--primary))'>基本ポイント</span>が付与されます（例：良いスコアで<span style='color:hsl(var(--primary))'>+30</span>ポイント獲得可能）。",
-    "<b>レシート確認ボーナス:</b> レシートで確認すると、基本ポイントに対して<b style='color:hsl(var(--primary))'>3xボーナス</b>が付与されます（例：30基本ポイントが<span style='color:hsl(var(--primary))'>+90</span>になります！）。",
+    "<b>高いフットプリントのペナルティ:</b> フットプリントが地域最大値を超えると、深刻度に応じて<span style='color:hsl(var(--destructive))'>-1から-10ポイント</span>を失います。",
+    "<b>基本リワード:</b> レシートがない場合、スコアに対して完全な<span style='color:hsl(var(--primary))'>基本ポイント</span>がすぐに付与されます（例：良いスコアで<span style='color:hsl(var(--primary))'>+30</span>ポイント獲得可能）。",
+    "<b>レシート確認ボーナス:</b> レシートで確認すると、基本ポイントに対して<b style='color:hsl(var(--primary))'>5倍のボーナス</b>が付与されます（例：11基本ポイントが<span style='color:hsl(var(--primary))'>+55</span>になります！）。",
     "<b>セカンドチャンスボーナス:</b> 確認済みの持続可能なアクションを実行して、ペナルティを取り消し、<span style='color:hsl(var(--primary))'>失ったポイント+ 10ボーナスポイント</span>を獲得します。"
   ],
-  "guide_survey_footer": "システムは、調査から「ベースポイント」値を計算します。これらのポイントを仮に受け取ります。レシートがあれば、3倍のボーナスがもらえます。",
+  "guide_survey_footer": "システムは、調査からすぐに付与される「基本ポイント」値を計算します。レシートで確認すると、基本ポイントが5倍のボーナス額に置き換えられます。",
   "guide_verification_title": "検証センターとフェアプレー",
   "guide_verification_description": "コミュニティを公正に保ち、報酬を意味のあるものにするために、ポイントを獲得するすべてのアクションには検証が必要です。システムを操作しようとすると、ポイントペナルティが発生します。",
   "guide_verification_items_list": [
@@ -160,10 +160,10 @@
   "guide_howto_footprint_title": "カーボン調査の使用方法：",
   "guide_howto_footprint_steps": [
     "メインメニューから「二酸化炭素排出量を見る」ボタンをタップし、毎日の調査を完了します。",
-    "初期分析と仮ポイントを取得します。",
+    "分析と基本ポイントを受け取り、すぐに合計に追加されます。",
     "結果画面で「確認センターに移動」ボタンをタップします。",
     "あなたの活動のライブ写真の証拠を提出してください（例：バス乗車、ベジタリアン料理）。",
-    "アクションが確認されると、仮ポイントが全ポイントと<span style='color:hsl(var(--primary))'>3倍</span>のボーナスに置き換えられます！"
+    "アクションが確認されると、基本ポイントがはるかに大きな<span style='color:hsl(var(--primary))'>5倍のボーナス</span>に置き換えられます！"
   ],
   "guide_howto_verification_title": "確認センターの使用方法：",
   "guide_howto_verification_steps": [

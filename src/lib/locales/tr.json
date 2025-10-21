@@ -73,15 +73,15 @@
   "survey_range_hint": "Bölge aralığı: min {min}, ort {avg}, maks {max} kg",
   "survey_penalty_title": "Yüksek Ayak İzi Cezası",
   "survey_penalty_description": "Ayak iziniz bölgesel sınırı aştı. <span style='color:hsl(var(--destructive))'>{points} puanlık bir ceza</span> uygulandı.",
-  "survey_provisional_title": "Geçici Puanlar Verildi!",
-  "survey_provisional_description_points": "Bugünün <b>geçici</b> ödülü: <b style='color:hsl(var(--primary))'>{points}</b>",
-  "survey_provisional_description_details": "Bugünün <b>temel</b> puanı: <b style='color:hsl(var(--primary))'>{base}</b> puan · Fiş Bonusu: <b style='color:hsl(var(--primary))'>x{x}</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> puan",
-  "analysis_good_title": "Bugün harika seçimler",
-  "analysis_mid_title": "İyi, ama geliştirilebilir",
-  "analysis_bad_title": "Yüksek etki — iyileştirme gerekiyor",
+  "survey_base_points_title": "Temel Puanlar Kazanıldı!",
+  "survey_base_points_description": "Bugünkü puanınız için <b style='color:hsl(var(--primary))'>{points} temel puan</b> kazandınız.",
+  "survey_bonus_description_details": "Bir fişle doğrulayarak <b style='color:hsl(var(--primary))'>x{x} bonus</b> kazanın &rarr; toplam <b style='color:hsl(var(--primary))'>{bonus}</b> puan!",
   "survey_recommendations_title": "İyileştirmek için 3 yol",
   "survey_recovery_title": "Bugün puanları geri kazan",
   "survey_bonus_title": "Bugün daha fazla puan kazan",
+  "analysis_good_title": "Bugün harika seçimler",
+  "analysis_mid_title": "İyi, ama geliştirilebilir",
+  "analysis_bad_title": "Yüksek etki — iyileştirme gerekiyor",
   "metaphor_low": "Bu, 2 yetişkin ağacın bir yılda emdiği CO₂ gibi.",
   "metaphor_medium_low": "Kısa bir şehir içi araba yolculuğuna (≈100–150 km) benzer.",
   "metaphor_medium": "Evde yoğun bir enerji kullanım gününe eşdeğer.",
@@ -130,14 +130,14 @@
     "unrecyclable": "Geri Dönüştürülemez"
   },
   "guide_survey_title": "Karbon Ayak İzi Anketi",
-  "guide_survey_description": "Geçici puanlar almak için günlük bir anketi tamamlayın. Büyük bir bonus için bir fişle doğrulayın!",
+  "guide_survey_description": "Temel puanları almak için günlük bir anketi tamamlayın. Büyük bir 5x bonus için bir fişle doğrulayın!",
   "guide_survey_items_list": [
-    "<b>Yüksek Ayak İzi Cezası:</b> Eğer ayak iziniz bölgesel ortalamanın üzerindeyse, şiddetine bağlı olarak <span style='color:hsl(var(--destructive))'>-1 ile -10 arasında puan</span> kaybedersiniz.",
-    "<b>Geçici Ödül:</b> Fiş olmadan, puanınıza karşılık gelen tam <span style='color:hsl(var(--primary))'>temel puanı</span> alırsınız (ör. iyi bir skor size <span style='color:hsl(var(--primary))'>+30</span> puan kazandırabilir).",
-    "<b>Fiş Doğrulama Bonusu:</b> Fiş ile doğrulamak, temel puanlarınız üzerinden size <b style='color:hsl(var(--primary))'>3 kat bonus</b> kazandırır (ör. 30 temel puan <span style='color:hsl(var(--primary))'>+90</span> olur!).",
-    "<b>İkinci Şans Bonusu:</b> Bir cezayı tersine çevirin ve doğrulanmış bir sürdürülebilir eylem gerçekleştirerek <span style='color:hsl(var(--primary))'>kaybettiğiniz puanları + 10 bonus puan</span> kazanın."
+    "<b>Yüksek Ayak İzi Cezası:</b> Ayak iziniz bölgesel maksimumun üzerindeyse, şiddetine bağlı olarak <span style='color:hsl(var(--destructive))'>-1 ila -10 puan</span> arasında kaybedersiniz.",
+    "<b>Temel Ödül:</b> Fiş olmadan, puanınız için tam <span style='color:hsl(var(--primary))'>temel puanları</span> hemen alırsınız (örneğin, iyi bir puan size <span style='color:hsl(var(--primary))'>+30</span> puan kazandırabilir).",
+    "<b>Fiş Doğrulama Bonusu:</b> Bir fişle doğrulamak, temel puanlarınızda size <b style='color:hsl(var(--primary))'>5x bonus</b> verir (örneğin, 11 temel puan <span style='color:hsl(var(--primary))'>+55</span> olur!).",
+    "<b>İkinci Şans Bonusu:</b> Bir cezayı tersine çevirin ve doğrulanmış sürdürülebilir bir eylem gerçekleştirerek <span style='color:hsl(var(--primary))'>kaybettiğiniz puanları + 10 bonus puan</span> kazanın."
   ],
-  "guide_survey_footer": "Sistem, anketinizden bir 'temel puan' değeri hesaplar. Bu puanları geçici olarak alırsınız. Bir fiş ile 3 kat bonus alırsınız.",
+  "guide_survey_footer": "Sistem, anketinizden derhal verilen bir 'temel puan' değeri hesaplar. Bir fişle doğrulamak, temel puanları 5x bonus miktarıyla değiştirir.",
   "guide_verification_title": "Doğrulama Merkezi ve Adil Oyun",
   "guide_verification_description": "Topluluğu adil tutmak ve ödülleri anlamlı kılmak için, puan kazandıran tüm eylemlerin doğrulanması gerekir. Sistemi manipüle etme girişimleri puan cezalarıyla sonuçlanacaktır.",
   "guide_verification_items_list": [
@@ -160,10 +160,10 @@
   "guide_howto_footprint_title": "Karbon Anketini Nasıl Kullanılır:",
   "guide_howto_footprint_steps": [
     "Ana menüden 'Karbon Ayak İzinizi Görün' butonuna dokunun ve günlük anketi tamamlayın.",
-    "İlk analiziniz ve geçici puanlarınız gösterilecektir.",
-    "Sonuç ekranındaki 'Doğrulama Merkezine Git' butonuna dokunun.",
+    "Analizinizi ve temel puanlarınızı alın, bunlar hemen toplamınıza eklenir.",
+    "Sonuçlar ekranındaki 'Doğrulama Merkezine Git' düğmesine dokunun.",
     "Etkinliklerinizin canlı fotoğraf kanıtlarını gönderin (ör. otobüs yolculuğu, vejetaryen yemek).",
-    "Eyleminiz doğrulanırsa, geçici puanlarınız tam puan artı <span style='color:hsl(var(--primary))'>3x bonus</span> ile değiştirilecektir!"
+    "Eyleminiz doğrulanırsa, temel puanlarınız çok daha büyük bir <span style='color:hsl(var(--primary))'>5x bonus</span> ile değiştirilecektir!"
   ],
   "guide_howto_verification_title": "Doğrulama Merkezi Nasıl Kullanılır:",
   "guide_howto_verification_steps": [

@@ -89,19 +89,23 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
     const energyOption: EnergyOption = noEnergy ? 'no_energy' : 'some_energy';
 
     startTransition(async () => {
+       const aiInput = {
+        language,
+        region,
+        transport,
+        diet,
+        energy: otherInfo,
+        other: ''
+      };
+      
       let analysisResult: CarbonFootprintAnalysisOutput | null = null;
       try {
-        analysisResult = await analyzeFootprint({
-          language,
-          region,
-          transport,
-          diet,
-          energy: otherInfo,
-        });
+        analysisResult = await analyzeFootprint(aiInput);
         setAiAnalysis(analysisResult);
       } catch (e) {
         console.error("AI analysis failed", e);
-        setAiAnalysis(null);
+        // Fallback to deterministic if AI fails
+        setAiAnalysis(null); 
       }
       
       const regionKey = getRegionKey(region) as RegionKey;
@@ -122,7 +126,7 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
 
       if (userProfileRef && userProfile) {
         const currentPoints = userProfile.totalPoints ?? 0;
-        const pointsChange = penaltyPoints < 0 ? penaltyPoints : Math.floor(basePoints * 0.1); // Provisional points
+        const pointsChange = basePoints + penaltyPoints; // Award base points or apply penalty
         
         updateDocumentNonBlocking(userProfileRef, { 
           totalPoints: Math.max(0, currentPoints + pointsChange),
@@ -163,15 +167,14 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
   }
 
   if (step === 'results' && userProfile) {
-    const provisionalPoints = Math.floor(basePoints * 0.1);
+    const finalPoints = basePoints + penaltyPoints;
     
     return (
         <SurveyResultsCard 
             region={getRegionKey(region) as RegionKey}
             kg={estimatedFootprint}
-            basePoints={basePoints > 0 ? basePoints : penaltyPoints}
-            provisionalPoints={provisionalPoints}
-            bonusMultiplier={3}
+            basePoints={finalPoints}
+            bonusMultiplier={5}
             onSecondChance={() => setStep('secondChance')}
             analysis={aiAnalysis?.analysis}
             recommendations={aiAnalysis?.recommendations}
