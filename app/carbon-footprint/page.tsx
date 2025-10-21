@@ -28,7 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useFirebase, useUser, useMemoFirebase, updateDocumentNonBlocking, useDoc } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
-import { REGION, computeKgDeterministic, pointsFromKgRegionAware, computeProvisional, finalizeWithReceipt } from '@/lib/carbon-calculator';
+import { REGION, computeKgDeterministic, pointsFromKgRegionAware, computeProvisional, finalizeWithReceipt, getRegionKey } from '@/lib/carbon-calculator';
 
 export default function CarbonFootprintPage() {
     const [isPending, startTransition] = useTransition();
@@ -89,8 +89,8 @@ export default function CarbonFootprintPage() {
     
     const handleVerifyWithReceipt = () => {
     if (!results || !receiptResult || !receiptResult.isValidReceipt) return;
-
-    const actualBasePoints = pointsFromKgRegionAware(results.estimatedFootprintKg, region as any);
+    const regionKey = getRegionKey(region);
+    const actualBasePoints = pointsFromKgRegionAware(results.estimatedFootprintKg, regionKey);
     const bonusPoints = finalizeWithReceipt(actualBasePoints);
     const provisionalPoints = computeProvisional(actualBasePoints);
 
@@ -118,6 +118,7 @@ export default function CarbonFootprintPage() {
         setIsLoading(true);
         startTransition(async () => {
           try {
+            const regionKey = getRegionKey(region);
             // 1. Ensure single values from form
             const transport = formData.transport[0] as any;
             const diet = formData.diet[0] as any;
@@ -125,8 +126,8 @@ export default function CarbonFootprintPage() {
             const energy = (isNoEnergy ? "none" : formData.energy) as any;
             
             // 2. Run our own deterministic calculation
-            const deterministicKg = computeKgDeterministic(region as any, transport, diet, drink, energy);
-            const base = pointsFromKgRegionAware(deterministicKg, region as any);
+            const deterministicKg = computeKgDeterministic(regionKey, transport, diet, drink, energy);
+            const base = pointsFromKgRegionAware(deterministicKg, regionKey);
             const provisional = computeProvisional(base);
 
             // 3. Call AI only for qualitative analysis
@@ -135,7 +136,6 @@ export default function CarbonFootprintPage() {
             // 4. Update user profile with ONLY provisional points
             if (userProfileRef && userProfile) {
               const currentPoints = userProfile.totalPoints || 0;
-              const regionKey = region.toLowerCase().replace(/, /g, '_').replace(' ', '_') as keyof typeof REGION;
               const regionData = REGION[regionKey] || REGION.europe; // Fallback to europe
               const penaltyThreshold = regionData.max * 1.05;
               const pointsChange = deterministicKg > penaltyThreshold ? -10 : provisional;
@@ -391,5 +391,3 @@ export default function CarbonFootprintPage() {
     </main>
   );
 }
-
-    

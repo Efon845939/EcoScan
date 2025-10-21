@@ -1,12 +1,29 @@
 // factors.ts
 export const REGION = {
   turkey: { min:5, avg:10, max:25 },
-  europe: { min:8, avg:20, max:40 },
+  germany: { min:8, avg:20, max:40 },
   usa:    { min:15, avg:40, max:60 },
   uae:    { min:20, avg:50, max:70 },
   kuwait: { min:25, avg:65, max:85 },
   japan:  { min:6,  avg:15, max:35 },
+  uk:     { min:8, avg:20, max:40 },
+  europe: { min:8, avg:20, max:40 },
 } as const;
+
+const REGION_MAP: Record<string, keyof typeof REGION> = {
+  "Turkey": "turkey",
+  "Germany": "germany",
+  "USA": "usa",
+  "Dubai, UAE": "uae",
+  "Kuwait": "kuwait",
+  "Japan": "japan",
+  "United Kingdom": "uk"
+};
+
+export function getRegionKey(displayName: string): keyof typeof REGION {
+    return REGION_MAP[displayName] || 'europe'; // Default to 'europe'
+}
+
 
 export const TRANSPORT_KG = { car_gasoline:28, ev:10, bus_train:8, bike_walk:0 } as const;
 export const DIET_KG      = { red_meat_heavy:20, white_fish:8, vegetarian_vegan:5, carb_based:10 } as const;
