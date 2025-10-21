@@ -82,8 +82,8 @@ export function calculatePoints(
     // 1. Check for penalty first
     if (estimatedFootprintKg > region.penaltyThreshold) {
         const penalty = Math.round((estimatedFootprintKg - region.penaltyThreshold) / 2);
-        const penaltyPoints = Math.max(-10, -penalty); // Capped at -10
-        return { basePoints: 0, penaltyPoints };
+        const penaltyPoints = Math.max(-10, -penalty); // Capped at -10, can be -1, -2, etc.
+        return { basePoints: penaltyPoints, penaltyPoints: penaltyPoints };
     }
 
     // 2. If no penalty, calculate base points
@@ -92,7 +92,7 @@ export function calculatePoints(
     const b = 30 - a * region.min;
     let basePoints = a * estimatedFootprintKg + b;
     
-    basePoints = Math.max(0, Math.min(30, basePoints));
+    basePoints = Math.max(1, Math.min(30, basePoints));
 
     return { basePoints: Math.round(basePoints), penaltyPoints: 0 };
 }

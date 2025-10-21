@@ -71,7 +71,7 @@
   "survey_results_estimated": "Estimated Footprint:",
   "survey_range_hint": "Region range: min {min}, avg {avg}, max {max} kg",
   "survey_penalty_title": "High Footprint Penalty",
-  "survey_penalty_description": "Your footprint exceeded the regional bound. A -10 point penalty has been applied.",
+  "survey_penalty_description": "Your footprint exceeded the regional bound. A <span style='color:hsl(var(--destructive))'>{points} point penalty</span> has been applied.",
   "survey_provisional_title": "Provisional Points Granted",
   "survey_provisional_description": "You received <span style='color:hsl(var(--primary))'>{points} provisional points</span>.",
   "survey_bonus_hint": "Verify with a receipt to get a <span style='color:hsl(var(--primary))'>x{x} bonus</span> for a total of <span style='color:hsl(var(--primary))'>{bonus} points!</span>",
@@ -110,6 +110,7 @@
   ],
   "go_to_verify": "Go to Verification Center",
   "back_to_lobby": "Back to Lobby",
+  "take_second_chance_button": "Take Second Chance",
   "guide_title": "App Guide & Rules",
   "guide_description": "Learn how to use the app and play fair.",
   "guide_recycling_title": "Recycling Points",
@@ -129,8 +130,8 @@
   "guide_survey_title": "Carbon Footprint Survey",
   "guide_survey_description": "Complete a daily survey to get provisional points. Verify with a receipt for a massive bonus!",
   "guide_survey_items_list": [
-    "<b>High Footprint Penalty:</b> If your footprint is over the regional average, you lose <span style='color:hsl(var(--destructive))'>-10 points</span>.",
-    "<b>Provisional Reward:</b> Without a receipt, you get the full base points for your score (e.g., a good score might get you <span style='color:hsl(var(--primary))'>+30</span> points).",
+    "<b>High Footprint Penalty:</b> If your footprint is over the regional average, you lose between <span style='color:hsl(var(--destructive))'>-1 to -10 points</span>, depending on the severity.",
+    "<b>Provisional Reward:</b> Without a receipt, you get the full <span style='color:hsl(var(--primary))'>base points</span> for your score (e.g., a good score might get you <span style='color:hsl(var(--primary))'>+30</span> points).",
     "<b>Receipt Verification Bonus:</b> Verifying with a receipt gives you a <b style='color:hsl(var(--primary))'>3x bonus</b> on your base points (e.g., 30 base points becomes <span style='color:hsl(var(--primary))'>+90</span>!).",
     "<b>Second Chance Bonus:</b> Reverse a penalty and earn the <span style='color:hsl(var(--primary))'>points you lost + 10 bonus points</span> by taking a verified sustainable action."
   ],
@@ -141,7 +142,7 @@
     "<b>Live Photos Only:</b> All verifications must be live photos taken through the app. Gallery uploads and screenshots are disabled.",
     "<b>Recycling:</b> A photo of you (or your hand) placing the scanned item in the correct bin.",
     "<b>Carbon Actions:</b> A photo of your sustainable action (e.g., your bus ticket, your bike, your home-cooked meal).",
-    "<b>Same Photo Penalty:</b> Submitting the same photo multiple times will result in a <span style='color:hsl(var(--destructive))'>-50 point</span> penalty.",
+    "<b>Duplicate Photo Penalty:</b> Submitting the same photo multiple times will result in a <span style='color:hsl(var(--destructive))'>-50 point</span> penalty.",
     "<b>Fraud Penalty:</b> Submitting clearly fake or AI-generated images will result in a <span style='color:hsl(var(--destructive))'>-200 point</span> penalty and may lead to account suspension."
   ],
   "guide_verification_footer": "Our AI moderation system verifies each submission. Penalties are applied automatically.",
@@ -165,10 +166,11 @@
   "guide_howto_verification_title": "How to Use the Verification Center:",
   "guide_howto_verification_steps": [
     "Navigate to the Verification Center from the survey results or the settings menu.",
-    "Choose the category you want to verify (e.g., Transport, Meal, Drink).",
-    "Each category requires a specific type of proof: a live photo of a receipt, a vehicle, a meal, etc.",
-    "Tap 'Capture & Submit' to take a live photo. Gallery uploads are disabled to ensure fairness.",
-    "Our AI will process your submission. You'll be notified once it's complete and bonus points are awarded."
+    "Choose the category you want to verify (e.g., Transport, Meal, Drink, Energy).",
+    "For Meal and Drink, you can submit a receipt OR a live photo of the item.",
+    "For Transport and other actions, a live photo of the action is required.",
+    "For monthly energy, capture your electricity or water bill.",
+    "Tap 'Capture & Submit' to take a live photo. Gallery uploads are disabled to ensure fairness."
   ],
   "guide_points_disclaimer": "<b>Disclaimer:</b> Point values for recycling and survey actions are illustrative and may be adjusted over time based on new environmental data or sponsor requirements.",
   "settings_title": "Settings",

@@ -19,6 +19,7 @@ type Props = {
   bonusMultiplier?: number;       // default is 3
   analysisText?: string;          // AI text (optional)
   recommendations?: string[];     // 3 recommendations (optional)
+  onSecondChance: () => void;
 };
 
 export default function SurveyResultsCard({
@@ -29,6 +30,7 @@ export default function SurveyResultsCard({
   bonusMultiplier = 3,
   analysisText,
   recommendations = [],
+  onSecondChance,
 }: Props) {
   const { t } = useTranslation();
   const r = useRouter();
@@ -47,15 +49,18 @@ export default function SurveyResultsCard({
 
   // 3) Top 3 improvements
   const top3 = useMemo(() => {
-    if (recommendations && recommendations.length > 0) return recommendations.slice(0,3);
-    return t("improvements_high", { returnObjects: true }); // Fallback
-  }, [t, recommendations]);
+    if (recommendations && recommendations.length > 0) return recommendations;
+    const fallbackKey = sentiment === 'good' ? 'improvements_low' : sentiment === 'mid' ? 'improvements_medium' : 'improvements_high';
+    return t(fallbackKey, { returnObjects: true }) as string[];
+  }, [t, recommendations, sentiment]);
 
   // 4) Recovery actions if score is bad
-  const recovery3 = useMemo(() => (sentiment === "bad" ? t("recovery_actions", { returnObjects: true }) : []), [sentiment, t]);
+  const recovery3 = useMemo(() => (sentiment === "bad" ? t("recovery_actions", { returnObjects: true }) as string[] : []), [sentiment, t]);
 
   const { min, avg, max } = REGIONS[region];
-  const isPenalty = kg > (REGIONS[region]?.penaltyThreshold || 30);
+  const isPenalty = basePoints <= 0;
+
+  const analysisKey = sentiment === 'good' ? 'default_analysis_good' : sentiment === 'mid' ? 'default_analysis_mid' : 'default_analysis_bad';
 
   return (
     <Card>
@@ -84,10 +89,7 @@ export default function SurveyResultsCard({
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>{t("survey_penalty_title") || "Penalty applied"}</AlertTitle>
-            <AlertDescription>
-              {t("survey_penalty_description", { points: -10 }) ||
-                "Your footprint exceeded the regional bound. −10 points applied."}
-            </AlertDescription>
+            <AlertDescription dangerouslySetInnerHTML={{ __html: t("survey_penalty_description", { points: basePoints })}} />
           </Alert>
         ) : (
           <Alert variant="default" className="border-yellow-400/50 text-center bg-yellow-50/50 dark:bg-yellow-900/10">
@@ -96,7 +98,7 @@ export default function SurveyResultsCard({
               {t("survey_provisional_title") || "Provisional points granted"}
             </AlertTitle>
             <AlertDescription>
-              <span dangerouslySetInnerHTML={{ __html: t("survey_provisional_description", { points: provisionalPoints }) || `You received ${provisionalPoints} provisional points.`}} />
+              <span dangerouslySetInnerHTML={{ __html: t("survey_provisional_description", { points: provisionalPoints })}} />
               <div className="mt-1 text-xs text-muted-foreground">
                  <span dangerouslySetInnerHTML={{ __html: t("survey_bonus_hint", { bonus: basePoints * bonusMultiplier, x: bonusMultiplier }) }} />
               </div>
@@ -116,7 +118,7 @@ export default function SurveyResultsCard({
               : (t("analysis_bad_title") || "High impact — needs improvement")}
           </AlertTitle>
           <AlertDescription>
-            {analysisText || t('default_analysis_good')}
+            {analysisText || t(analysisKey)}
           </AlertDescription>
         </Alert>
 
@@ -151,8 +153,8 @@ export default function SurveyResultsCard({
       </CardContent>
 
       <CardFooter className="flex flex-col gap-3">
-        <Button size="lg" className="w-full" onClick={() => r.push("/verify")}>
-          <Receipt className="mr-2" /> {t("go_to_verify") || "Go to Verification Center"}
+        <Button size="lg" className="w-full" onClick={() => (isPenalty ? onSecondChance() : r.push("/verify"))}>
+          <Receipt className="mr-2" /> { isPenalty ? t('take_second_chance_button') : t("go_to_verify") }
         </Button>
 
         <Button size="lg" variant="outline" className="w-full" onClick={() => r.push("/")}>
@@ -164,7 +166,7 @@ export default function SurveyResultsCard({
 }
 
 
-function carbonMetaphor(kg: number, t: (key: string) => string): string {
+function carbonMetaphor(kg: number, t: (key: string, options?: any) => string): string {
   if (kg <= 10) return t("metaphor_low");
   if (kg <= 25) return t("metaphor_medium_low");
   if (kg <= 50) return t("metaphor_medium");

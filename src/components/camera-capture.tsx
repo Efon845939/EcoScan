@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
-import { Camera, Loader2, AlertTriangle } from 'lucide-react';
+import { Camera, Loader2, AlertTriangle, LucideProps } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
@@ -12,9 +12,10 @@ interface CameraCaptureProps {
   category: string;
   apiUrl: string;
   onCapture?: () => void;
+  icon?: React.ComponentType<LucideProps>;
 }
 
-export function CameraCapture({ label, category, apiUrl, onCapture }: CameraCaptureProps) {
+export function CameraCapture({ label, category, apiUrl, onCapture, icon: Icon = Camera }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isBusy, setIsBusy] = useState(false);
@@ -99,7 +100,7 @@ export function CameraCapture({ label, category, apiUrl, onCapture }: CameraCapt
   }, [apiUrl, category, hasCameraPermission, toast, onCapture]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 p-4 border rounded-lg">
       <p className="text-sm font-medium">{label}</p>
       <div className="relative w-full aspect-video bg-muted rounded-lg overflow-hidden flex items-center justify-center">
         <video
@@ -129,7 +130,7 @@ export function CameraCapture({ label, category, apiUrl, onCapture }: CameraCapt
         {isBusy ? (
           <Loader2 className="mr-2 animate-spin" />
         ) : (
-          <Camera className="mr-2" />
+          <Icon className="mr-2" />
         )}
         Capture & Submit
       </Button>

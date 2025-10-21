@@ -58,7 +58,7 @@ export function GuideSection({ onBack }: GuideSectionProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+        <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="item-1">
             <AccordionTrigger>
               <div className="flex items-center gap-2">

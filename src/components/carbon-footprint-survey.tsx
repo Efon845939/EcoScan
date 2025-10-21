@@ -16,7 +16,7 @@ import {
   Leaf,
 } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useTranslation } from '@/hooks/use-translation';
 import { useFirebase, useUser, updateDocumentNonBlocking, serverTimestamp, useDoc, useMemoFirebase } from '@/firebase';
@@ -161,17 +161,18 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   }
 
   if (step === 'results' && userProfile) {
-    const provisionalPoints = basePoints;
+    const provisionalPoints = basePoints > 0 ? basePoints : 0;
     
     return (
         <SurveyResultsCard 
             region={getRegionKey(region) as RegionKey}
             kg={estimatedFootprint}
-            basePoints={basePoints}
+            basePoints={basePoints > 0 ? basePoints : penaltyPoints}
             provisionalPoints={provisionalPoints}
             bonusMultiplier={3}
             analysisText={analysisResults?.analysis || undefined}
             recommendations={analysisResults?.recommendations || []}
+            onSecondChance={() => setStep('secondChance')}
         />
     )
   }

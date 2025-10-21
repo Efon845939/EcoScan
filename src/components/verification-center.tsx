@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Bus, Utensils, GlassWater, Building } from 'lucide-react';
+import { ChevronLeft, Bus, Utensils, GlassWater, Building, Receipt, Camera } from 'lucide-react';
 import { CameraCapture } from './camera-capture';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
@@ -25,7 +25,7 @@ export function VerificationCenter({ onBack, isSecondChance, onVerified }: Verif
     if (onVerified) {
       onVerified();
     } else {
-      onBack();
+      // Don't go back automatically, let user decide when they are done.
     }
   }
 
@@ -56,7 +56,7 @@ export function VerificationCenter({ onBack, isSecondChance, onVerified }: Verif
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion type="single" collapsible className="w-full" defaultValue='transport'>
+        <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="transport">
             <AccordionTrigger>
               <div className="flex items-center gap-3">
@@ -84,9 +84,17 @@ export function VerificationCenter({ onBack, isSecondChance, onVerified }: Verif
             <AccordionContent className="pt-4 space-y-6">
                <CameraCapture
                 onCapture={handleDone}
-                label="Capture your meal receipt for OCR verification."
+                label="Option 1: Capture your meal receipt for OCR verification."
                 category="meal_receipt"
                 apiUrl="/api/verify/meal-receipt"
+                icon={Receipt}
+              />
+               <CameraCapture
+                onCapture={handleDone}
+                label="Option 2: Capture a live photo of you eating the meal."
+                category="meal_photo"
+                apiUrl="/api/verify/meal-photo"
+                icon={Camera}
               />
             </AccordionContent>
           </AccordionItem>
@@ -101,9 +109,17 @@ export function VerificationCenter({ onBack, isSecondChance, onVerified }: Verif
             <AccordionContent className="pt-4 space-y-6">
               <CameraCapture
                 onCapture={handleDone}
-                label="Capture your drink receipt for OCR verification."
+                label="Option 1: Capture your drink receipt for OCR verification."
                 category="drink_receipt"
                 apiUrl="/api/verify/drink-receipt"
+                icon={Receipt}
+              />
+               <CameraCapture
+                onCapture={handleDone}
+                label="Option 2: Capture a live photo of your drink."
+                category="drink_photo"
+                apiUrl="/api/verify/drink-photo"
+                icon={Camera}
               />
             </AccordionContent>
           </AccordionItem>
@@ -131,7 +147,7 @@ export function VerificationCenter({ onBack, isSecondChance, onVerified }: Verif
         </Accordion>
       </CardContent>
        <CardFooter>
-        <Button variant="outline" className="w-full" onClick={onBack}>Cancel</Button>
+        <Button variant="outline" className="w-full" onClick={onBack}>Done</Button>
       </CardFooter>
     </Card>
   );
