@@ -21,7 +21,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { useFirebase, useUser, updateDocumentNonBlocking, serverTimestamp, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import {
-  computeKg,
+  calibrateAiKg,
   calculatePoints,
   getRegionKey,
   type TransportOption,
@@ -86,42 +86,46 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
   
   const handleSubmit = async () => {
     setStep('loading');
-    
     const energyOption: EnergyOption = noEnergy ? 'no_energy' : 'some_energy';
-    const kg = computeKg(transport, diet, drink, energyOption);
-    setEstimatedFootprint(kg);
 
-    const regionKey = getRegionKey(region);
-    const { basePoints, penaltyPoints } = calculatePoints(kg, regionKey as RegionKey);
-    setBasePoints(basePoints);
-    setPenaltyPoints(penaltyPoints);
-    
     startTransition(async () => {
+      let analysisResult: CarbonFootprintAnalysisOutput | null = null;
       try {
-        const analysis = await analyzeFootprint({
+        analysisResult = await analyzeFootprint({
           language,
           region,
           transport,
           diet,
           energy: otherInfo,
         });
-        setAiAnalysis(analysis);
+        setAiAnalysis(analysisResult);
       } catch (e) {
         console.error("AI analysis failed", e);
-        setAiAnalysis(null); // Set to null or some default state
+        setAiAnalysis(null);
       }
+      
+      const regionKey = getRegionKey(region) as RegionKey;
+
+      const finalKg = calibrateAiKg(
+          analysisResult?.estimatedFootprintKg,
+          regionKey,
+          transport,
+          diet,
+          drink,
+          energyOption
+      );
+      setEstimatedFootprint(finalKg);
+
+      const { basePoints, penaltyPoints } = calculatePoints(finalKg, regionKey);
+      setBasePoints(basePoints);
+      setPenaltyPoints(penaltyPoints);
 
       if (userProfileRef && userProfile) {
         const currentPoints = userProfile.totalPoints ?? 0;
-        let pointsChange = 0;
-
-        if (penaltyPoints < 0) {
-          pointsChange = penaltyPoints;
-        } else {
-          pointsChange = basePoints;
-        }
+        const pointsChange = penaltyPoints < 0 ? penaltyPoints : Math.floor(basePoints * 0.1); // Provisional points
+        
         updateDocumentNonBlocking(userProfileRef, { 
-          totalPoints: currentPoints + pointsChange,
+          totalPoints: Math.max(0, currentPoints + pointsChange),
           lastCarbonSurveyDate: serverTimestamp() 
         });
       }
@@ -159,7 +163,7 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
   }
 
   if (step === 'results' && userProfile) {
-    const provisionalPoints = basePoints > 0 ? basePoints : 0;
+    const provisionalPoints = Math.floor(basePoints * 0.1);
     
     return (
         <SurveyResultsCard 

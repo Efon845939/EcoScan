@@ -21,6 +21,7 @@ export type CarbonFootprintAnalysisInput = z.infer<
 >;
 
 export const CarbonFootprintAnalysisOutputSchema = z.object({
+  estimatedFootprintKg: z.number().optional().describe('A numerical estimate of the CO2 footprint in kg.'),
   analysis: z
     .string()
     .describe(
