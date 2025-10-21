@@ -1,24 +1,19 @@
+
 "use client";
-import { useRouter } from "next/navigation";
 import { useCooldown } from "@/hooks/use-cooldown";
 import { Footprints } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { cn } from "@/lib/utils";
 
-export default function SurveyButton({ cooldownEndsAt }: { cooldownEndsAt?: number | {seconds:number; nanoseconds:number} }) {
-  const r = useRouter();
+export default function SurveyButton({ cooldownEndsAt, onClick }: { cooldownEndsAt?: number | {seconds:number; nanoseconds:number}, onClick: () => void }) {
   const { t } = useTranslation();
   const { inCooldown, label } = useCooldown(cooldownEndsAt);
-
-  const handleClick = () => {
-    // Always navigate to the survey page for now.
-    r.push("/carbon-footprint");
-  };
 
   return (
     <button
       type="button"
-      onClick={handleClick}
+      onClick={onClick}
+      disabled={inCooldown}
       className={cn(
         "h-20 text-base md:h-24 w-full rounded-md px-4 py-3 font-semibold transition flex flex-col items-center justify-center select-none",
         inCooldown
