@@ -56,12 +56,16 @@ export function getRegionKey(regionDisplayName: string): string {
 }
 
 export function computeKg(
-    transport: TransportOption,
-    diet: DietOption,
-    drink: DrinkOption,
+    transport: TransportOption[],
+    diet: DietOption[],
+    drink: DrinkOption[],
     energy: EnergyOption
 ): number {
-    return TRANSPORT_KG[transport] + DIET_KG[diet] + DRINK_KG[drink] + ENERGY_KG[energy];
+    const transportKg = transport.reduce((sum, key) => sum + (TRANSPORT_KG[key] || 0), 0);
+    const dietKg = diet.reduce((sum, key) => sum + (DIET_KG[key] || 0), 0);
+    const drinkKg = drink.reduce((sum, key) => sum + (DRINK_KG[key] || 0), 0);
+
+    return transportKg + dietKg + drinkKg + ENERGY_KG[energy];
 }
 
 export function calculatePoints(

@@ -18,9 +18,8 @@ import {
   ThumbsDown,
   ThumbsUp,
 } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from './ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Textarea } from './ui/textarea';
 import { useTranslation } from '@/hooks/use-translation';
 import { useFirebase, useUser, updateDocumentNonBlocking, serverTimestamp } from '@/firebase';
@@ -53,10 +52,10 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   const [step, setStep] = useState<SurveyStep>('form');
   const [isPending, startTransition] = useTransition();
 
-  // Form state
-  const [transport, setTransport] = useState<TransportOption>('car_gasoline');
-  const [diet, setDiet] = useState<DietOption>('red_meat');
-  const [drink, setDrink] = useState<DrinkOption>('drink_coffee_milk');
+  // Form state - changed to arrays for multiple selections
+  const [transport, setTransport] = useState<TransportOption[]>([]);
+  const [diet, setDiet] = useState<DietOption[]>([]);
+  const [drink, setDrink] = useState<DrinkOption[]>([]);
   const [energy, setEnergy] = useState<EnergyOption>('some_energy');
   const [noEnergy, setNoEnergy] = useState(false);
 
@@ -65,6 +64,16 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   const [basePoints, setBasePoints] = useState(0);
   const [penaltyPoints, setPenaltyPoints] = useState(0);
 
+  const handleCheckboxChange = <T extends string>(
+    setter: React.Dispatch<React.SetStateAction<T[]>>,
+    option: T,
+    checked: boolean
+  ) => {
+    setter(prev => 
+      checked ? [...prev, option] : prev.filter(item => item !== option)
+    );
+  };
+  
   const handleSubmit = () => {
     setStep('loading');
     const energyOption: EnergyOption = noEnergy ? 'no_energy' : 'some_energy';
@@ -78,18 +87,19 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
     setPenaltyPoints(penaltyPoints);
     
     const userProfileRef = user && firestore ? doc(firestore, 'users', user.uid) : null;
-    if (userProfileRef) {
+    if (userProfileRef && user) {
+      const currentPoints = userProfile?.totalPoints ?? 0;
       if (penaltyPoints < 0) {
         // Apply penalty
         updateDocumentNonBlocking(userProfileRef, { 
-          totalPoints: (user?.reloadUserInfo as any)?.totalPoints ?? 0 + penaltyPoints,
+          totalPoints: currentPoints + penaltyPoints,
           lastCarbonSurveyDate: serverTimestamp() 
         });
       } else {
         // Award provisional points
         const provisionalPoints = Math.floor(basePoints * 0.1);
         updateDocumentNonBlocking(userProfileRef, { 
-           totalPoints: (user?.reloadUserInfo as any)?.totalPoints ?? 0 + provisionalPoints,
+           totalPoints: currentPoints + provisionalPoints,
            lastCarbonSurveyDate: serverTimestamp() 
         });
       }
@@ -103,9 +113,11 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
       const bonusPoints = basePoints * 3;
       const provisionalPoints = Math.floor(basePoints * 0.1);
       const userProfileRef = user && firestore ? doc(firestore, 'users', user.uid) : null;
+      const { user, isUserLoading, isProfileLoading } = useUser();
+      const userProfile = useDoc(userProfileRef);
 
-      if(userProfileRef && user) {
-          const currentPoints = (user.reloadUserInfo as any)?.totalPoints ?? 0;
+       if(userProfileRef && user && !isUserLoading && !isProfileLoading && userProfile.data) {
+          const currentPoints = userProfile.data.totalPoints ?? 0;
           const newPoints = Math.max(0, currentPoints - provisionalPoints + bonusPoints);
           updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
 
@@ -124,9 +136,11 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
       const bonus = 15;
       const totalAward = pointsToReverse + bonus;
       const userProfileRef = user && firestore ? doc(firestore, 'users', user.uid) : null;
+      const { user, isUserLoading, isProfileLoading } = useUser();
+      const userProfile = useDoc(userProfileRef);
 
-       if(userProfileRef && user) {
-          const currentPoints = (user.reloadUserInfo as any)?.totalPoints ?? 0;
+       if(userProfileRef && user && !isUserLoading && !isProfileLoading && userProfile.data) {
+          const currentPoints = userProfile.data.totalPoints ?? 0;
           updateDocumentNonBlocking(userProfileRef, { totalPoints: currentPoints + totalAward });
           
            toast({
@@ -238,40 +252,52 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
         {/* Transport */}
         <div className="space-y-3">
           <Label className="text-base font-semibold">{t('survey_q1')}</Label>
-          <RadioGroup value={transport} onValueChange={(v) => setTransport(v as TransportOption)} className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {(Object.keys(t('survey_q1_options', {returnObjects: true})) as TransportOption[]).map((key) => (
-              <Label key={key} className="flex items-center gap-3 rounded-md border p-3 hover:bg-accent hover:text-accent-foreground has-[input:checked]:border-primary has-[input:checked]:ring-1 has-[input:checked]:ring-primary">
-                <RadioGroupItem value={key} id={`transport-${key}`} />
+              <Label key={key} htmlFor={`transport-${key}`} className="flex items-center gap-3 rounded-md border p-3 hover:bg-accent hover:text-accent-foreground has-[input:checked]:border-primary has-[input:checked]:ring-1 has-[input:checked]:ring-primary">
+                <Checkbox 
+                  id={`transport-${key}`}
+                  checked={transport.includes(key)}
+                  onCheckedChange={(checked) => handleCheckboxChange(setTransport, key, !!checked)}
+                />
                 <span>{t(`survey_q1_options.${key}`)}</span>
               </Label>
             ))}
-          </RadioGroup>
+          </div>
         </div>
 
         {/* Diet */}
         <div className="space-y-3">
           <Label className="text-base font-semibold">{t('survey_q2')}</Label>
-          <RadioGroup value={diet} onValueChange={(v) => setDiet(v as DietOption)} className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {(Object.keys(t('survey_q2_options', {returnObjects: true})) as DietOption[]).map((key) => (
-               <Label key={key} className="flex items-center gap-3 rounded-md border p-3 hover:bg-accent hover:text-accent-foreground has-[input:checked]:border-primary has-[input:checked]:ring-1 has-[input:checked]:ring-primary">
-                <RadioGroupItem value={key} id={`diet-${key}`} />
+               <Label key={key} htmlFor={`diet-${key}`} className="flex items-center gap-3 rounded-md border p-3 hover:bg-accent hover:text-accent-foreground has-[input:checked]:border-primary has-[input:checked]:ring-1 has-[input:checked]:ring-primary">
+                <Checkbox 
+                  id={`diet-${key}`} 
+                  checked={diet.includes(key)}
+                  onCheckedChange={(checked) => handleCheckboxChange(setDiet, key, !!checked)}
+                />
                 <span>{t(`survey_q2_options.${key}`)}</span>
               </Label>
             ))}
-          </RadioGroup>
+          </div>
         </div>
 
         {/* Drink */}
         <div className="space-y-3">
           <Label className="text-base font-semibold">{t('survey_q4')}</Label>
-          <RadioGroup value={drink} onValueChange={(v) => setDrink(v as DrinkOption)} className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {(Object.keys(t('survey_q4_options', {returnObjects: true})) as DrinkOption[]).map((key) => (
-               <Label key={key} className="flex items-center gap-3 rounded-md border p-3 hover:bg-accent hover:text-accent-foreground has-[input:checked]:border-primary has-[input:checked]:ring-1 has-[input:checked]:ring-primary">
-                <RadioGroupItem value={key} id={`drink-${key}`} />
+               <Label key={key} htmlFor={`drink-${key}`} className="flex items-center gap-3 rounded-md border p-3 hover:bg-accent hover:text-accent-foreground has-[input:checked]:border-primary has-[input:checked]:ring-1 has-[input:checked]:ring-primary">
+                <Checkbox
+                  id={`drink-${key}`} 
+                  checked={drink.includes(key)}
+                  onCheckedChange={(checked) => handleCheckboxChange(setDrink, key, !!checked)}
+                />
                 <span>{t(`survey_q4_options.${key}`)}</span>
               </Label>
             ))}
-          </RadioGroup>
+          </div>
         </div>
         
         {/* Energy */}
