@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
@@ -391,5 +392,3 @@ export default function CarbonFootprintPage() {
     </main>
   );
 }
-
-    
