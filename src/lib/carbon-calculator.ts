@@ -36,7 +36,11 @@ type RegionData = {
     max: number;
     penaltyThreshold: number;
 }
-const REGIONS: Record<string, RegionData> = {
+
+export type RegionKey = 'turkey' | 'germany' | 'usa' | 'uae' | 'kuwait' | 'default';
+
+
+export const REGIONS: Record<string, RegionData> = {
     'turkey': { min: 10, avg: 24, max: 40, penaltyThreshold: 30 },
     'germany': { min: 12, avg: 27, max: 45, penaltyThreshold: 35 },
     'usa': { min: 20, avg: 45, max: 70, penaltyThreshold: 55 },

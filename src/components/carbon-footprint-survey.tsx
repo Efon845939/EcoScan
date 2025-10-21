@@ -13,10 +13,6 @@ import {
   ChevronLeft,
   Loader2,
   Leaf,
-  Info,
-  Camera,
-  ThumbsDown,
-  ThumbsUp,
 } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -32,17 +28,19 @@ import {
   type DietOption,
   type DrinkOption,
   type EnergyOption,
+  RegionKey,
 } from '@/lib/carbon-calculator';
-import { processReceipt, ReceiptOutput } from '@/ai/flows/receipt-ocr-flow';
 import { useToast } from '@/hooks/use-toast';
 import { VerificationCenter } from './verification-center';
+import SurveyResultsCard from './SurveyResultsCard';
+import { analyzeFootprint, CarbonFootprintAnalysis } from '@/ai/flows/carbon-footprint-analysis';
 
 interface CarbonFootprintSurveyProps {
   onBack: () => void;
   region: string;
 }
 
-type SurveyStep = 'form' | 'loading' | 'results' | 'scanReceipt' | 'secondChance';
+type SurveyStep = 'form' | 'loading' | 'results' | 'secondChance';
 
 export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyProps) {
   const { t } = useTranslation();
@@ -59,17 +57,20 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   const [drink, setDrink] = useState<DrinkOption[]>([]);
   const [energy, setEnergy] = useState<EnergyOption>('some_energy');
   const [noEnergy, setNoEnergy] = useState(false);
+  const [otherInfo, setOtherInfo] = useState('');
 
   // Results state
+  const [analysisResults, setAnalysisResults] = useState<CarbonFootprintAnalysis | null>(null);
   const [estimatedFootprint, setEstimatedFootprint] = useState(0);
   const [basePoints, setBasePoints] = useState(0);
   const [penaltyPoints, setPenaltyPoints] = useState(0);
+
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
     [firestore, user]
   );
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+  const { data: userProfile } = useDoc(userProfileRef);
 
   const handleCheckboxChange = <T extends string>(
     setter: React.Dispatch<React.SetStateAction<T[]>>,
@@ -83,55 +84,51 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   
   const handleSubmit = () => {
     setStep('loading');
-    const energyOption: EnergyOption = noEnergy ? 'no_energy' : 'some_energy';
-    
-    const kg = computeKg(transport, diet, drink, energyOption);
-    setEstimatedFootprint(kg);
+    startTransition(() => {
+      const energyOption: EnergyOption = noEnergy ? 'no_energy' : 'some_energy';
+      
+      const kg = computeKg(transport, diet, drink, energyOption);
+      setEstimatedFootprint(kg);
 
-    const regionKey = getRegionKey(region);
-    const { basePoints, penaltyPoints } = calculatePoints(kg, regionKey);
-    setBasePoints(basePoints);
-    setPenaltyPoints(penaltyPoints);
-    
-    if (userProfileRef && userProfile) {
-      const currentPoints = userProfile.totalPoints ?? 0;
-      if (penaltyPoints < 0) {
-        // Apply penalty
+      const regionKey = getRegionKey(region);
+      const { basePoints, penaltyPoints } = calculatePoints(kg, regionKey);
+      setBasePoints(basePoints);
+      setPenaltyPoints(penaltyPoints);
+      
+      if (userProfileRef && userProfile) {
+        const currentPoints = userProfile.totalPoints ?? 0;
+        let pointsChange = 0;
+
+        if (penaltyPoints < 0) {
+          // Apply penalty
+          pointsChange = penaltyPoints;
+        } else {
+          // Award provisional points
+          pointsChange = Math.floor(basePoints * 0.1);
+        }
         updateDocumentNonBlocking(userProfileRef, { 
-          totalPoints: currentPoints + penaltyPoints,
+          totalPoints: currentPoints + pointsChange,
           lastCarbonSurveyDate: serverTimestamp() 
         });
-      } else {
-        // Award provisional points
-        const provisionalPoints = Math.floor(basePoints * 0.1);
-        updateDocumentNonBlocking(userProfileRef, { 
-           totalPoints: currentPoints + provisionalPoints,
-           lastCarbonSurveyDate: serverTimestamp() 
-        });
       }
-    }
 
-    setStep('results');
+      // Also get AI analysis
+      analyzeFootprint({
+        transport,
+        diet,
+        drink,
+        energy: energyOption,
+        other: otherInfo,
+        region
+      }).then(setAnalysisResults).catch(e => {
+        console.error("Error getting AI analysis:", e);
+        // We can proceed without AI analysis
+        setAnalysisResults(null);
+      }).finally(() => {
+        setStep('results');
+      });
+    });
   };
-  
-  const handleScanReceipt = () => {
-      // For now, this just applies the bonus. Later it will involve camera.
-      const bonusPoints = basePoints * 3;
-      const provisionalPoints = Math.floor(basePoints * 0.1);
-
-       if(userProfileRef && userProfile) {
-          const currentPoints = userProfile.totalPoints ?? 0;
-          const newPoints = Math.max(0, currentPoints - provisionalPoints + bonusPoints);
-          updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
-
-           toast({
-              title: t('toast_bonus_applied_title'),
-              description: t('toast_bonus_applied_description', {points: bonusPoints}),
-            });
-            setStep('form'); // or a success screen
-            onBack(); // Go back to main menu
-      }
-  }
   
   const handleSecondChance = () => {
       // Reverses penalty and awards 10 bonus points.
@@ -162,77 +159,24 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
     );
   }
 
-  if (step === 'results') {
+  if (step === 'results' && userProfile) {
     const provisionalPoints = Math.floor(basePoints * 0.1);
-    const hasPenalty = penaltyPoints < 0;
-
+    
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-center font-headline text-2xl">
-            {t('survey_results_title')}
-          </CardTitle>
-          <CardDescription className="flex items-center justify-center gap-2 pt-2">
-            <Leaf className="h-4 w-4 text-green-500" />
-            <span>{t('survey_results_estimated')}</span>
-            <span className="font-bold">{estimatedFootprint.toFixed(1)} kg CO₂</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {hasPenalty ? (
-            <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-center">
-              <ThumbsDown className="mx-auto h-10 w-10 text-destructive" />
-              <h3 className="mt-2 font-semibold text-destructive">{t('survey_penalty_title')}</h3>
-              <p className="text-sm text-destructive/80">
-                {t('survey_penalty_description', { points: penaltyPoints })}
-              </p>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-primary bg-primary/10 p-4 text-center">
-                <ThumbsUp className="mx-auto h-10 w-10 text-primary" />
-              <h3 className="mt-2 font-semibold text-primary">{t('survey_provisional_title')}</h3>
-              <p className="text-sm text-primary/80">
-                {t('survey_provisional_description', { points: provisionalPoints })}
-              </p>
-               <p className="mt-2 text-xs text-muted-foreground">
-                 {t('survey_base_points_hint', {base: basePoints})}
-              </p>
-            </div>
-          )}
-
-          <div>
-            <h4 className="font-semibold mb-2">{t('survey_recommendations_title')}</h4>
-            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                <li>This is a placeholder for an AI recommendation.</li>
-                <li>This is another placeholder for an AI recommendation.</li>
-            </ul>
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-3">
-          {hasPenalty ? (
-             <Button className="w-full" onClick={() => setStep('secondChance')}>
-                <Camera className="mr-2" />
-                {t('survey_second_chance_button')}
-             </Button>
-          ) : (
-             <Button className="w-full" onClick={() => setStep('scanReceipt')}>
-                <Camera className="mr-2" />
-                {t('survey_scan_receipt_button')}
-            </Button>
-          )}
-          <Button variant="outline" className="w-full" onClick={onBack}>
-            {t('survey_back_button')}
-          </Button>
-        </CardFooter>
-      </Card>
-    );
+        <SurveyResultsCard 
+            region={getRegionKey(region) as RegionKey}
+            kg={estimatedFootprint}
+            basePoints={basePoints}
+            provisionalPoints={provisionalPoints}
+            bonusMultiplier={3}
+            analysisText={analysisResults?.analysis || undefined}
+            recommendations={analysisResults?.recommendations || []}
+        />
+    )
   }
   
-  if (step === 'scanReceipt' || step === 'secondChance') {
-    return <VerificationCenter onBack={() => setStep('results')} isSecondChance={step === 'secondChance'} onVerified={() => {
-      if (step === 'scanReceipt') handleScanReceipt();
-      else handleSecondChance();
-    }}/>
+  if (step === 'secondChance') {
+    return <VerificationCenter onBack={() => setStep('results')} isSecondChance={true} onVerified={handleSecondChance}/>
   }
 
   return (
@@ -295,7 +239,7 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
           <Label className="text-base font-semibold">{t('survey_q4')}</Label>
           <div className="grid grid-cols-2 gap-4">
             {(Object.keys(t('survey_q4_options', {returnObjects: true})) as DrinkOption[]).map((key) => (
-               <Label key={key} htmlFor={`drink-${key}`} className="flex items-center gap-3 rounded-md border p-3 hover:bg-accent hover:text-accent-foreground has-[input:checked]:border-primary has-[input:checked]:ring-1 has-[input-checked]:ring-primary">
+               <Label key={key} htmlFor={`drink-${key}`} className="flex items-center gap-3 rounded-md border p-3 hover:bg-accent hover:text-accent-foreground has-[input:checked]:border-primary has-[input-checked]:ring-primary">
                 <Checkbox
                   id={`drink-${key}`} 
                   checked={drink.includes(key)}
@@ -310,7 +254,7 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
         {/* Energy */}
         <div className="space-y-3">
            <Label className="text-base font-semibold">{t('survey_q3')}</Label>
-           <Textarea placeholder={t('survey_q3_placeholder')} disabled={noEnergy} />
+           <Textarea placeholder={t('survey_q3_placeholder')} disabled={noEnergy} value={otherInfo} onChange={(e) => setOtherInfo(e.target.value)} />
            <div className="flex items-center space-x-2">
                 <Checkbox id="no-energy" checked={noEnergy} onCheckedChange={(c) => setNoEnergy(c as boolean)} />
                 <label
@@ -336,5 +280,3 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
     </Card>
   );
 }
-
-    
