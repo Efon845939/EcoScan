@@ -1,3 +1,4 @@
+
 {
   "header_title": "EcoScan Ödülleri",
   "header_points": "Puan",
@@ -72,11 +73,10 @@
   "survey_results_estimated": "Tahmini Ayak İzi:",
   "survey_range_hint": "Bölge aralığı: min {min}, ort {avg}, maks {max} kg",
   "survey_penalty_title": "Yüksek Ayak İzi Cezası",
-  "survey_penalty_description": "Günlük ayak iziniz yüksekti, bu yüzden {points} puan düşüldü. Aşağıdaki eylemlerden birini yaparak ve bir fotoğrafla doğrulayarak bunu geri alabilirsiniz.",
+  "survey_penalty_description": "Günlük ayak iziniz yüksekti, bu yüzden -10 puan düşüldü.",
   "survey_provisional_title": "Geçici Puanlar Verildi!",
-  "survey_provisional_description": "{points} geçici puan kazandınız. Günlük ayak izinizi doğrulamak ve 3 kat puan bonusu kazanmak için gün içinden bir fiş tarayın!",
-  "survey_base_points_hint": "Temel puanınız {base} puandır.",
-  "survey_bonus_hint": "Fiş bonusu: x{x}",
+  "survey_provisional_description": "<span style='color:hsl(var(--primary))'>{points} geçici puan</span> kazandınız.",
+  "survey_bonus_hint": "Fiş ile doğrulayarak toplamda <span style='color:hsl(var(--primary))'>{bonus} puan</span> için <span style='color:hsl(var(--primary))'>x{x} bonus</span> kazanın!",
   "analysis_good_title": "Bugün harika seçimler",
   "analysis_mid_title": "İyi, ama geliştirilebilir",
   "analysis_bad_title": "Yüksek etki — iyileştirme gerekiyor",
@@ -132,11 +132,11 @@
   "guide_survey_description": "Geçici puanlar almak için günlük bir anketi tamamlayın. Büyük bir bonus için bir fişle doğrulayın!",
   "guide_survey_items_list": [
     "<b>Yüksek Ayak İzi Cezası:</b> Eğer ayak iziniz bölgesel ortalamanın üzerindeyse <span style='color:hsl(var(--destructive))'>-10 puan</span> kaybedersiniz.",
-    "<b>Geçici Ödül:</b> Fiş olmadan, temel puanınızın %10'unu alırsınız (ör. 30 puan <span style='color:hsl(var(--primary))'>+3</span> olur).",
-    "<b>Fiş Doğrulama Bonusu:</b> Fiş ile doğrulamak, geçici puanlarınızı tam <b>Temel Puan <span style='color:hsl(var(--primary))'>x 3</span></b> ile değiştirir.",
-    "<b>İkinci Şans Bonusu:</b> Bir cezayı tersine çevirin ve doğrulanmış bir sürdürülebilir eylem gerçekleştirerek <span style='color:hsl(var(--primary))'>kaybettiğiniz puanlar + 10 bonus puan</span> kazanın."
+    "<b>Geçici Ödül:</b> Fiş olmadan, puanınıza karşılık gelen temel puanın tamamını alırsınız (ör. iyi bir skor size <span style='color:hsl(var(--primary))'>+30</span> puan kazandırabilir).",
+    "<b>Fiş Doğrulama Bonusu:</b> Fiş ile doğrulamak, temel puanlarınız üzerinden size <b style='color:hsl(var(--primary))'>3 kat bonus</b> kazandırır (ör. 30 temel puan <span style='color:hsl(var(--primary))'>+90</span> olur!).",
+    "<b>İkinci Şans Bonusu:</b> Bir cezayı tersine çevirin ve doğrulanmış bir sürdürülebilir eylem gerçekleştirerek <span style='color:hsl(var(--primary))'>kaybettiğiniz puanları + 10 bonus puan</span> kazanın."
   ],
-  "guide_survey_footer": "Sistem, anketinizden bir 'temel puan' değeri hesaplar. Fiş olmadan, bunun %10'unu alırsınız. Fişle, temel puanların <span style='color:hsl(var(--primary))'>3 katını</span> alırsınız.",
+  "guide_survey_footer": "Sistem, anketinizden bir 'temel puan' değeri hesaplar. Bu puanları geçici olarak alırsınız. Bir fiş ile 3 kat bonus alırsınız.",
   "guide_verification_title": "Doğrulama Merkezi ve Adil Oyun",
   "guide_verification_description": "Topluluğu adil tutmak ve ödülleri anlamlı kılmak için, puan kazandıran tüm eylemlerin doğrulanması gerekir. Sistemi manipüle etme girişimleri puan cezalarıyla sonuçlanacaktır.",
   "guide_verification_items_list": [
@@ -164,6 +164,15 @@
     "Etkinliklerinizin canlı fotoğraf kanıtlarını gönderin (ör. otobüs yolculuğu, vejetaryen yemek).",
     "Eyleminiz doğrulanırsa, geçici puanlarınız tam puan artı <span style='color:hsl(var(--primary))'>3x bonus</span> ile değiştirilecektir!"
   ],
+  "guide_howto_verification_title": "Doğrulama Merkezi Nasıl Kullanılır:",
+  "guide_howto_verification_steps": [
+    "Anket sonuçlarından veya ayarlar menüsünden Doğrulama Merkezi'ne gidin.",
+    "Doğrulamak istediğiniz kategoriyi seçin (ör. Ulaşım, Yemek, İçecek).",
+    "Her kategori belirli bir kanıt türü gerektirir: fişin canlı fotoğrafı, bir araç, bir yemek vb.",
+    "Canlı fotoğraf çekmek için 'Çek ve Gönder'e dokunun. Adilliği sağlamak için galeri yüklemeleri devre dışı bırakılmıştır.",
+    "Yapay zekamız gönderiminizi işleyecektir. Tamamlandığında ve bonus puanlar verildiğinde size bildirilecektir."
+  ],
+  "guide_points_disclaimer": "<b>Uyarı:</b> Geri dönüşüm ve anket eylemleri için verilen puan değerleri örnek niteliğindedir ve yeni çevresel verilere veya sponsor gereksinimlerine göre zamanla ayarlanabilir.",
   "settings_title": "Ayarlar",
   "settings_description": "Uygulama ayarlarınızı ve tercihlerinizi yönetin.",
   "settings_guide_button": "Uygulama Rehberi ve Kurallar",

@@ -1,3 +1,4 @@
+
 {
   "header_title": "EcoScan",
   "header_points": "Points",
@@ -72,9 +73,8 @@
   "survey_penalty_title": "High Footprint Penalty",
   "survey_penalty_description": "Your footprint exceeded the regional bound. A -10 point penalty has been applied.",
   "survey_provisional_title": "Provisional Points Granted",
-  "survey_provisional_description": "You received {points} provisional points.",
-  "survey_base_points_hint": "Base today: {base} pts.",
-  "survey_bonus_hint": "Receipt bonus: x{x}",
+  "survey_provisional_description": "You received <span style='color:hsl(var(--primary))'>{points} provisional points</span>.",
+  "survey_bonus_hint": "Verify with a receipt to get a <span style='color:hsl(var(--primary))'>x{x} bonus</span> for a total of <span style='color:hsl(var(--primary))'>{bonus} points!</span>",
   "survey_recommendations_title": "3 ways to improve",
   "survey_recovery_title": "Regain points today",
   "analysis_good_title": "Great choices today",
@@ -130,11 +130,11 @@
   "guide_survey_description": "Complete a daily survey to get provisional points. Verify with a receipt for a massive bonus!",
   "guide_survey_items_list": [
     "<b>High Footprint Penalty:</b> If your footprint is over the regional average, you lose <span style='color:hsl(var(--destructive))'>-10 points</span>.",
-    "<b>Provisional Reward:</b> Without a receipt, you get 10% of your base score (e.g., 30 points becomes <span style='color:hsl(var(--primary))'>+3</span>).",
-    "<b>Receipt Verification Bonus:</b> Verifying with a receipt replaces your provisional points with your full <b>Base Points <span style='color:hsl(var(--primary))'>x 3</span></b>.",
+    "<b>Provisional Reward:</b> Without a receipt, you get the full base points for your score (e.g., a good score might get you <span style='color:hsl(var(--primary))'>+30</span> points).",
+    "<b>Receipt Verification Bonus:</b> Verifying with a receipt gives you a <b style='color:hsl(var(--primary))'>3x bonus</b> on your base points (e.g., 30 base points becomes <span style='color:hsl(var(--primary))'>+90</span>!).",
     "<b>Second Chance Bonus:</b> Reverse a penalty and earn the <span style='color:hsl(var(--primary))'>points you lost + 10 bonus points</span> by taking a verified sustainable action."
   ],
-  "guide_survey_footer": "The system calculates a 'base point' value from your survey. Without a receipt, you get 10% of that. With a receipt, you get <span style='color:hsl(var(--primary))'>3x</span> the base points.",
+  "guide_survey_footer": "The system calculates a 'base point' value from your survey. You get these points provisionally. With a receipt, you get a 3x bonus.",
   "guide_verification_title": "Verification Center & Fair Play",
   "guide_verification_description": "To keep the community fair and rewards meaningful, all point-earning actions require verification. Attempts to manipulate the system will result in point penalties.",
   "guide_verification_items_list": [
@@ -162,6 +162,15 @@
     "Submit live photo proof of your activities (e.g., bus ride, vegetarian meal).",
     "If your action is verified, your provisional points will be replaced with the full points plus a <span style='color:hsl(var(--primary))'>3x bonus</span>!"
   ],
+  "guide_howto_verification_title": "How to Use the Verification Center:",
+  "guide_howto_verification_steps": [
+    "Navigate to the Verification Center from the survey results or the settings menu.",
+    "Choose the category you want to verify (e.g., Transport, Meal, Drink).",
+    "Each category requires a specific type of proof: a live photo of a receipt, a vehicle, a meal, etc.",
+    "Tap 'Capture & Submit' to take a live photo. Gallery uploads are disabled to ensure fairness.",
+    "Our AI will process your submission. You'll be notified once it's complete and bonus points are awarded."
+  ],
+  "guide_points_disclaimer": "<b>Disclaimer:</b> Point values for recycling and survey actions are illustrative and may be adjusted over time based on new environmental data or sponsor requirements.",
   "settings_title": "Settings",
   "settings_description": "Manage your application settings and preferences.",
   "settings_guide_button": "App Guide & Rules",

@@ -1,3 +1,4 @@
+
 {
   "header_title": "EcoScan Belohnungen",
   "header_points": "Punkte",
@@ -72,11 +73,10 @@
   "survey_results_estimated": "Geschätzter Fußabdruck:",
   "survey_range_hint": "Bereich der Region: min {min}, avg {avg}, max {max} kg",
   "survey_penalty_title": "Strafe für hohen Fußabdruck",
-  "survey_penalty_description": "Ihr täglicher Fußabdruck war hoch, daher wurden {points} Punkte abgezogen. Sie können dies rückgängig machen, indem Sie eine der folgenden Maßnahmen ergreifen und mit einem Foto verifizieren.",
+  "survey_penalty_description": "Ihr täglicher Fußabdruck war hoch, daher wurden -10 Punkte abgezogen.",
   "survey_provisional_title": "Vorläufige Punkte vergeben!",
-  "survey_provisional_description": "Sie haben vorläufig {points} Punkte verdient. Scannen Sie einen Beleg von Ihrem Tag, um Ihren Fußabdruck zu verifizieren und einen 3x-Punktebonus zu erhalten!",
-  "survey_base_points_hint": "Ihre Basispunktzahl beträgt {base} Punkte.",
-  "survey_bonus_hint": "Belegbonus: x{x}",
+  "survey_provisional_description": "Sie haben <span style='color:hsl(var(--primary))'>{points} vorläufige Punkte</span> verdient.",
+  "survey_bonus_hint": "Bestätigen Sie mit einem Beleg, um einen <span style='color:hsl(var(--primary))'>x{x}-Bonus</span> für insgesamt <span style='color:hsl(var(--primary))'>{bonus} Punkte</span> zu erhalten!",
   "analysis_good_title": "Großartige Entscheidungen heute",
   "analysis_mid_title": "Anständig, aber verbesserungsfähig",
   "analysis_bad_title": "Hohe Auswirkung - verbesserungsbedürftig",
@@ -132,11 +132,11 @@
   "guide_survey_description": "Füllen Sie eine tägliche Umfrage aus, um vorläufige Punkte zu erhalten. Verifizieren Sie mit einem Beleg für einen riesigen Bonus!",
   "guide_survey_items_list": [
     "<b>Strafe für hohen Fußabdruck:</b> Wenn Ihr Fußabdruck über dem regionalen Durchschnitt liegt, verlieren Sie <span style='color:hsl(var(--destructive))'>-10 Punkte</span>.",
-    "<b>Vorläufige Belohnung:</b> Ohne Beleg erhalten Sie 10 % Ihrer Basispunktzahl (z. B. werden aus 30 Punkten <span style='color:hsl(var(--primary))'>+3</span>).",
-    "<b>Belegverifizierungsbonus:</b> Die Verifizierung mit einem Beleg ersetzt Ihre vorläufigen Punkte durch Ihre vollen <b>Basispunkte <span style='color:hsl(var(--primary))'>x 3</span></b>.",
-    "<b>Zweite-Chance-Bonus:</b> Heben Sie eine Strafe auf und verdienen Sie <span style='color:hsl(var(--primary))'>die verlorenen Punkte + 10 Bonuspunkte</span>, indem Sie eine verifizierte nachhaltige Aktion durchführen."
+    "<b>Vorläufige Belohnung:</b> Ohne Beleg erhalten Sie die vollen Basispunkte für Ihre Punktzahl (z. B. eine gute Punktzahl könnte Ihnen <span style='color:hsl(var(--primary))'>+30</span> Punkte einbringen).",
+    "<b>Belegverifizierungsbonus:</b> Die Verifizierung mit einem Beleg gibt Ihnen einen <b style='color:hsl(var(--primary))'>3x-Bonus</b> auf Ihre Basispunkte (z. B. werden aus 30 Basispunkten <span style='color:hsl(var(--primary))'>+90</span>!).",
+    "<b>Zweite-Chance-Bonus:</b> Heben Sie eine Strafe auf und verdienen Sie die <span style='color:hsl(var(--primary))'>verlorenen Punkte + 10 Bonuspunkte</span>, indem Sie eine verifizierte nachhaltige Aktion durchführen."
   ],
-  "guide_survey_footer": "Das System berechnet aus Ihrer Umfrage einen „Basispunktwert“. Ohne Beleg erhalten Sie 10% davon. Mit Beleg erhalten Sie das <span style='color:hsl(var(--primary))'>3-fache</span> der Basispunkte.",
+  "guide_survey_footer": "Das System berechnet einen „Basispunktwert“ aus Ihrer Umfrage. Sie erhalten diese Punkte vorläufig. Mit einem Beleg erhalten Sie einen 3x-Bonus.",
   "guide_verification_title": "Verifizierungszentrum & Fairplay",
   "guide_verification_description": "Um die Community fair zu halten und die Belohnungen sinnvoll zu gestalten, müssen alle punkteträchtigen Aktionen verifiziert werden. Versuche, das System zu manipulieren, führen zu Punktabzügen.",
   "guide_verification_items_list": [
@@ -164,6 +164,15 @@
     "Senden Sie einen Live-Fotonachweis Ihrer Aktivitäten (z. B. Busfahrt, vegetarisches Essen).",
     "Wenn Ihre Aktion verifiziert wird, werden Ihre vorläufigen Punkte durch die vollen Punkte plus einen <span style='color:hsl(var(--primary))'>3x-Bonus</span> ersetzt!"
   ],
+  "guide_howto_verification_title": "So verwenden Sie das Verifizierungszentrum:",
+  "guide_howto_verification_steps": [
+    "Navigieren Sie zum Verifizierungszentrum über die Umfrageergebnisse oder das Einstellungsmenü.",
+    "Wählen Sie die Kategorie aus, die Sie verifizieren möchten (z. B. Transport, Mahlzeit, Getränk).",
+    "Jede Kategorie erfordert einen bestimmten Nachweis: ein Live-Foto eines Belegs, eines Fahrzeugs, einer Mahlzeit usw.",
+    "Tippen Sie auf 'Erfassen & Senden', um ein Live-Foto aufzunehmen. Galerie-Uploads sind deaktiviert, um Fairness zu gewährleisten.",
+    "Unsere KI verarbeitet Ihre Einreichung. Sie werden benachrichtigt, sobald sie abgeschlossen ist und Bonuspunkte vergeben werden."
+  ],
+  "guide_points_disclaimer": "<b>Haftungsausschluss:</b> Die Punktwerte für Recycling- und Umfrageaktionen sind beispielhaft und können im Laufe der Zeit aufgrund neuer Umweltdaten oder Sponsorenanforderungen angepasst werden.",
   "settings_title": "Einstellungen",
   "settings_description": "Verwalten Sie Ihre Anwendungseinstellungen und Präferenzen.",
   "settings_guide_button": "App-Anleitung & Regeln",

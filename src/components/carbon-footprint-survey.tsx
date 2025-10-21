@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useTransition } from 'react';
 import {
@@ -103,8 +104,8 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
           // Apply penalty
           pointsChange = penaltyPoints;
         } else {
-          // Award provisional points
-          pointsChange = Math.floor(basePoints * 0.1);
+          // Award full base points provisionally
+          pointsChange = basePoints;
         }
         updateDocumentNonBlocking(userProfileRef, { 
           totalPoints: currentPoints + pointsChange,
@@ -160,7 +161,7 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   }
 
   if (step === 'results' && userProfile) {
-    const provisionalPoints = Math.floor(basePoints * 0.1);
+    const provisionalPoints = basePoints;
     
     return (
         <SurveyResultsCard 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -149,6 +150,15 @@ export function GuideSection({ onBack }: GuideSectionProps) {
                   ))}
                 </ol>
               </div>
+               <div>
+                <h4 className="font-medium mb-2">{t('guide_howto_verification_title')}</h4>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                   {(t('guide_howto_verification_steps', {returnObjects: true}) as string[]).map((step, index) => (
+                    <li key={index} dangerouslySetInnerHTML={{ __html: step }}/>
+                  ))}
+                </ol>
+              </div>
+                 <p className="text-xs text-muted-foreground pt-4" dangerouslySetInnerHTML={{ __html: t('guide_points_disclaimer') }} />
             </AccordionContent>
           </AccordionItem>
         </Accordion>

@@ -1,3 +1,4 @@
+
 {
   "header_title": "EcoScanリワード",
   "header_points": "ポイント",
@@ -72,11 +73,10 @@
   "survey_results_estimated": "推定フットプリント：",
   "survey_range_hint": "地域の範囲：最小{min}、平均{avg}、最大{max} kg",
   "survey_penalty_title": "高いフットプリントのペナルティ",
-  "survey_penalty_description": "毎日のフットプリントが高かったため、{points}ポイントが差し引かれました。以下のアクションの1つを実行し、写真で確認することで、これを取り消すことができます。",
+  "survey_penalty_description": "毎日のフットプリントが高かったため、-10ポイントが差し引かれました。",
   "survey_provisional_title": "仮ポイントが付与されました！",
-  "survey_provisional_description": "{points}ポイントの仮ポイントを獲得しました。その日のレシートをスキャンしてフットプリントを確認し、3倍のポイントボーナスを獲得してください！",
-  "survey_base_points_hint": "あなたのベーススコアは{base}ポイントです。",
-  "survey_bonus_hint": "レシートボーナス：x{x}",
+  "survey_provisional_description": "<span style='color:hsl(var(--primary))'>{points}仮ポイント</span>を獲得しました。",
+  "survey_bonus_hint": "レシートで確認して、合計<span style='color:hsl(var(--primary))'>{bonus}ポイント</span>の<span style='color:hsl(var(--primary))'>x{x}ボーナス</span>を獲得しましょう！",
   "analysis_good_title": "今日の素晴らしい選択",
   "analysis_mid_title": "まずまずですが、改善の余地あり",
   "analysis_bad_title": "影響大 - 改善が必要",
@@ -132,11 +132,11 @@
   "guide_survey_description": "毎日の調査を完了して仮ポイントを獲得します。レシートで確認して、莫大なボーナスを獲得してください！",
   "guide_survey_items_list": [
     "<b>高いフットプリントのペナルティ:</b> フットプリントが地域平均を超えると、<span style='color:hsl(var(--destructive))'>-10ポイント</span>を失います。",
-    "<b>仮リワード:</b> レシートがない場合、ベーススコアの10％が付与されます（例：30ポイントが<span style='color:hsl(var(--primary))'>+3</span>になります）。",
-    "<b>レシート確認ボーナス:</b> レシートで確認すると、仮ポイントが完全な<b>ベースポイント<span style='color:hsl(var(--primary))'>x 3</span></b>に置き換えられます。",
+    "<b>仮リワード:</b> レシートがない場合、スコアに対して完全な基本ポイントが付与されます（例：良いスコアで<span style='color:hsl(var(--primary))'>+30</span>ポイント獲得可能）。",
+    "<b>レシート確認ボーナス:</b> レシートで確認すると、基本ポイントに対して<b style='color:hsl(var(--primary))'>3xボーナス</b>が付与されます（例：30基本ポイントが<span style='color:hsl(var(--primary))'>+90</span>になります！）。",
     "<b>セカンドチャンスボーナス:</b> 確認済みの持続可能なアクションを実行して、ペナルティを取り消し、<span style='color:hsl(var(--primary))'>失ったポイント+ 10ボーナスポイント</span>を獲得します。"
   ],
-  "guide_survey_footer": "システムは、調査から「ベースポイント」値を計算します。レシートがない場合は、その10％が付与されます。レシートがある場合は、ベースポイントの<span style='color:hsl(var(--primary))'>3倍</span>が付与されます。",
+  "guide_survey_footer": "システムは、調査から「ベースポイント」値を計算します。これらのポイントを仮に受け取ります。レシートがあれば、3倍のボーナスがもらえます。",
   "guide_verification_title": "検証センターとフェアプレー",
   "guide_verification_description": "コミュニティを公正に保ち、報酬を意味のあるものにするために、ポイントを獲得するすべてのアクションには検証が必要です。システムを操作しようとすると、ポイントペナルティが発生します。",
   "guide_verification_items_list": [
@@ -164,6 +164,15 @@
     "あなたの活動のライブ写真の証拠を提出してください（例：バス乗車、ベジタリアン料理）。",
     "アクションが確認されると、仮ポイントが全ポイントと<span style='color:hsl(var(--primary))'>3倍</span>のボーナスに置き換えられます！"
   ],
+  "guide_howto_verification_title": "確認センターの使用方法：",
+  "guide_howto_verification_steps": [
+    "調査結果または設定メニューから確認センターに移動します。",
+    "確認したいカテゴリを選択します（例：交通機関、食事、飲み物）。",
+    "各カテゴリには特定の種類の証明が必要です：レシートのライブ写真、車両、食事など。",
+    "「キャプチャして送信」をタップしてライブ写真を撮ります。公平性を確保するため、ギャラリーのアップロードは無効になっています。",
+    "AIが提出物を処理します。完了し、ボーナスポイントが付与されると通知されます。"
+  ],
+  "guide_points_disclaimer": "<b>免責事項:</b> リサイクルおよび調査アクションのポイント値は例示であり、新しい環境データまたはスポンサーの要件に基づいて時間とともに調整される場合があります。",
   "settings_title": "設定",
   "settings_description": "アプリケーションの設定と設定を管理します。",
   "settings_guide_button": "アプリガイドとルール",

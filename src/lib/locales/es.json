@@ -1,3 +1,4 @@
+
 {
   "header_title": "Recompensas EcoScan",
   "header_points": "Puntos",
@@ -72,11 +73,10 @@
   "survey_results_estimated": "Huella estimada:",
   "survey_range_hint": "Rango de la región: mín. {min}, prom. {avg}, máx. {max} kg",
   "survey_penalty_title": "Penalización por huella alta",
-  "survey_penalty_description": "Su huella diaria fue alta, por lo que se han deducido {points} puntos. Puede revertir esto realizando una de las acciones a continuación y verificando con una foto.",
+  "survey_penalty_description": "Su huella diaria fue alta, por lo que se han deducido -10 puntos.",
   "survey_provisional_title": "¡Puntos provisionales otorgados!",
-  "survey_provisional_description": "Ha ganado {points} puntos provisionales. ¡Escanee un recibo de su día para verificar su huella y obtener un bono de puntos del 3x!",
-  "survey_base_points_hint": "Su puntaje base es de {base} puntos.",
-  "survey_bonus_hint": "Bonificación por recibo: x{x}",
+  "survey_provisional_description": "Ha ganado <span style='color:hsl(var(--primary))'>{points} puntos provisionales</span>.",
+  "survey_bonus_hint": "¡Verifique con un recibo para obtener una bonificación de <span style='color:hsl(var(--primary))'>x{x}</span> para un total de <span style='color:hsl(var(--primary))'>{bonus} puntos!</span>",
   "analysis_good_title": "Grandes elecciones hoy",
   "analysis_mid_title": "Decente, pero con margen de mejora",
   "analysis_bad_title": "Alto impacto — necesita mejorar",
@@ -132,11 +132,11 @@
   "guide_survey_description": "Complete una encuesta diaria para obtener puntos provisionales. ¡Verifique con un recibo para obtener una bonificación masiva!",
   "guide_survey_items_list": [
     "<b>Penalización por huella alta:</b> Si su huella está por encima del promedio regional, pierde <span style='color:hsl(var(--destructive))'>-10 puntos</span>.",
-    "<b>Recompensa provisional:</b> Sin un recibo, obtiene el 10 % de su puntaje base (p. ej., 30 puntos se convierten en <span style='color:hsl(var(--primary))'>+3</span>).",
-    "<b>Bonificación por verificación de recibo:</b> La verificación con un recibo reemplaza sus puntos provisionales con sus <b>puntos base completos <span style='color:hsl(var(--primary))'>x 3</span></b>.",
+    "<b>Recompensa provisional:</b> Sin un recibo, obtiene los puntos base completos por su puntaje (p. ej., un buen puntaje podría darle <span style='color:hsl(var(--primary))'>+30</span> puntos).",
+    "<b>Bonificación por verificación de recibo:</b> La verificación con un recibo le da una <b style='color:hsl(var(--primary))'>bonificación de 3x</b> sobre sus puntos base (p. ej., 30 puntos base se convierten en <span style='color:hsl(var(--primary))'>+90</span>!).",
     "<b>Bonificación de segunda oportunidad:</b> Revierta una penalización y gane <span style='color:hsl(var(--primary))'>los puntos que perdió + 10 puntos de bonificación</span> al realizar una acción sostenible verificada."
   ],
-  "guide_survey_footer": "El sistema calcula un valor de 'puntos base' a partir de su encuesta. Sin un recibo, obtiene el 10% de eso. Con un recibo, obtiene <span style='color:hsl(var(--primary))'>3 veces</span> los puntos base.",
+  "guide_survey_footer": "El sistema calcula un valor de 'puntos base' a partir de su encuesta. Obtiene estos puntos provisionalmente. Con un recibo, obtiene una bonificación de 3x.",
   "guide_verification_title": "Centro de verificación y juego limpio",
   "guide_verification_description": "Para mantener la comunidad justa y las recompensas significativas, todas las acciones para ganar puntos requieren verificación. Los intentos de manipular el sistema darán lugar a penalizaciones de puntos.",
   "guide_verification_items_list": [
@@ -164,6 +164,15 @@
     "Envíe una prueba de foto en vivo de sus actividades (p. ej., viaje en autobús, comida vegetariana).",
     "Si se verifica su acción, sus puntos provisionales serán reemplazados por los puntos completos más una bonificación de <span style='color:hsl(var(--primary))'>3x</span>."
   ],
+  "guide_howto_verification_title": "Cómo usar el Centro de Verificación:",
+  "guide_howto_verification_steps": [
+    "Navegue al Centro de Verificación desde los resultados de la encuesta o el menú de configuración.",
+    "Elija la categoría que desea verificar (p. ej., Transporte, Comida, Bebida).",
+    "Cada categoría requiere un tipo específico de prueba: una foto en vivo de un recibo, un vehículo, una comida, etc.",
+    "Toque 'Capturar y Enviar' para tomar una foto en vivo. Las cargas de la galería están deshabilitadas para garantizar la equidad.",
+    "Nuestra IA procesará su envío. Se le notificará una vez que se complete y se otorguen los puntos de bonificación."
+  ],
+  "guide_points_disclaimer": "<b>Descargo de responsabilidad:</b> Los valores de los puntos para las acciones de reciclaje y encuestas son ilustrativos y pueden ajustarse con el tiempo en función de nuevos datos ambientales o requisitos de los patrocinadores.",
   "settings_title": "Configuración",
   "settings_description": "Administre la configuración y las preferencias de su aplicación.",
   "settings_guide_button": "Guía y reglas de la aplicación",
@@ -203,3 +212,5 @@
   "toast_reward_redeemed_title": "¡Recompensa canjeada!",
   "toast_reward_redeemed_description": "Ha canjeado con éxito '{title}'."
 }
+
+    

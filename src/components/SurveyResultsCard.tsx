@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo } from "react";
@@ -12,12 +13,12 @@ import { useTranslation } from "@/hooks/use-translation";
 
 type Props = {
   region: RegionKey;
-  kg: number;                     // estimatedFootprintKg (deterministik)
+  kg: number;                     // estimatedFootprintKg (deterministic)
   basePoints: number;             // pointsFromKgRegionAware(kg, region)
-  provisionalPoints?: number;     // computeProvisional(basePoints)
-  bonusMultiplier?: number;       // varsayılan 5
-  analysisText?: string;          // AI metni (isteğe bağlı)
-  recommendations?: string[];     // 3 maddelik öneri (opsiyonel)
+  provisionalPoints?: number;     // Now same as basePoints
+  bonusMultiplier?: number;       // default is 3
+  analysisText?: string;          // AI text (optional)
+  recommendations?: string[];     // 3 recommendations (optional)
 };
 
 export default function SurveyResultsCard({
@@ -32,7 +33,7 @@ export default function SurveyResultsCard({
   const { t } = useTranslation();
   const r = useRouter();
 
-  // 1) Duygu/ikon eşlemesi
+  // 1) Sentiment/icon mapping
   const sentiment = useMemo(() => {
     if (basePoints >= 20) return "good";
     if (basePoints >= 10) return "mid";
@@ -41,17 +42,17 @@ export default function SurveyResultsCard({
 
   const SentimentIcon = sentiment === "good" ? ThumbsUp : sentiment === "mid" ? Meh : ThumbsDown;
 
-  // 2) Basit metafor (insanların anlaması için)
+  // 2) Simple metaphor
   const metaphor = useMemo(() => carbonMetaphor(kg, t), [kg, t]);
 
-  // 3) “Bugün iyileştirmek için 3 madde”
+  // 3) Top 3 improvements
   const top3 = useMemo(() => {
     if (recommendations && recommendations.length > 0) return recommendations.slice(0,3);
-    return topThreeImprovements(region, kg, t);
-  }, [region, kg, t, recommendations]);
+    return t("improvements_high", { returnObjects: true }); // Fallback
+  }, [t, recommendations]);
 
-  // 4) Eğer kötü ise: “Bugün puanı geri kazan” önerileri
-  const recovery3 = useMemo(() => (sentiment === "bad" ? recoveryActionsToday(region, t) : []), [region, sentiment, t]);
+  // 4) Recovery actions if score is bad
+  const recovery3 = useMemo(() => (sentiment === "bad" ? t("recovery_actions", { returnObjects: true }) : []), [sentiment, t]);
 
   const { min, avg, max } = REGIONS[region];
   const isPenalty = kg > (REGIONS[region]?.penaltyThreshold || 30);
@@ -66,7 +67,7 @@ export default function SurveyResultsCard({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* KG + Metafor */}
+        {/* KG + Metaphor */}
         <div className="text-center p-4 bg-muted/50 rounded-lg">
           <p className="text-muted-foreground">{t("survey_results_estimated") || "Estimated Footprint"}</p>
           <p className="text-5xl font-bold font-headline text-primary">
@@ -78,7 +79,7 @@ export default function SurveyResultsCard({
           </p>
         </div>
 
-        {/* Puan bildirimi */}
+        {/* Points notification */}
         {isPenalty ? (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
@@ -95,19 +96,15 @@ export default function SurveyResultsCard({
               {t("survey_provisional_title") || "Provisional points granted"}
             </AlertTitle>
             <AlertDescription>
-              {/* Geçici puan + base + bonus info */}
-              {(t("survey_provisional_description", { points: provisionalPoints }) as string) ||
-                `You received ${provisionalPoints} provisional points.`}
+              <span dangerouslySetInnerHTML={{ __html: t("survey_provisional_description", { points: provisionalPoints }) || `You received ${provisionalPoints} provisional points.`}} />
               <div className="mt-1 text-xs text-muted-foreground">
-                {(t("survey_base_points_hint", { base: basePoints }) as string) || `Base today: ${basePoints} pts.`}
-                {" · "}
-                {(t("survey_bonus_hint", { x: bonusMultiplier }) as string) || `Receipt bonus: ×${bonusMultiplier}.`}
+                 <span dangerouslySetInnerHTML={{ __html: t("survey_bonus_hint", { bonus: basePoints * bonusMultiplier, x: bonusMultiplier }) }} />
               </div>
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Analiz + ikon */}
+        {/* Analysis + icon */}
         <Alert>
           <SentimentIcon className={sentiment === "good" ? "text-green-600 h-4 w-4"
             : sentiment === "mid" ? "text-amber-500 h-4 w-4" : "text-red-600 h-4 w-4"} />
@@ -119,11 +116,11 @@ export default function SurveyResultsCard({
               : (t("analysis_bad_title") || "High impact — needs improvement")}
           </AlertTitle>
           <AlertDescription>
-            {analysisText || defaultAnalysisText(sentiment, t)}
+            {analysisText || t('default_analysis_good')}
           </AlertDescription>
         </Alert>
 
-        {/* 3 öneri */}
+        {/* 3 recommendations */}
         {top3.length > 0 && (
             <div>
             <h3 className="font-semibold mb-2">{t("survey_recommendations_title") || "3 ways to improve"}</h3>
@@ -135,7 +132,7 @@ export default function SurveyResultsCard({
             </div>
         )}
 
-        {/* Kötüyse: bugün puanı geri kazanmak için 3 madde */}
+        {/* If bad: 3 ways to recover points today */}
         {recovery3.length > 0 && (
           <>
             <Separator />
@@ -154,12 +151,10 @@ export default function SurveyResultsCard({
       </CardContent>
 
       <CardFooter className="flex flex-col gap-3">
-        {/* Doğrulama Merkezi */}
         <Button size="lg" className="w-full" onClick={() => r.push("/verify")}>
           <Receipt className="mr-2" /> {t("go_to_verify") || "Go to Verification Center"}
         </Button>
 
-        {/* Lobiye Dön */}
         <Button size="lg" variant="outline" className="w-full" onClick={() => r.push("/")}>
           <Home className="mr-2" /> {t("back_to_lobby") || "Back to Lobby"}
         </Button>
@@ -168,41 +163,11 @@ export default function SurveyResultsCard({
   );
 }
 
-/* -----------------------------
-   Yardımcı Fonksiyonlar
------------------------------ */
-type TFunction = (key: string, options?: any) => any;
 
-// Basit, anlaşılır benzetmeler (metafor). Sayılar yaklaşık tutulur.
-function carbonMetaphor(kg: number, t: TFunction): string {
+function carbonMetaphor(kg: number, t: (key: string) => string): string {
   if (kg <= 10) return t("metaphor_low");
   if (kg <= 25) return t("metaphor_medium_low");
   if (kg <= 50) return t("metaphor_medium");
   if (kg <= 70) return t("metaphor_high");
   return t("metaphor_very_high");
-}
-
-function defaultAnalysisText(sentiment: "good"|"mid"|"bad", t: TFunction): string {
-  if (sentiment === "good") {
-    return t("default_analysis_good");
-  } else if (sentiment === "mid") {
-    return t("default_analysis_mid");
-  }
-  return t("default_analysis_bad");
-}
-
-// Bölgeye ve banda göre 3 öneri
-function topThreeImprovements(region: RegionKey, kg: number, t: TFunction): string[] {
-  if (kg <= REGIONS[region].avg) {
-    return t("improvements_low", { returnObjects: true });
-  }
-  if (kg <= REGIONS[region].max) {
-    return t("improvements_medium", { returnObjects: true });
-  }
-  return t("improvements_high", { returnObjects: true });
-}
-
-// Kötüyse: bugün anında puan geri kazandıran 3 eylem (doğrulama merkezine yönelik)
-function recoveryActionsToday(region: RegionKey, t: TFunction): string[] {
-  return t("recovery_actions", { returnObjects: true });
 }

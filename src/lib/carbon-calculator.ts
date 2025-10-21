@@ -1,3 +1,4 @@
+
 export type TransportOption = 'car_gasoline' | 'ev' | 'public_transport' | 'walk_bike';
 export type DietOption = 'red_meat' | 'white_meat_fish' | 'vegetarian_vegan' | 'carb_based';
 export type DrinkOption = 'drink_coffee_milk' | 'drink_bottled' | 'drink_alcohol' | 'drink_water_tea';
