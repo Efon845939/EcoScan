@@ -104,7 +104,7 @@
     "<b>High Footprint Penalty:</b> If your footprint is over the regional average, you lose points (<span class='text-destructive'>-1</span> to <span class='text-destructive'>-10</span>).",
     "<b>Provisional Reward:</b> Without a receipt, you get 10% of your base score, rounded down.",
     "<b>Receipt Verification Bonus:</b> Verifying with a receipt replaces your provisional points with your full <b>Base Points <span class='text-primary'>x 3</span></b>.",
-    "<b>Second Chance Bonus:</b> Reverse a penalty and earn <span class='text-primary'>+15 points</span> by taking a verified sustainable action."
+    "<b>Second Chance Bonus:</b> Reverse a penalty and earn <span class='text-primary'>+10 points</span> by taking a verified sustainable action."
   ],
   "guide_survey_footer": "The system calculates a 'base point' value from your survey. Without a receipt, you get 10% of that. With a receipt, you get <span class='text-primary'>3x</span> the base points.",
   "guide_verification_title": "Verification Center & Fair Play",
@@ -174,3 +174,5 @@
   "toast_reward_redeemed_title": "Reward Redeemed!",
   "toast_reward_redeemed_description": "You've successfully redeemed '{title}'."
 }
+
+    

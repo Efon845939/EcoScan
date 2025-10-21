@@ -1,4 +1,3 @@
-
 {
   "header_title": "Recompensas EcoScan",
   "header_points": "Puntos",
@@ -33,6 +32,8 @@
   "rewards_title": "Canjear sus puntos",
   "rewards_description": "Use sus puntos para obtener descuentos en nuestras tiendas asociadas.",
   "rewards_redeem_button": "Canjear",
+  "rewards_redeemed_title": "¡Recompensa canjeada!",
+  "rewards_redeemed_description": "Ha canjeado con éxito '{title}'.",
   "rewards": {
     "free_coffee": { "title": "Café gratis", "partner": "The Daily Grind" },
     "groceries_5_off": { "title": "$5 de descuento en comestibles", "partner": "Green Grocer" },
@@ -103,7 +104,7 @@
     "<b>Penalización por huella alta:</b> Si su huella está por encima del promedio regional, pierde puntos (<span class='text-destructive'>-1</span> a <span class='text-destructive'>-10</span>).",
     "<b>Recompensa provisional:</b> Sin un recibo, obtiene el 10 % de su puntaje base, redondeado hacia abajo.",
     "<b>Bonificación por verificación de recibo:</b> La verificación con un recibo reemplaza sus puntos provisionales con sus <b>puntos base completos <span class='text-primary'>x 3</span></b>.",
-    "<b>Bonificación de segunda oportunidad:</b> Revierta una penalización y gane <span class='text-primary'>+15 puntos</span> al realizar una acción sostenible verificada."
+    "<b>Bonificación de segunda oportunidad:</b> Revierta una penalización y gane <span class='text-primary'>+10 puntos</span> al realizar una acción sostenible verificada."
   ],
   "guide_survey_footer": "El sistema calcula un valor de 'puntos base' a partir de su encuesta. Sin un recibo, obtiene el 10% de eso. Con un recibo, obtiene <span class='text-primary'>3 veces</span> los puntos base.",
   "guide_verification_title": "Centro de verificación y juego limpio",
@@ -173,3 +174,5 @@
   "toast_reward_redeemed_title": "¡Recompensa canjeada!",
   "toast_reward_redeemed_description": "Ha canjeado con éxito '{title}'."
 }
+
+    

@@ -61,7 +61,7 @@ To ensure fairness, penalties and rewards are scaled based on regional daily COâ
 
 4.  **Second Chance Bonus:**
     *   If a user receives a penalty, they can perform one of the AI-recommended actions and submit photo proof.
-    *   If the action is verified, the penalty is reversed, and they are awarded an additional **+15 points**.
+    *   If the action is verified, the penalty is reversed, and they are awarded an additional **+10 points**.
 
 ---
 
@@ -78,3 +78,5 @@ This logic is defined in `src/components/rewards-section.tsx`.
 | **$10 Off Clothes**   | Eco Threads           | 1200        |
 | **Free Movie Ticket** | Cineplex Green        | 1600        |
 | **$15 Off Shoes**     | Sustainable Soles     | 2000        |
+
+    

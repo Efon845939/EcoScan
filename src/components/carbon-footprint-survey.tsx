@@ -35,6 +35,7 @@ import {
 } from '@/lib/carbon-calculator';
 import { processReceipt, ReceiptOutput } from '@/ai/flows/receipt-ocr-flow';
 import { useToast } from '@/hooks/use-toast';
+import { VerificationCenter } from './verification-center';
 
 interface CarbonFootprintSurveyProps {
   onBack: () => void;
@@ -133,9 +134,9 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   }
   
   const handleSecondChance = () => {
-      // For now, this just reverses penalty. Later it will involve camera.
+      // Reverses penalty and awards 10 bonus points.
       const pointsToReverse = Math.abs(penaltyPoints);
-      const bonus = 15;
+      const bonus = 10;
       const totalAward = pointsToReverse + bonus;
 
        if(userProfileRef && userProfile) {
@@ -294,7 +295,7 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
           <Label className="text-base font-semibold">{t('survey_q4')}</Label>
           <div className="grid grid-cols-2 gap-4">
             {(Object.keys(t('survey_q4_options', {returnObjects: true})) as DrinkOption[]).map((key) => (
-               <Label key={key} htmlFor={`drink-${key}`} className="flex items-center gap-3 rounded-md border p-3 hover:bg-accent hover:text-accent-foreground has-[input:checked]:border-primary has-[input:checked]:ring-1 has-[input:checked]:ring-primary">
+               <Label key={key} htmlFor={`drink-${key}`} className="flex items-center gap-3 rounded-md border p-3 hover:bg-accent hover:text-accent-foreground has-[input:checked]:border-primary has-[input:checked]:ring-1 has-[input-checked]:ring-primary">
                 <Checkbox
                   id={`drink-${key}`} 
                   checked={drink.includes(key)}
@@ -335,3 +336,5 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
     </Card>
   );
 }
+
+    

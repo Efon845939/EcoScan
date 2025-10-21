@@ -1,4 +1,3 @@
-
 {
   "header_title": "EcoScanリワード",
   "header_points": "ポイント",
@@ -33,6 +32,8 @@
   "rewards_title": "ポイントを利用",
   "rewards_description": "ポイントを使って提携店で割引を受けましょう。",
   "rewards_redeem_button": "利用する",
+  "rewards_redeemed_title": "リワードを利用しました！",
+  "rewards_redeemed_description": "「{title}」を正常に利用しました。",
   "rewards": {
     "free_coffee": { "title": "無料コーヒー", "partner": "ザ・デイリーグラインド" },
     "groceries_5_off": { "title": "食料品5ドル割引", "partner": "グリーン・グローサー" },
@@ -103,7 +104,7 @@
     "<b>高いフットプリントのペナルティ:</b> フットプリントが地域平均を超えると、ポイントが失われます（<span class='text-destructive'>-1</span>〜<span class='text-destructive'>-10</span>）。",
     "<b>仮リワード:</b> レシートがない場合、ベーススコアの10％が切り捨てで付与されます。",
     "<b>レシート確認ボーナス:</b> レシートで確認すると、仮ポイントが完全な<b>ベースポイント<span class='text-primary'>x 3</span></b>に置き換えられます。",
-    "<b>セカンドチャンスボーナス:</b> 確認済みの持続可能なアクションを実行して、ペナルティを取り消し、<span class='text-primary'>+15ポイント</span>を獲得します。"
+    "<b>セカンドチャンスボーナス:</b> 確認済みの持続可能なアクションを実行して、ペナルティを取り消し、<span class='text-primary'>+10ポイント</span>を獲得します。"
   ],
   "guide_survey_footer": "システムは、調査から「ベースポイント」値を計算します。レシートがない場合は、その10％が付与されます。レシートがある場合は、ベースポイントの<span class='text-primary'>3倍</span>が付与されます。",
   "guide_verification_title": "検証センターとフェアプレー",
@@ -173,3 +174,5 @@
   "toast_reward_redeemed_title": "リワードを利用しました！",
   "toast_reward_redeemed_description": "「{title}」を正常に利用しました。"
 }
+
+    

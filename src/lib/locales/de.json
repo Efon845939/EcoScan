@@ -32,6 +32,8 @@
   "rewards_title": "Punkte einlösen",
   "rewards_description": "Nutzen Sie Ihre Punkte für Rabatte in unseren Partnergeschäften.",
   "rewards_redeem_button": "Einlösen",
+  "rewards_redeemed_title": "Belohnung eingelöst!",
+  "rewards_redeemed_description": "Sie haben '{title}' erfolgreich eingelöst.",
   "rewards": {
     "free_coffee": { "title": "Kostenloser Kaffee", "partner": "The Daily Grind" },
     "groceries_5_off": { "title": "5 $ Rabatt auf Lebensmittel", "partner": "Green Grocer" },
@@ -102,7 +104,7 @@
     "<b>Strafe für hohen Fußabdruck:</b> Wenn Ihr Fußabdruck über dem regionalen Durchschnitt liegt, verlieren Sie Punkte (<span class='text-destructive'>-1</span> bis <span class='text-destructive'>-10</span>).",
     "<b>Vorläufige Belohnung:</b> Ohne Beleg erhalten Sie 10 % Ihrer Basispunktzahl, abgerundet.",
     "<b>Belegverifizierungsbonus:</b> Die Verifizierung mit einem Beleg ersetzt Ihre vorläufigen Punkte durch Ihre vollen <b>Basispunkte <span class='text-primary'>x 3</span></b>.",
-    "<b>Zweite-Chance-Bonus:</b> Heben Sie eine Strafe auf und verdienen Sie <span class='text-primary'>+15 Punkte</span>, indem Sie eine verifizierte nachhaltige Aktion durchführen."
+    "<b>Zweite-Chance-Bonus:</b> Heben Sie eine Strafe auf und verdienen Sie <span class='text-primary'>+10 Punkte</span>, indem Sie eine verifizierte nachhaltige Aktion durchführen."
   ],
   "guide_survey_footer": "Das System berechnet aus Ihrer Umfrage einen „Basispunktwert“. Ohne Beleg erhalten Sie 10% davon. Mit Beleg erhalten Sie das <span class='text-primary'>3-fache</span> der Basispunkte.",
   "guide_verification_title": "Verifizierungszentrum & Fairplay",
@@ -172,3 +174,5 @@
   "toast_reward_redeemed_title": "Belohnung eingelöst!",
   "toast_reward_redeemed_description": "Sie haben '{title}' erfolgreich eingelöst."
 }
+
+    

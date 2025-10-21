@@ -1,4 +1,3 @@
-
 {
   "header_title": "EcoScan Ödülleri",
   "header_points": "Puan",
@@ -33,6 +32,8 @@
   "rewards_title": "Puanlarınızı Kullanın",
   "rewards_description": "Puanlarınızı ortak mağazalarımızda indirim almak için kullanın.",
   "rewards_redeem_button": "Kullan",
+  "rewards_redeemed_title": "Ödül Kullanıldı!",
+  "rewards_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız.",
   "rewards": {
     "free_coffee": { "title": "Ücretsiz Kahve", "partner": "Günlük Mola" },
     "groceries_5_off": { "title": "Market Alışverişinde 5$ İndirim", "partner": "Yeşil Bakkal" },
@@ -103,7 +104,7 @@
     "<b>Yüksek Ayak İzi Cezası:</b> Eğer ayak iziniz bölgesel ortalamanın üzerindeyse puan kaybedersiniz (<span class='text-destructive'>-1</span> ila <span class='text-destructive'>-10</span>).",
     "<b>Geçici Ödül:</b> Fiş olmadan, temel puanınızın %10'unu alırsınız, aşağı yuvarlanır.",
     "<b>Fiş Doğrulama Bonusu:</b> Fiş ile doğrulamak, geçici puanlarınızı tam <b>Temel Puan <span class='text-primary'>x 3</span></b> ile değiştirir.",
-    "<b>İkinci Şans Bonusu:</b> Bir cezayı tersine çevirin ve doğrulanmış bir sürdürülebilir eylem gerçekleştirerek <span class='text-primary'>+15 puan</span> kazanın."
+    "<b>İkinci Şans Bonusu:</b> Bir cezayı tersine çevirin ve doğrulanmış bir sürdürülebilir eylem gerçekleştirerek <span class='text-primary'>+10 puan</span> kazanın."
   ],
   "guide_survey_footer": "Sistem, anketinizden bir 'temel puan' değeri hesaplar. Fiş olmadan, bunun %10'unu alırsınız. Fişle, temel puanların <span class='text-primary'>3 katını</span> alırsınız.",
   "guide_verification_title": "Doğrulama Merkezi ve Adil Oyun",
@@ -173,3 +174,5 @@
   "toast_reward_redeemed_title": "Ödül Kullanıldı!",
   "toast_reward_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız."
 }
+
+    
