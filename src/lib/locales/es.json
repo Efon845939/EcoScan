@@ -32,10 +32,10 @@
   "disposed_card_rewards_link": "Consultar recompensas",
   "rewards_title": "Canjear sus puntos",
   "rewards_description": "Use sus puntos para obtener descuentos en nuestras tiendas asociadas.",
+  "rewards_redeem_button": "Canjear",
   "rewards_redeemed_title": "¡Recompensa reclamada!",
   "rewards_redeemed_description": "Disfrute de su descuento. ¡Gracias por su contribución!",
   "rewards_back_button": "Volver al menú principal",
-  "rewards_redeem_button": "Canjear",
   "rewards": {
     "free_coffee": { "title": "Café gratis", "partner": "The Daily Grind" },
     "groceries_5_off": { "title": "$5 de descuento en comestibles", "partner": "Green Grocer" },
@@ -75,7 +75,7 @@
   "survey_penalty_title": "Penalización por huella alta",
   "survey_penalty_description": "Su huella diaria fue alta, por lo que se han deducido {points} puntos. Puede revertir esto realizando una de las acciones a continuación y verificando con una foto.",
   "survey_provisional_title": "¡Puntos provisionales otorgados!",
-  "survey_provisional_description": "Ha ganado {points} puntos provisionales. ¡Escanee un recibo de su día para verificar su huella y obtener un bono de puntos del 5x!",
+  "survey_provisional_description": "Ha ganado {points} puntos provisionales. ¡Escanee un recibo de su día para verificar su huella y obtener un bono de puntos del 3x!",
   "survey_base_points_hint": "Su puntaje base es de {base} puntos. El bono se calcula a partir de este puntaje.",
   "survey_analysis_title": "Análisis",
   "survey_recommendations_title": "Cómo mejorar mañana:",
@@ -88,6 +88,8 @@
   "guide_description": "Aprenda a ganar puntos, canjear recompensas y jugar limpio.",
   "guide_recycling_title": "Puntos de reciclaje",
   "guide_recycling_description": "Gane puntos escaneando un artículo y verificando su eliminación con una foto. Los puntos se otorgan en función del impacto ambiental del material.",
+  "guide_material_header": "Material",
+  "guide_points_header": "Puntos",
   "materials": {
     "battery": "Batería",
     "plastic": "Plástico",
@@ -100,13 +102,13 @@
   },
   "guide_survey_title": "Encuesta de huella de carbono",
   "guide_survey_description": "Complete una encuesta diaria para obtener puntos provisionales. ¡Verifique con un recibo para obtener una bonificación masiva!",
-  "guide_survey_items": {
-    "item1": { "title": "Penalización por huella alta", "desc": "(Si la huella > promedio regional)", "points": "-1 a -10 {points}" },
-    "item2": { "title": "Recompensa provisional", "desc": "(Sin verificación de recibo)", "points": "10% de los puntos base" },
-    "item3": { "title": "Bonificación por verificación de recibo", "desc": "(Reemplaza los puntos provisionales)", "points": "Puntos base x 5" },
-    "item4": { "title": "Bonificación de segunda oportunidad", "desc": "(Revierta una penalización tomando medidas)", "points": "+15 {points}" }
-  },
-  "guide_survey_footer": "El sistema calcula un valor de 'puntos base' a partir de su encuesta. Sin un recibo, obtiene el 10% de eso. Con un recibo, obtiene 5 veces los puntos base.",
+  "guide_survey_items_list": [
+    "<b>Penalización por huella alta:</b> Si su huella está por encima del promedio regional, pierde puntos (-1 a -10).",
+    "<b>Recompensa provisional:</b> Sin un recibo, obtiene el 10 % de su puntaje base.",
+    "<b>Bonificación por verificación de recibo:</b> La verificación con un recibo reemplaza sus puntos provisionales con sus <b>puntos base completos x 3</b>.",
+    "<b>Bonificación de segunda oportunidad:</b> Revierta una penalización y gane <b>+15 puntos</b> al realizar una acción sostenible verificada."
+  ],
+  "guide_survey_footer": "El sistema calcula un valor de 'puntos base' a partir de su encuesta. Sin un recibo, obtiene el 10% de eso. Con un recibo, obtiene 3 veces los puntos base.",
   "guide_redemption_title": "Canje de recompensas",
   "guide_redemption_description": "Use sus puntos ganados con esfuerzo para obtener descuentos y recompensas del mundo real de nuestros socios.",
   "guide_rules_title": "Reglas generales y juego limpio",
@@ -115,7 +117,7 @@
     "Todas las presentaciones deben ser genuinas y representar sus propias acciones, tomadas en tiempo real.",
     "No envíe fotos de su galería, capturas de pantalla o imágenes generadas por IA.",
     "Cada acto de reciclaje y encuesta diaria solo debe registrarse una vez. Nuestro sistema tiene controles para envíos duplicados.",
-    "Intentar manipular el sistema de puntos enviando imágenes fraudulentas resultará en una **penalización de -50 puntos** y puede llevar a la suspensión de la cuenta."
+    "Intentar manipular el sistema de puntos enviando imágenes fraudulentas resultará en una <b>penalización de -50 puntos</b> y puede llevar a la suspensión de la cuenta."
   ],
   "guide_howto_title": "Guías prácticas",
   "guide_howto_recycle_title": "Cómo reciclar y ganar:",
@@ -129,7 +131,7 @@
   "guide_howto_footprint_step2": "Reciba su análisis inicial y puntos provisionales.",
   "guide_howto_footprint_step3": "Toque el botón '{button}' para abrir la cámara.",
   "guide_howto_footprint_step4": "Escanee un recibo de hoy que refleje sus actividades diarias (p. ej., comestibles, boletos de transporte).",
-  "guide_howto_footprint_step5": "Si se valida el recibo, sus puntos provisionales serán reemplazados por los puntos completos más una bonificación del 5x.",
+  "guide_howto_footprint_step5": "Si se valida el recibo, sus puntos provisionales serán reemplazados por los puntos completos más una bonificación del 3x.",
   "settings_title": "Configuración",
   "settings_description": "Administre la configuración y las preferencias de su aplicación.",
   "settings_guide_button": "Guía y reglas de la aplicación",
@@ -169,4 +171,3 @@
   "toast_reward_redeemed_title": "¡Recompensa canjeada!",
   "toast_reward_redeemed_description": "Ha canjeado con éxito \"{title}\"."
 }
-    

@@ -1,4 +1,3 @@
-
 {
   "header_title": "EcoScan Belohnungen",
   "header_points": "Punkte",
@@ -32,10 +31,10 @@
   "disposed_card_rewards_link": "Belohnungen ansehen",
   "rewards_title": "Punkte einlösen",
   "rewards_description": "Nutzen Sie Ihre Punkte für Rabatte in unseren Partnergeschäften.",
+  "rewards_redeem_button": "Einlösen",
   "rewards_redeemed_title": "Belohnung eingefordert!",
   "rewards_redeemed_description": "Genießen Sie Ihren Rabatt. Vielen Dank für Ihren Beitrag!",
   "rewards_back_button": "Zurück zum Hauptmenü",
-  "rewards_redeem_button": "Einlösen",
   "rewards": {
     "free_coffee": { "title": "Kostenloser Kaffee", "partner": "The Daily Grind" },
     "groceries_5_off": { "title": "5 $ Rabatt auf Lebensmittel", "partner": "Green Grocer" },
@@ -75,7 +74,7 @@
   "survey_penalty_title": "Strafe für hohen Fußabdruck",
   "survey_penalty_description": "Ihr täglicher Fußabdruck war hoch, daher wurden {points} Punkte abgezogen. Sie können dies rückgängig machen, indem Sie eine der folgenden Maßnahmen ergreifen und mit einem Foto verifizieren.",
   "survey_provisional_title": "Vorläufige Punkte vergeben!",
-  "survey_provisional_description": "Sie haben vorläufig {points} Punkte verdient. Scannen Sie einen Beleg von Ihrem Tag, um Ihren Fußabdruck zu verifizieren und einen 5x-Punktebonus zu erhalten!",
+  "survey_provisional_description": "Sie haben vorläufig {points} Punkte verdient. Scannen Sie einen Beleg von Ihrem Tag, um Ihren Fußabdruck zu verifizieren und einen 3x-Punktebonus zu erhalten!",
   "survey_base_points_hint": "Ihre Basispunktzahl beträgt {base} Punkte. Der Bonus wird aus dieser Punktzahl berechnet.",
   "survey_analysis_title": "Analyse",
   "survey_recommendations_title": "Wie Sie sich morgen verbessern können:",
@@ -88,6 +87,8 @@
   "guide_description": "Erfahren Sie, wie Sie Punkte sammeln, Belohnungen einlösen und fair spielen.",
   "guide_recycling_title": "Recycling-Punkte",
   "guide_recycling_description": "Sammeln Sie Punkte, indem Sie einen Artikel scannen und Ihre Entsorgung mit einem Foto verifizieren. Die Punkte werden basierend auf der Umweltauswirkung des Materials vergeben.",
+  "guide_material_header": "Material",
+  "guide_points_header": "Punkte",
   "materials": {
     "battery": "Batterie",
     "plastic": "Plastik",
@@ -100,13 +101,13 @@
   },
   "guide_survey_title": "CO2-Fußabdruck-Umfrage",
   "guide_survey_description": "Füllen Sie eine tägliche Umfrage aus, um vorläufige Punkte zu erhalten. Verifizieren Sie mit einem Beleg für einen riesigen Bonus!",
-  "guide_survey_items": {
-    "item1": { "title": "Strafe für hohen Fußabdruck", "desc": "(Wenn Fußabdruck > regionaler Durchschnitt)", "points": "-1 bis -10 {points}" },
-    "item2": { "title": "Vorläufige Belohnung", "desc": "(Ohne Belegverifizierung)", "points": "10% der Basispunkte" },
-    "item3": { "title": "Belegverifizierungsbonus", "desc": "(Ersetzt vorläufige Punkte)", "points": "Basispunkte x 5" },
-    "item4": { "title": "Zweite-Chance-Bonus", "desc": "(Heben Sie eine Strafe auf, indem Sie Maßnahmen ergreifen)", "points": "+15 {points}" }
-  },
-  "guide_survey_footer": "Das System berechnet aus Ihrer Umfrage einen „Basispunktwert“. Ohne Beleg erhalten Sie 10% davon. Mit Beleg erhalten Sie das 5-fache der Basispunkte.",
+  "guide_survey_items_list": [
+    "<b>Strafe für hohen Fußabdruck:</b> Wenn Ihr Fußabdruck über dem regionalen Durchschnitt liegt, verlieren Sie Punkte (-1 bis -10).",
+    "<b>Vorläufige Belohnung:</b> Ohne Beleg erhalten Sie 10 % Ihrer Basispunktzahl.",
+    "<b>Belegverifizierungsbonus:</b> Die Verifizierung mit einem Beleg ersetzt Ihre vorläufigen Punkte durch Ihre vollen <b>Basispunkte x 3</b>.",
+    "<b>Zweite-Chance-Bonus:</b> Heben Sie eine Strafe auf und verdienen Sie <b>+15 Punkte</b>, indem Sie eine verifizierte nachhaltige Aktion durchführen."
+  ],
+  "guide_survey_footer": "Das System berechnet aus Ihrer Umfrage einen „Basispunktwert“. Ohne Beleg erhalten Sie 10% davon. Mit Beleg erhalten Sie das 3-fache der Basispunkte.",
   "guide_redemption_title": "Belohnungseinlösung",
   "guide_redemption_description": "Verwenden Sie Ihre hart verdienten Punkte, um echte Rabatte und Belohnungen von unseren Partnern zu erhalten.",
   "guide_rules_title": "Allgemeine Regeln & Fairplay",
@@ -115,7 +116,7 @@
     "Alle Einreichungen müssen echt sein und Ihre eigenen, in Echtzeit durchgeführten Handlungen darstellen.",
     "Senden Sie keine Fotos aus Ihrer Galerie, Screenshots oder KI-generierte Bilder.",
     "Jeder Recyclingvorgang und jede tägliche Umfrage sollte nur einmal protokolliert werden. Unser System verfügt über Prüfungen auf doppelte Einreichungen.",
-    "Der Versuch, das Punktesystem durch Einreichung betrügerischer Bilder zu manipulieren, führt zu einer **-50-Punkte-Strafe** und kann zur Sperrung des Kontos führen."
+    "Der Versuch, das Punktesystem durch Einreichung betrügerischer Bilder zu manipulieren, führt zu einer <b>-50-Punkte-Strafe</b> und kann zur Sperrung des Kontos führen."
   ],
   "guide_howto_title": "Anleitungen",
   "guide_howto_recycle_title": "Wie man recycelt & verdient:",
@@ -129,7 +130,7 @@
   "guide_howto_footprint_step2": "Erhalten Sie Ihre erste Analyse und vorläufige Punkte.",
   "guide_howto_footprint_step3": "Tippen Sie auf die Schaltfläche '{button}', um die Kamera zu öffnen.",
   "guide_howto_footprint_step4": "Scannen Sie einen Beleg von heute, der Ihre täglichen Aktivitäten widerspiegelt (z. B. Lebensmittel, Fahrkarten).",
-  "guide_howto_footprint_step5": "Wenn der Beleg validiert wird, werden Ihre vorläufigen Punkte durch die vollen Punkte plus einen 5x-Bonus ersetzt!",
+  "guide_howto_footprint_step5": "Wenn der Beleg validiert wird, werden Ihre vorläufigen Punkte durch die vollen Punkte plus einen 3x-Bonus ersetzt!",
   "settings_title": "Einstellungen",
   "settings_description": "Verwalten Sie Ihre Anwendungseinstellungen und Präferenzen.",
   "settings_guide_button": "App-Anleitung & Regeln",
@@ -169,4 +170,3 @@
   "toast_reward_redeemed_title": "Belohnung eingelöst!",
   "toast_reward_redeemed_description": "Sie haben \"{title}\" erfolgreich eingelöst."
 }
-    

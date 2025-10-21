@@ -32,10 +32,10 @@
   "disposed_card_rewards_link": "Ödüllere göz at",
   "rewards_title": "Puanlarınızı Kullanın",
   "rewards_description": "Puanlarınızı ortak mağazalarımızda indirim almak için kullanın.",
+  "rewards_redeem_button": "Kullan",
   "rewards_redeemed_title": "Ödül Alındı!",
   "rewards_redeemed_description": "İndiriminizin tadını çıkarın. Katkınız için teşekkür ederiz!",
   "rewards_back_button": "Ana Menüye Geri Dön",
-  "rewards_redeem_button": "Kullan",
   "rewards": {
     "free_coffee": { "title": "Ücretsiz Kahve", "partner": "Günlük Mola" },
     "groceries_5_off": { "title": "Market Alışverişinde 5$ İndirim", "partner": "Yeşil Bakkal" },
@@ -75,7 +75,7 @@
   "survey_penalty_title": "Yüksek Ayak İzi Cezası",
   "survey_penalty_description": "Günlük ayak iziniz yüksekti, bu yüzden {points} puan düşüldü. Aşağıdaki eylemlerden birini yaparak ve bir fotoğrafla doğrulayarak bunu geri alabilirsiniz.",
   "survey_provisional_title": "Geçici Puanlar Verildi!",
-  "survey_provisional_description": "{points} geçici puan kazandınız. Günlük ayak izinizi doğrulamak ve 5 kat puan bonusu kazanmak için gün içinden bir fiş tarayın!",
+  "survey_provisional_description": "{points} geçici puan kazandınız. Günlük ayak izinizi doğrulamak ve 3 kat puan bonusu kazanmak için gün içinden bir fiş tarayın!",
   "survey_base_points_hint": "Temel puanınız {base} puandır. Bonus bu puandan hesaplanır.",
   "survey_analysis_title": "Analiz",
   "survey_recommendations_title": "Yarını iyileştirmek için:",
@@ -88,6 +88,8 @@
   "guide_description": "Puan kazanmayı, ödülleri kullanmayı ve adil oynamayı öğrenin.",
   "guide_recycling_title": "Geri Dönüşüm Puanları",
   "guide_recycling_description": "Bir öğeyi tarayarak ve atığınızı bir fotoğrafla doğrulayarak puan kazanın. Puanlar, malzemenin çevresel etkisine göre verilir.",
+  "guide_material_header": "Malzeme",
+  "guide_points_header": "Puan",
   "materials": {
     "battery": "Pil",
     "plastic": "Plastik",
@@ -100,13 +102,13 @@
   },
   "guide_survey_title": "Karbon Ayak İzi Anketi",
   "guide_survey_description": "Geçici puanlar almak için günlük bir anketi tamamlayın. Büyük bir bonus için bir fişle doğrulayın!",
-  "guide_survey_items": {
-    "item1": { "title": "Yüksek Ayak İzi Cezası", "desc": "(Bölgesel ortalamanın üzerindeyse)", "points": "-1 ila -10 Puan" },
-    "item2": { "title": "Geçici Ödül", "desc": "(Fiş doğrulaması olmadan)", "points": "Temel Puanların %10'u" },
-    "item3": { "title": "Fiş Doğrulama Bonusu", "desc": "(Geçici puanların yerini alır)", "points": "Temel Puanlar x 5" },
-    "item4": { "title": "İkinci Şans Bonusu", "desc": "(Harekete geçerek bir cezayı geri alın)", "points": "+15 Puan" }
-  },
-  "guide_survey_footer": "Sistem, anketinizden bir 'temel puan' değeri hesaplar. Fiş olmadan, bunun %10'unu alırsınız. Fişle, temel puanların 5 katını alırsınız.",
+  "guide_survey_items_list": [
+    "<b>Yüksek Ayak İzi Cezası:</b> Eğer ayak iziniz bölgesel ortalamanın üzerindeyse puan kaybedersiniz (-1 ila -10).",
+    "<b>Geçici Ödül:</b> Fiş olmadan, temel puanınızın %10'unu alırsınız.",
+    "<b>Fiş Doğrulama Bonusu:</b> Fiş ile doğrulamak, geçici puanlarınızı tam <b>Temel Puan x 3</b> ile değiştirir.",
+    "<b>İkinci Şans Bonusu:</b> Bir cezayı tersine çevirin ve doğrulanmış bir sürdürülebilir eylem gerçekleştirerek <b>+15 puan</b> kazanın."
+  ],
+  "guide_survey_footer": "Sistem, anketinizden bir 'temel puan' değeri hesaplar. Fiş olmadan, bunun %10'unu alırsınız. Fişle, temel puanların 3 katını alırsınız.",
   "guide_redemption_title": "Ödül Kullanımı",
   "guide_redemption_description": "Zor kazanılan puanlarınızı ortaklarımızdan gerçek dünya indirimleri ve ödülleri almak için kullanın.",
   "guide_rules_title": "Genel Kurallar ve Adil Oyun",
@@ -115,7 +117,7 @@
     "Tüm gönderimler gerçek olmalı ve gerçek zamanlı olarak kendi eylemlerinizi temsil etmelidir.",
     "Galerinizden fotoğraflar, ekran görüntüleri veya yapay zeka tarafından oluşturulmuş görüntüler göndermeyin.",
     "Her geri dönüşüm eylemi ve günlük anket yalnızca bir kez kaydedilmelidir. Sistemimiz yinelenen gönderimler için kontrollere sahiptir.",
-    "Hileli resimler göndererek puan sistemini manipüle etmeye çalışmak **-50 puan cezası** ile sonuçlanacak ve hesap askıya alınmasına neden olabilir."
+    "Hileli resimler göndererek puan sistemini manipüle etmeye çalışmak <b>-50 puan cezası</b> ile sonuçlanacak ve hesap askıya alınmasına neden olabilir."
   ],
   "guide_howto_title": "Nasıl Yapılır Kılavuzları",
   "guide_howto_recycle_title": "Nasıl Geri Dönüşüm Yapılır ve Kazanılır:",
@@ -129,7 +131,7 @@
   "guide_howto_footprint_step2": "İlk analiziniz ve geçici puanlarınız gösterilecektir.",
   "guide_howto_footprint_step3": "Kamerayı açmak için '{button}' butonuna dokunun.",
   "guide_howto_footprint_step4": "Bugünden bir fiş tarayın (örn. market/ulaşım).",
-  "guide_howto_footprint_step5": "Fiş doğrulanırsa, geçici puanlarınız tam puan + 5 kat bonus ile güncellenir.",
+  "guide_howto_footprint_step5": "Fiş doğrulanırsa, geçici puanlarınız tam puan + 3 kat bonus ile güncellenir.",
   "settings_title": "Ayarlar",
   "settings_description": "Uygulama ayarlarınızı ve tercihlerinizi yönetin.",
   "settings_guide_button": "Uygulama Rehberi ve Kurallar",
@@ -166,7 +168,4 @@
   "toast_bonus_applied_description": "Ayak izinizi doğruladığınız için devasa bir {points} puan bonusu kazandınız!",
   "toast_not_enough_points_title": "Yeterli puan yok",
   "toast_not_enough_points_description": "Bu ödülü kullanmak için {points} puana ihtiyacınız var.",
-  "toast_reward_redeemed_title": "Ödül Kullanıldı!",
-  "toast_reward_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız."
-}
-    
+  "toast_reward_redeemed_title": "
