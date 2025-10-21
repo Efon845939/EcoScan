@@ -35,6 +35,7 @@
   "rewards_redeemed_title": "リワード獲得！",
   "rewards_redeemed_description": "割引をお楽しみください。ご協力ありがとうございます！",
   "rewards_back_button": "メインメニューに戻る",
+  "rewards_redeem_button": "利用する",
   "rewards": {
     "free_coffee": { "title": "無料コーヒー", "partner": "ザ・デイリーグラインド" },
     "groceries_5_off": { "title": "食料品5ドル割引", "partner": "グリーン・グローサー" },
@@ -135,6 +136,9 @@
   "settings_region_label": "地域",
   "settings_language_label": "言語",
   "settings_close_button": "閉じる",
+  "low_confidence_title": "ちょっと自信がない...",
+  "low_confidence_description": "私たちのAIはこのアイテムについて自信がありません。正しく識別するためにバーコード番号を提供していただけますか？",
+  "low_confidence_submit_button": "バーコードを送信",
   "loading_profile": "プロフィールを読み込み中...",
   "loading_material": "素材を特定中...",
   "loading_barcode": "バーコードで素材を再特定中...",
@@ -165,5 +169,4 @@
   "toast_reward_redeemed_title": "リワードを利用しました！",
   "toast_reward_redeemed_description": "「{title}」を正常に利用しました。"
 }
-
     

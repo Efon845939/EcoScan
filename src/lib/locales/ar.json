@@ -35,6 +35,7 @@
   "rewards_redeemed_title": "تم استلام المكافأة!",
   "rewards_redeemed_description": "استمتع بخصمك. شكرا لمساهمتك!",
   "rewards_back_button": "العودة إلى القائمة الرئيسية",
+  "rewards_redeem_button": "استبدال",
   "rewards": {
     "free_coffee": { "title": "قهوة مجانية", "partner": "ذي ديلي جريند" },
     "groceries_5_off": { "title": "خصم 5 دولارات على البقالة", "partner": "جرين جروcer" },
@@ -135,6 +136,9 @@
   "settings_region_label": "المنطقة",
   "settings_language_label": "اللغة",
   "settings_close_button": "إغلاق",
+  "low_confidence_title": "لست متأكدا تماما...",
+  "low_confidence_description": "الذكاء الاصطناعي الخاص بنا ليس واثقا من هذا العنصر. هل يمكنك تقديم رقم الباركود لمساعدتنا في تحديده بشكل صحيح؟",
+  "low_confidence_submit_button": "إرسال الباركود",
   "loading_profile": "جارٍ تحميل ملفك الشخصي...",
   "loading_material": "جارٍ تحديد المادة...",
   "loading_barcode": "إعادة تحديد المادة بالباركود...",
@@ -165,5 +169,4 @@
   "toast_reward_redeemed_title": "تم استبدال المكافأة!",
   "toast_reward_redeemed_description": "لقد نجحت في استبدال \"{title}\"."
 }
-
     

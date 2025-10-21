@@ -35,6 +35,7 @@
   "rewards_redeemed_title": "Belohnung eingefordert!",
   "rewards_redeemed_description": "Genießen Sie Ihren Rabatt. Vielen Dank für Ihren Beitrag!",
   "rewards_back_button": "Zurück zum Hauptmenü",
+  "rewards_redeem_button": "Einlösen",
   "rewards": {
     "free_coffee": { "title": "Kostenloser Kaffee", "partner": "The Daily Grind" },
     "groceries_5_off": { "title": "5 $ Rabatt auf Lebensmittel", "partner": "Green Grocer" },
@@ -135,6 +136,9 @@
   "settings_region_label": "Region",
   "settings_language_label": "Sprache",
   "settings_close_button": "Schließen",
+  "low_confidence_title": "Nicht ganz sicher...",
+  "low_confidence_description": "Unsere KI ist sich bei diesem Artikel nicht sicher. Können Sie die Barcode-Nummer angeben, um uns bei der korrekten Identifizierung zu helfen?",
+  "low_confidence_submit_button": "Barcode übermitteln",
   "loading_profile": "Ihr Profil wird geladen...",
   "loading_material": "Material wird identifiziert...",
   "loading_barcode": "Material wird mit Barcode neu identifiziert...",
@@ -165,5 +169,4 @@
   "toast_reward_redeemed_title": "Belohnung eingelöst!",
   "toast_reward_redeemed_description": "Sie haben \"{title}\" erfolgreich eingelöst."
 }
-
     

@@ -144,7 +144,7 @@ export function RewardsSection({ userPoints, onBack }: RewardsSectionProps) {
                 <p className="text-sm text-muted-foreground">{tReward.partner}</p>
                 <p className="text-sm font-bold text-primary">{reward.cost} {t('header_points')}</p>
               </div>
-              <Button onClick={() => handleRedeem(reward.cost, tReward.title)} disabled={userPoints < reward.cost}>Redeem</Button>
+              <Button onClick={() => handleRedeem(reward.cost, tReward.title)} disabled={userPoints < reward.cost}>{t('rewards_redeem_button')}</Button>
             </Card>
           )
         })}

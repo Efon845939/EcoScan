@@ -35,6 +35,7 @@
   "rewards_redeemed_title": "Ödül Alındı!",
   "rewards_redeemed_description": "İndiriminizin tadını çıkarın. Katkınız için teşekkür ederiz!",
   "rewards_back_button": "Ana Menüye Geri Dön",
+  "rewards_redeem_button": "Kullan",
   "rewards": {
     "free_coffee": { "title": "Ücretsiz Kahve", "partner": "Günlük Mola" },
     "groceries_5_off": { "title": "Market Alışverişinde 5$ İndirim", "partner": "Yeşil Bakkal" },
@@ -135,6 +136,9 @@
   "settings_region_label": "Bölge",
   "settings_language_label": "Dil",
   "settings_close_button": "Kapat",
+  "low_confidence_title": "Pek emin olamadık...",
+  "low_confidence_description": "Yapay zekamız bu öğeden emin değil. Doğru tanımlamamıza yardımcı olmak için barkod numarasını verebilir misiniz?",
+  "low_confidence_submit_button": "Barkodu Gönder",
   "loading_profile": "Profiliniz yükleniyor...",
   "loading_material": "Malzeme tanımlanıyor...",
   "loading_barcode": "Barkod ile malzeme yeniden tanımlanıyor...",
@@ -165,5 +169,4 @@
   "toast_reward_redeemed_title": "Ödül Kullanıldı!",
   "toast_reward_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız."
 }
-
     

@@ -35,6 +35,7 @@
   "rewards_redeemed_title": "¡Recompensa reclamada!",
   "rewards_redeemed_description": "Disfrute de su descuento. ¡Gracias por su contribución!",
   "rewards_back_button": "Volver al menú principal",
+  "rewards_redeem_button": "Canjear",
   "rewards": {
     "free_coffee": { "title": "Café gratis", "partner": "The Daily Grind" },
     "groceries_5_off": { "title": "$5 de descuento en comestibles", "partner": "Green Grocer" },
@@ -135,6 +136,9 @@
   "settings_region_label": "Región",
   "settings_language_label": "Idioma",
   "settings_close_button": "Cerrar",
+  "low_confidence_title": "No estoy muy seguro...",
+  "low_confidence_description": "Nuestra IA no está segura acerca de este artículo. ¿Puede proporcionar el número de código de barras para ayudarnos a identificarlo correctamente?",
+  "low_confidence_submit_button": "Enviar código de barras",
   "loading_profile": "Cargando su perfil...",
   "loading_material": "Identificando material...",
   "loading_barcode": "Reidentificando material con código de barras...",
@@ -165,5 +169,4 @@
   "toast_reward_redeemed_title": "¡Recompensa canjeada!",
   "toast_reward_redeemed_description": "Ha canjeado con éxito \"{title}\"."
 }
-
     
