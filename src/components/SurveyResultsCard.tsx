@@ -14,6 +14,8 @@ type Props = {
   region: RegionKey;
   kg: number;
   basePoints: number;
+  provisionalPoints: number;
+  penaltyPoints: number;
   bonusMultiplier?: number;
   onSecondChance: () => void;
   analysis?: string;
@@ -25,6 +27,8 @@ export default function SurveyResultsCard({
   region,
   kg,
   basePoints,
+  provisionalPoints,
+  penaltyPoints,
   bonusMultiplier = 5,
   onSecondChance,
   analysis,
@@ -34,9 +38,9 @@ export default function SurveyResultsCard({
   const { t } = useTranslation();
   const r = useRouter();
 
-  const isPenalty = basePoints < 0;
+  const isPenalty = penaltyPoints < 0;
 
-  // 1) Sentiment/icon mapping
+  // Sentiment is based on BASE points, not provisional or penalty
   const sentiment = useMemo(() => {
     if (isPenalty) return "bad";
     if (basePoints >= 20) return "good";
@@ -46,7 +50,6 @@ export default function SurveyResultsCard({
 
   const SentimentIcon = sentiment === "good" ? ThumbsUp : sentiment === "mid" ? Meh : ThumbsDown;
 
-  // 2) Simple metaphor
   const metaphor = useMemo(() => {
      if (kg <= 10) return t("metaphor_low");
     if (kg <= 25) return t("metaphor_medium_low");
@@ -62,6 +65,7 @@ export default function SurveyResultsCard({
   const finalRecommendations = recommendations && recommendations.length > 0 ? recommendations : (t(sentiment === 'good' ? 'improvements_low' : sentiment === 'mid' ? 'improvements_medium' : 'improvements_high', { returnObjects: true }) as string[]);
   const finalRecoveryActions = recoveryActions && recoveryActions.length > 0 ? recoveryActions : (t("recovery_actions", { returnObjects: true }) as string[]);
   const finalAnalysis = analysis || t(sentiment === 'good' ? 'default_analysis_good' : sentiment === 'mid' ? 'default_analysis_mid' : 'default_analysis_bad');
+  
   const recoveryTitle = isPenalty ? t("survey_recovery_title") : t("survey_bonus_title");
 
   return (
@@ -91,17 +95,17 @@ export default function SurveyResultsCard({
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>{t("survey_penalty_title") || "Penalty applied"}</AlertTitle>
-            <AlertDescription dangerouslySetInnerHTML={{ __html: t("survey_penalty_description", { points: basePoints })}} />
+            <AlertDescription dangerouslySetInnerHTML={{ __html: t("survey_penalty_description", { points: penaltyPoints })}} />
           </Alert>
         ) : (
           <Alert variant="default" className="border-green-400/50 text-center bg-green-50/50 dark:bg-green-900/10">
             <Sparkles className="h-4 w-4 text-green-500" />
             <AlertTitle className="text-green-600 dark:text-green-400">
-              {t("survey_base_points_title")}
+              {t('survey_provisional_points_title')}
             </AlertTitle>
             <AlertDescription>
-                <span dangerouslySetInnerHTML={{ __html: t("survey_base_points_description", { points: basePoints })}} />
-                <div className="mt-1 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t("survey_bonus_description_details", { bonus: basePoints * bonusMultiplier, x: bonusMultiplier })}} />
+                <span dangerouslySetInnerHTML={{ __html: t('survey_provisional_points_description', { points: provisionalPoints })}} />
+                <div className="mt-1 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t("survey_bonus_description_details", { base: basePoints, bonus: basePoints * bonusMultiplier, x: bonusMultiplier })}} />
             </AlertDescription>
           </Alert>
         )}

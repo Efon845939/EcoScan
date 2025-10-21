@@ -5,10 +5,10 @@ export type DrinkOption = 'drink_coffee_milk' | 'drink_bottled' | 'drink_alcohol
 export type EnergyOption = 'no_energy' | 'some_energy' | 'low' | 'medium' | 'high' | 'none';
 
 // Reference KG values for deterministic calculation
-const TRANSPORT_KG_REF: Record<TransportOption, number> = { 'car_gasoline': 28, 'ev': 10, 'public_transport': 8, 'walk_bike': 0 };
-const DIET_KG_REF: Record<DietOption, number> = { 'red_meat': 20, 'white_meat_fish': 8, 'vegetarian_vegan': 5, 'carb_based': 10 };
-const DRINK_KG_REF: Record<DrinkOption, number> = { 'drink_coffee_milk': 2.0, 'drink_bottled': 1.5, 'drink_alcohol': 2.5, 'drink_water_tea': 0.5 };
-const ENERGY_KG_REF: Record<EnergyOption, number> = { 'none': 0, 'no_energy': 0, 'low': 6, 'some_energy': 6, 'medium': 12, 'high': 20 };
+export const TRANSPORT_KG: Record<TransportOption, number> = { 'car_gasoline': 28, 'ev': 10, 'public_transport': 8, 'walk_bike': 0 };
+export const DIET_KG: Record<DietOption, number> = { 'red_meat': 20, 'white_meat_fish': 8, 'vegetarian_vegan': 5, 'carb_based': 10 };
+export const DRINK_KG: Record<DrinkOption, number> = { 'drink_coffee_milk': 2.0, 'drink_bottled': 1.5, 'drink_alcohol': 2.5, 'drink_water_tea': 0.5 };
+export const ENERGY_KG: Record<EnergyOption, number> = { 'none': 0, 'no_energy': 0, 'low': 6, 'some_energy': 6, 'medium': 12, 'high': 20 };
 
 
 export type RegionKey = 'turkey' | 'europe' | 'usa' | 'uae' | 'kuwait' | 'japan' | 'uk' | 'default';
@@ -45,19 +45,19 @@ export function getRegionKey(regionDisplayName: string): string {
     return 'default';
 }
 
-function computeKgDeterministic(
+export function computeKgDeterministic(
     region: RegionKey,
-    transport: TransportOption[],
-    diet: DietOption[],
-    drink: DrinkOption[],
+    transport: TransportOption,
+    diet: DietOption,
+    drink: DrinkOption,
     energy: EnergyOption
 ): number {
     const { min, avg, max } = REGIONS[region];
     
-    const transportKg = transport.reduce((sum, key) => sum + (TRANSPORT_KG_REF[key] || 0), 0);
-    const dietKg = diet.reduce((sum, key) => sum + (DIET_KG_REF[key] || 0), 0);
-    const drinkKg = drink.reduce((sum, key) => sum + (DRINK_KG_REF[key] || 0), 0);
-    const energyKg = ENERGY_KG_REF[energy] || 0;
+    const transportKg = TRANSPORT_KG[transport] || 0;
+    const dietKg = DIET_KG[diet] || 0;
+    const drinkKg = DRINK_KG[drink] || 0;
+    const energyKg = ENERGY_KG[energy] || 0;
 
     const base = transportKg + dietKg + drinkKg + energyKg;
     const scale = avg / 20; // neutral anchor = EU avg 20
@@ -77,9 +77,9 @@ function applyFineTune(kg: number, region: RegionKey): number {
 export function calibrateAiKg(
   aiKg: number | null | undefined,
   region: RegionKey,
-  transport: TransportOption[],
-  diet: DietOption[],
-  drink: DrinkOption[],
+  transport: TransportOption,
+  diet: DietOption,
+  drink: DrinkOption,
   energy: EnergyOption
 ): number {
   const det = computeKgDeterministic(region, transport, diet, drink, energy);
@@ -102,11 +102,11 @@ export function calculatePoints(
 ): { basePoints: number; penaltyPoints: number } {
     const region = REGIONS[regionKey] || REGIONS['default'];
     
-    // Check for penalty first: Penalty applies only if KG is ABOVE max.
+    // Penalty is only applied if KG is ABOVE max.
     if (estimatedFootprintKg > region.max) {
         const diff = estimatedFootprintKg - region.max;
         const penalty = Math.round(diff / 2); // 1 point lost for every 2kg over
-        const finalPenalty = Math.max(-10, -penalty);
+        const finalPenalty = Math.max(-10, -penalty); // Cap penalty at -10
         return { basePoints: 0, penaltyPoints: finalPenalty };
     }
 
@@ -130,3 +130,6 @@ export function calculatePoints(
     
     return { basePoints: Math.round(points), penaltyPoints: 0 };
 }
+
+export const computeProvisional = (base: number) => Math.floor(base * 0.10);
+export const finalizeWithReceipt = (base: number) => base * 5;

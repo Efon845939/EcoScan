@@ -58,7 +58,7 @@
     "carb_based": "يعتمد على الكربوهيدرات"
   },
   "survey_q3": "كيف كان استهلاكك للطاقة في المنزل؟",
-  "survey_q3_placeholder": "على سبيل المثال، استخدمت مكيف الهواء، تركت الأنوار مضاءة...",
+  "survey_q3_placeholder": "على سبيل المثال، استخدمت مكيف الهواء، تركت الأنوار مضاءة، كل الأنوار والمكيفات مضاءة...",
   "survey_q3_no_energy": "لم أستخدم الكهرباء في المنزل اليوم",
   "survey_q4": "ماذا شربت بشكل أساسي اليوم؟",
   "survey_q4_options": {
@@ -73,16 +73,18 @@
   "survey_range_hint": "نطاق المنطقة: الحد الأدنى {min}, المتوسط {avg}, الحد الأقصى {max} كجم",
   "survey_penalty_title": "عقوبة البصمة العالية",
   "survey_penalty_description": "تجاوزت بصمتك الحد الإقليمي. تم تطبيق عقوبة <span style='color:hsl(var(--destructive))'>{points} نقطة</span>.",
+  "survey_provisional_points_title": "تم منح نقاط مؤقتة!",
+  "survey_provisional_points_description": "لقد ربحت <b style='color:hsl(var(--primary))'>{points} نقاط مؤقتة</b> لدرجاتك اليوم.",
+  "survey_bonus_description_details": "درجاتك الأساسية هي <b style='color:hsl(var(--primary))'>{base} نقطة</b>. تحقق من خلال إيصال للحصول على مكافأة <b style='color:hsl(var(--primary))'>x{x}</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> إجمالي النقاط!",
   "survey_base_points_title": "تم منح نقاط أساسية!",
-  "survey_base_points_description": "لقد ربحت <b style='color:hsl(var(--primary))'>{points} نقاط أساسية</b> لدرجاتك اليوم.",
-  "survey_bonus_description_details": "تحقق من خلال إيصال للحصول على مكافأة <b style='color:hsl(var(--primary))'>x{x}</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> إجمالي النقاط!",
+  "survey_base_points_description": "لقد ربحت <b style='color:hsl(var(--primary))'>{points} نقاط أساسية</b> لدرجاتك اليوم. تحقق من خلال إيصال للحصول على مكافأة <b style='color:hsl(var(--primary))'>x{x}</b>!",
   "analysis_good_title": "خيارات رائعة اليوم",
   "analysis_mid_title": "لائق، ولكن هناك مجال للتحسين",
   "analysis_bad_title": "تأثير كبير - يحتاج إلى تحسين",
   "survey_recommendations_title": "3 طرق للتحسين",
   "survey_recovery_title": "استعادة النقاط اليوم",
   "survey_bonus_title": "اكسب المزيد من النقاط اليوم",
-  "metaphor_low": "هذا مثل ثاني أكسيد الكربون الذي تمتصه شجرتان ناضجتان في عام واحد.",
+  "metaphor_low": "هذا مثل ثاني أكسيد الكربون الذي تمتصه شجرتان ناضجtan في عام واحد.",
   "metaphor_medium_low": "على غرار رحلة قصيرة بالسيارة في المدينة (≈100-150 كم).",
   "metaphor_medium": "يعادل يومًا ثقيلًا من استخدام الطاقة المنزلية.",
   "metaphor_high": "مثل يوم ثقيل من القيادة واستخدام مكيف الهواء مجتمعين.",
@@ -130,14 +132,14 @@
     "unrecyclable": "غير قابل لإعادة التدوير"
   },
   "guide_survey_title": "استبيان البصمة الكربونية",
-  "guide_survey_description": "أكمل استبيانًا يوميًا للحصول على نقاط أساسية. تحقق من ذلك بإيصال للحصول على مكافأة ضخمة 5x!",
+  "guide_survey_description": "أكمل استبيانًا يوميًا للحصول على نقاط. تحقق من ذلك بإيصال للحصول على مكافأة ضخمة!",
   "guide_survey_items_list": [
     "<b>عقوبة البصمة العالية:</b> إذا كانت بصمتك فوق الحد الأقصى الإقليمي، فستفقد ما بين <span style='color:hsl(var(--destructive))'>-1 إلى -10 نقاط</span>، اعتمادًا على الشدة.",
-    "<b>مكافأة أساسية:</b> بدون إيصال، تحصل على <span style='color:hsl(var(--primary))'>النقاط الأساسية</span> الكاملة لدرجاتك على الفور (على سبيل المثال، قد تمنحك درجة جيدة <span style='color:hsl(var(--primary))'>+30</span> نقطة).",
-    "<b>مكافأة التحقق من الإيصال:</b> التحقق بإيصال يمنحك مكافأة <b style='color:hsl(var(--primary))'>5x</b> على نقاطك الأساسية (على سبيل المثال، 11 نقطة أساسية تصبح <span style='color:hsl(var(--primary))'>+55</span>!).",
+    "<b>مكافأة أساسية:</b> تحصل على <span style='color:hsl(var(--primary))'>النقاط الأساسية</span> الكاملة لدرجاتك على الفور (على سبيل المثال، قد تمنحك درجة جيدة <span style='color:hsl(var(--primary))'>+30</span> نقطة).",
+    "<b>مكافأة التحقق من الإيصال:</b> التحقق بإيصال يمنحك مكافأة <b style='color:hsl(var(--primary))'>3x</b> على نقاطك الأساسية (على سبيل المثال، 10 نقاط أساسية تصبح <span style='color:hsl(var(--primary))'>+30</span>!).",
     "<b>مكافأة الفرصة الثانية:</b> اعكس عقوبة واكسب <span style='color:hsl(var(--primary))'>النقاط التي فقدتها + 10 نقاط إضافية</span> من خلال اتخاذ إجراء مستدام تم التحقق منه."
   ],
-  "guide_survey_footer": "يقوم النظام بحساب قيمة 'النقاط الأساسية' من استبيانك والتي يتم منحها على الفور. التحقق من خلال إيصال يحل محل النقاط الأساسية بمبلغ المكافأة 5x.",
+  "guide_survey_footer": "يقوم النظام بحساب قيمة 'النقاط الأساسية' من استبيانك والتي يتم منحها على الفور. التحقق من خلال إيصال يضاعف هذه القيمة الأساسية.",
   "guide_verification_title": "مركز التحقق واللعب النظيف",
   "guide_verification_description": "للحفاظ على عدالة المجتمع وجعل المكافآت ذات مغزى، تتطلب جميع الإجراءات التي تكسب نقاطًا التحقق. ستؤدي محاولات التلاعب بالنظام إلى عقوبات بالنقاط.",
   "guide_verification_items_list": [
@@ -163,7 +165,7 @@
     "احصل على تحليلك ونقاطك الأساسية، والتي تضاف إلى مجموعك على الفور.",
     "انقر على زر 'اذهب إلى مركز التحقق' في شاشة النتائج.",
     "أرسل إثباتًا بالصور الحية لأنشطتك (مثل ركوب الحافلة، وجبة نباتية).",
-    "إذا تم التحقق من الإجراء الخاص بك، فسيتم استبدال نقاطك الأساسية بمكافأة <span style='color:hsl(var(--primary))'>5x</span> أكبر بكثير!"
+    "إذا تم التحقق من الإجراء الخاص بك، فسيتم ضرب نقاطك الأساسية في <span style='color:hsl(var(--primary))'>3x</span>!"
   ],
   "guide_howto_verification_title": "كيفية استخدام مركز التحقق:",
   "guide_howto_verification_steps": [

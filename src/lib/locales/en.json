@@ -56,7 +56,7 @@
     "carb_based": "Carb-based / High-carb"
   },
   "survey_q3": "How was your energy use at home?",
-  "survey_q3_placeholder": "e.g., Used the AC, kept lights on...",
+  "survey_q3_placeholder": "e.g., Used the AC, kept lights on, all lights and AC on...",
   "survey_q3_no_energy": "I did not use electricity at home today",
   "survey_q4": "What did you primarily drink today?",
   "survey_q4_options": {
@@ -71,12 +71,14 @@
   "survey_range_hint": "Region range: min {min}, avg {avg}, max {max} kg",
   "survey_penalty_title": "High Footprint Penalty",
   "survey_penalty_description": "Your footprint exceeded the regional bound. A <span style='color:hsl(var(--destructive))'>{points} point penalty</span> has been applied.",
+  "survey_provisional_points_title": "Provisional Points Awarded!",
+  "survey_provisional_points_description": "You earned <b style='color:hsl(var(--primary))'>{points} provisional points</b> for your score today.",
+  "survey_bonus_description_details": "Your base score is <b style='color:hsl(var(--primary))'>{base} points</b>. Verify with a receipt for a <b style='color:hsl(var(--primary))'>x{x} bonus</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> total points!",
   "survey_base_points_title": "Base Points Awarded!",
-  "survey_base_points_description": "You earned <b style='color:hsl(var(--primary))'>{points} base points</b> for your score today.",
-  "survey_bonus_description_details": "Verify with a receipt to get a <b style='color:hsl(var(--primary))'>x{x} bonus</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> total points!",
+  "survey_base_points_description": "You earned <b style='color:hsl(var(--primary))'>{points} base points</b> for your score today. Verify with a receipt to get a <b style='color:hsl(var(--primary))'>x{x} bonus</b>!",
   "survey_recommendations_title": "3 ways to improve",
-  "survey_recovery_title": "Regain points today",
-  "survey_bonus_title": "Earn more points today",
+  "survey_recovery_title": "Earn Back Points Today",
+  "survey_bonus_title": "Earn More Points Today",
   "analysis_good_title": "Great choices today",
   "analysis_mid_title": "Decent, but room to improve",
   "analysis_bad_title": "High impact — needs improvement",
@@ -129,14 +131,14 @@
     "unrecyclable": "Unrecyclable"
   },
   "guide_survey_title": "Carbon Footprint Survey",
-  "guide_survey_description": "Complete a daily survey to get base points. Verify with a receipt for a massive 5x bonus!",
+  "guide_survey_description": "Complete a daily survey to get points. Verify with a receipt for a massive bonus!",
   "guide_survey_items_list": [
     "<b>High Footprint Penalty:</b> If your footprint is over the regional max, you lose between <span style='color:hsl(var(--destructive))'>-1 to -10 points</span>, depending on the severity.",
-    "<b>Base Reward:</b> Without a receipt, you get the full <span style='color:hsl(var(--primary))'>base points</span> for your score immediately (e.g., a good score might get you <span style='color:hsl(var(--primary))'>+30</span> points).",
-    "<b>Receipt Verification Bonus:</b> Verifying with a receipt gives you a <b style='color:hsl(var(--primary))'>5x bonus</b> on your base points (e.g., 11 base points becomes <span style='color:hsl(var(--primary))'>+55</span>!).",
+    "<b>Base Reward:</b> You get the full <span style='color:hsl(var(--primary))'>base points</span> for your score immediately (e.g., a good score might get you <span style='color:hsl(var(--primary))'>+30</span> points).",
+    "<b>Receipt Verification Bonus:</b> Verifying with a receipt gives you a <b style='color:hsl(var(--primary))'>3x bonus</b> on your base points (e.g., 10 base points becomes <span style='color:hsl(var(--primary))'>+30</span>!).",
     "<b>Second Chance Bonus:</b> Reverse a penalty and earn the <span style='color:hsl(var(--primary))'>points you lost + 10 bonus points</span> by taking a verified sustainable action."
   ],
-  "guide_survey_footer": "The system calculates a 'base point' value from your survey which is awarded immediately. Verifying with a receipt replaces the base points with the 5x bonus amount.",
+  "guide_survey_footer": "The system calculates a 'base point' value from your survey which is awarded immediately. Verifying with a receipt multiplies this base value.",
   "guide_verification_title": "Verification Center & Fair Play",
   "guide_verification_description": "To keep the community fair and rewards meaningful, all point-earning actions require verification. Attempts to manipulate the system will result in point penalties.",
   "guide_verification_items_list": [
@@ -162,7 +164,7 @@
     "Get your analysis and your base points, which are added to your total immediately.",
     "Tap the 'Go to Verification Center' button on the results screen.",
     "Submit live photo proof of your activities (e.g., bus ride, vegetarian meal).",
-    "If your action is verified, your base points will be replaced with a much larger <span style='color:hsl(var(--primary))'>5x bonus</span>!"
+    "If your action is verified, your base points will be multiplied by <span style='color:hsl(var(--primary))'>3x</span>!"
   ],
   "guide_howto_verification_title": "How to Use the Verification Center:",
   "guide_howto_verification_steps": [

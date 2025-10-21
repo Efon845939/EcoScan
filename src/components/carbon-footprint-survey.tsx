@@ -21,20 +21,26 @@ import { useTranslation } from '@/hooks/use-translation';
 import { useFirebase, useUser, updateDocumentNonBlocking, serverTimestamp, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import {
-  calibrateAiKg,
+  computeKgDeterministic,
   calculatePoints,
+  computeProvisional,
   getRegionKey,
   type TransportOption,
   type DietOption,
   type DrinkOption,
-  type EnergyOption,
   RegionKey,
+  TRANSPORT_KG,
+  DIET_KG,
+  DRINK_KG,
 } from '@/lib/carbon-calculator';
 import { useToast } from '@/hooks/use-toast';
 import { VerificationCenter } from './verification-center';
 import SurveyResultsCard from './SurveyResultsCard';
 import { analyzeFootprint } from '@/ai/flows/carbon-footprint-analysis';
 import type { CarbonFootprintAnalysisOutput } from '@/ai/flows/carbon-footprint-analysis.types';
+import { pickOne } from '@/lib/survey-normalize';
+import { toEnergyEnum } from '@/lib/energy-map';
+import { enforceWorstFloor } from '@/lib/carbon-guards';
 
 interface CarbonFootprintSurveyProps {
   onBack: () => void;
@@ -57,15 +63,17 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
   const [transport, setTransport] = useState<TransportOption[]>([]);
   const [diet, setDiet] = useState<DietOption[]>([]);
   const [drink, setDrink] = useState<DrinkOption[]>([]);
-  const [energy, setEnergy] = useState<EnergyOption>('some_energy');
+  const [energyText, setEnergyText] = useState('');
   const [noEnergy, setNoEnergy] = useState(false);
-  const [otherInfo, setOtherInfo] = useState('');
 
   // Results state
-  const [estimatedFootprint, setEstimatedFootprint] = useState(0);
-  const [basePoints, setBasePoints] = useState(0);
-  const [penaltyPoints, setPenaltyPoints] = useState(0);
-  const [aiAnalysis, setAiAnalysis] = useState<CarbonFootprintAnalysisOutput | null>(null);
+  const [results, setResults] = useState({
+    kg: 0,
+    basePoints: 0,
+    provisionalPoints: 0,
+    penaltyPoints: 0,
+    aiAnalysis: null as CarbonFootprintAnalysisOutput | null,
+  });
 
 
   const userProfileRef = useMemoFirebase(
@@ -86,47 +94,42 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
   
   const handleSubmit = async () => {
     setStep('loading');
-    const energyOption: EnergyOption = noEnergy ? 'no_energy' : 'some_energy';
 
     startTransition(async () => {
-       const aiInput = {
-        language,
-        region,
-        transport,
-        diet,
-        energy: otherInfo,
-        other: ''
-      };
-      
-      let analysisResult: CarbonFootprintAnalysisOutput | null = null;
-      try {
-        analysisResult = await analyzeFootprint(aiInput);
-        setAiAnalysis(analysisResult);
-      } catch (e) {
-        console.error("AI analysis failed", e);
-        // Fallback to deterministic if AI fails
-        setAiAnalysis(null); 
-      }
-      
+      // Normalize user selections to the 'worst' case for calculation
+      const worstTransport = pickOne(transport, TRANSPORT_KG, "worst");
+      const worstDiet = pickOne(diet, DIET_KG, "worst");
+      const worstDrink = pickOne(drink, DRINK_KG, "worst");
+      const energyEnum = noEnergy ? 'none' : toEnergyEnum(energyText);
+
       const regionKey = getRegionKey(region) as RegionKey;
 
-      const finalKg = calibrateAiKg(
-          analysisResult?.estimatedFootprintKg,
-          regionKey,
+      // Calculate deterministic footprint and enforce floor for worst-case scenarios
+      let kg = computeKgDeterministic(regionKey, worstTransport, worstDiet, worstDrink, energyEnum);
+      kg = enforceWorstFloor(kg, regionKey, worstTransport, worstDiet, worstDrink, energyEnum);
+
+      let aiAnalysisResult: CarbonFootprintAnalysisOutput | null = null;
+      try {
+        aiAnalysisResult = await analyzeFootprint({
+          language,
+          region,
           transport,
           diet,
-          drink,
-          energyOption
-      );
-      setEstimatedFootprint(finalKg);
+          energy: energyText,
+          other: '',
+        });
+      } catch (e) {
+        console.error("AI analysis failed", e);
+      }
 
-      const { basePoints, penaltyPoints } = calculatePoints(finalKg, regionKey);
-      setBasePoints(basePoints);
-      setPenaltyPoints(penaltyPoints);
+      // Calculate points based on the corrected kg value
+      const { basePoints, penaltyPoints } = calculatePoints(aiAnalysisResult?.estimatedFootprintKg ?? kg, regionKey);
+      const provisionalPoints = computeProvisional(basePoints);
 
+      // Award provisional points or apply penalty
       if (userProfileRef && userProfile) {
         const currentPoints = userProfile.totalPoints ?? 0;
-        const pointsChange = basePoints + penaltyPoints; // Award base points or apply penalty
+        const pointsChange = penaltyPoints < 0 ? penaltyPoints : provisionalPoints;
         
         updateDocumentNonBlocking(userProfileRef, { 
           totalPoints: Math.max(0, currentPoints + pointsChange),
@@ -134,12 +137,20 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
         });
       }
 
+      setResults({
+        kg,
+        basePoints,
+        provisionalPoints,
+        penaltyPoints,
+        aiAnalysis: aiAnalysisResult,
+      });
+
       setStep('results');
     });
   };
   
   const handleSecondChance = () => {
-      const pointsToReverse = Math.abs(penaltyPoints);
+      const pointsToReverse = Math.abs(results.penaltyPoints);
       const bonus = 10;
       const totalAward = pointsToReverse + bonus;
 
@@ -156,6 +167,22 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
       }
   }
 
+  const handleFinalizeWithReceipt = () => {
+    if (userProfileRef && userProfile) {
+        const currentPoints = userProfile.totalPoints ?? 0;
+        // Reverse the provisional points and add the full bonus
+        const finalPoints = (currentPoints - results.provisionalPoints) + (results.basePoints * 5);
+        updateDocumentNonBlocking(userProfileRef, { totalPoints: Math.max(0, finalPoints) });
+
+        toast({
+            title: t('toast_bonus_applied_title'),
+            description: t('toast_bonus_applied_description', { points: results.basePoints * 5 }),
+        });
+        setStep('form');
+        onBack();
+    }
+  };
+
 
   if (step === 'loading') {
     return (
@@ -167,18 +194,20 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
   }
 
   if (step === 'results' && userProfile) {
-    const finalPoints = basePoints + penaltyPoints;
+    const finalScore = results.penaltyPoints < 0 ? results.penaltyPoints : results.provisionalPoints;
     
     return (
         <SurveyResultsCard 
             region={getRegionKey(region) as RegionKey}
-            kg={estimatedFootprint}
-            basePoints={finalPoints}
+            kg={results.kg}
+            basePoints={results.basePoints}
+            provisionalPoints={results.provisionalPoints}
+            penaltyPoints={results.penaltyPoints}
             bonusMultiplier={5}
             onSecondChance={() => setStep('secondChance')}
-            analysis={aiAnalysis?.analysis}
-            recommendations={aiAnalysis?.recommendations}
-            recoveryActions={aiAnalysis?.recoveryActions}
+            analysis={results.aiAnalysis?.analysis}
+            recommendations={results.aiAnalysis?.recommendations}
+            recoveryActions={results.aiAnalysis?.recoveryActions}
         />
     )
   }
@@ -262,7 +291,7 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
         {/* Energy */}
         <div className="space-y-3">
            <Label className="text-base font-semibold">{t('survey_q3')}</Label>
-           <Textarea placeholder={t('survey_q3_placeholder')} disabled={noEnergy} value={otherInfo} onChange={(e) => setOtherInfo(e.target.value)} />
+           <Textarea placeholder={t('survey_q3_placeholder')} disabled={noEnergy} value={energyText} onChange={(e) => setEnergyText(e.target.value)} />
            <div className="flex items-center space-x-2">
                 <Checkbox id="no-energy" checked={noEnergy} onCheckedChange={(c) => setNoEnergy(c as boolean)} />
                 <label
@@ -276,7 +305,7 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
 
       </CardContent>
       <CardFooter>
-        <Button size="lg" className="w-full" onClick={handleSubmit} disabled={isPending}>
+        <Button size="lg" className="w-full" onClick={handleSubmit} disabled={isPending || transport.length === 0 || diet.length === 0 || drink.length === 0}>
           {isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (

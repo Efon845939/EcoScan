@@ -58,7 +58,7 @@
     "carb_based": "Kohlenhydratbasiert / kohlenhydratreich"
   },
   "survey_q3": "Wie war Ihr Energieverbrauch zu Hause?",
-  "survey_q3_placeholder": "z.B. Klimaanlage benutzt, Lichter angelassen...",
+  "survey_q3_placeholder": "z.B. Klimaanlage benutzt, Lichter angelassen, alle Lichter und Klimaanlage an...",
   "survey_q3_no_energy": "Ich habe heute zu Hause keinen Strom verbraucht",
   "survey_q4": "Was haben Sie heute hauptsächlich getrunken?",
   "survey_q4_options": {
@@ -73,9 +73,11 @@
   "survey_range_hint": "Bereich der Region: min {min}, avg {avg}, max {max} kg",
   "survey_penalty_title": "Strafe für hohen Fußabdruck",
   "survey_penalty_description": "Ihr Fußabdruck hat die regionale Grenze überschritten. Eine Strafe von <span style='color:hsl(var(--destructive))'>{points} Punkten</span> wurde angewendet.",
+  "survey_provisional_points_title": "Provisorische Punkte vergeben!",
+  "survey_provisional_points_description": "Sie haben heute <b style='color:hsl(var(--primary))'>{points} provisorische Punkte</b> für Ihre Punktzahl verdient.",
+  "survey_bonus_description_details": "Ihre Basispunktzahl beträgt <b style='color:hsl(var(--primary))'>{base} Punkte</b>. Bestätigen Sie mit einem Beleg, um einen <b style='color:hsl(var(--primary))'>x{x}-Bonus</b> zu erhalten &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> Gesamtpunkte!",
   "survey_base_points_title": "Basispunkte vergeben!",
-  "survey_base_points_description": "Sie haben heute <b style='color:hsl(var(--primary))'>{points} Basispunkte</b> für Ihre Punktzahl verdient.",
-  "survey_bonus_description_details": "Bestätigen Sie mit einem Beleg, um einen <b style='color:hsl(var(--primary))'>x{x}-Bonus</b> zu erhalten &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> Gesamtpunkte!",
+  "survey_base_points_description": "Sie haben heute <b style='color:hsl(var(--primary))'>{points} Basispunkte</b> für Ihre Punktzahl verdient. Bestätigen Sie mit einem Beleg, um einen <b style='color:hsl(var(--primary))'>x{x}-Bonus</b> zu erhalten!",
   "analysis_good_title": "Großartige Entscheidungen heute",
   "analysis_mid_title": "Anständig, aber verbesserungsfähig",
   "analysis_bad_title": "Hohe Auswirkung - verbesserungsbedürftig",
@@ -130,14 +132,14 @@
     "unrecyclable": "Nicht recycelbar"
   },
   "guide_survey_title": "CO2-Fußabdruck-Umfrage",
-  "guide_survey_description": "Füllen Sie eine tägliche Umfrage aus, um Basispunkte zu erhalten. Verifizieren Sie mit einem Beleg für einen riesigen 5x-Bonus!",
+  "guide_survey_description": "Füllen Sie eine tägliche Umfrage aus, um Punkte zu erhalten. Verifizieren Sie mit einem Beleg für einen riesigen Bonus!",
   "guide_survey_items_list": [
     "<b>Strafe für hohen Fußabdruck:</b> Wenn Ihr Fußabdruck über dem regionalen Maximum liegt, verlieren Sie je nach Schweregrad zwischen <span style='color:hsl(var(--destructive))'>-1 und -10 Punkten</span>.",
-    "<b>Basisbelohnung:</b> Ohne Beleg erhalten Sie sofort die vollen <span style='color:hsl(var(--primary))'>Basispunkte</span> für Ihre Punktzahl (z. B. könnte Ihnen eine gute Punktzahl <span style='color:hsl(var(--primary))'>+30</span> Punkte einbringen).",
-    "<b>Belegverifizierungsbonus:</b> Die Verifizierung mit einem Beleg gibt Ihnen einen <b style='color:hsl(var(--primary))'>5x-Bonus</b> auf Ihre Basispunkte (z. B. werden aus 11 Basispunkten <span style='color:hsl(var(--primary))'>+55</span>!).",
+    "<b>Basisbelohnung:</b> Sie erhalten sofort die vollen <span style='color:hsl(var(--primary))'>Basispunkte</span> für Ihre Punktzahl (z. B. könnte Ihnen eine gute Punktzahl <span style='color:hsl(var(--primary))'>+30</span> Punkte einbringen).",
+    "<b>Belegverifizierungsbonus:</b> Die Verifizierung mit einem Beleg gibt Ihnen einen <b style='color:hsl(var(--primary))'>3x-Bonus</b> auf Ihre Basispunkte (z. B. werden aus 10 Basispunkten <span style='color:hsl(var(--primary))'>+30</span>!).",
     "<b>Zweite-Chance-Bonus:</b> Heben Sie eine Strafe auf und verdienen Sie die <span style='color:hsl(var(--primary))'>verlorenen Punkte + 10 Bonuspunkte</span>, indem Sie eine verifizierte nachhaltige Aktion durchführen."
   ],
-  "guide_survey_footer": "Das System berechnet einen 'Basispunktwert' aus Ihrer Umfrage, der sofort gutgeschrieben wird. Die Verifizierung mit einem Beleg ersetzt die Basispunkte durch den 5-fachen Bonusbetrag.",
+  "guide_survey_footer": "Das System berechnet einen 'Basispunktwert' aus Ihrer Umfrage, der sofort gutgeschrieben wird. Die Verifizierung mit einem Beleg multipliziert diesen Basiswert.",
   "guide_verification_title": "Verifizierungszentrum & Fairplay",
   "guide_verification_description": "Um die Community fair zu halten und die Belohnungen sinnvoll zu gestalten, müssen alle punkteträchtigen Aktionen verifiziert werden. Versuche, das System zu manipulieren, führen zu Punktabzügen.",
   "guide_verification_items_list": [
@@ -163,7 +165,7 @@
     "Erhalten Sie Ihre Analyse und Ihre Basispunkte, die sofort zu Ihrer Gesamtsumme hinzugefügt werden.",
     "Tippen Sie auf dem Ergebnisbildschirm auf die Schaltfläche 'Zum Verifizierungszentrum gehen'.",
     "Senden Sie einen Live-Fotonachweis Ihrer Aktivitäten (z. B. Busfahrt, vegetarisches Essen).",
-    "Wenn Ihre Aktion verifiziert wird, werden Ihre Basispunkte durch einen viel größeren <span style='color:hsl(var(--primary))'>5x-Bonus</span> ersetzt!"
+    "Wenn Ihre Aktion verifiziert wird, werden Ihre Basispunkte mit <span style='color:hsl(var(--primary))'>3x</span> multipliziert!"
   ],
   "guide_howto_verification_title": "So verwenden Sie das Verifizierungszentrum:",
   "guide_howto_verification_steps": [
