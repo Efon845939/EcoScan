@@ -17,6 +17,9 @@ type Props = {
   provisionalPoints?: number;
   bonusMultiplier?: number;
   onSecondChance: () => void;
+  analysis?: string;
+  recommendations?: string[];
+  recoveryActions?: string[];
 };
 
 export default function SurveyResultsCard({
@@ -26,6 +29,9 @@ export default function SurveyResultsCard({
   provisionalPoints,
   bonusMultiplier = 3,
   onSecondChance,
+  analysis,
+  recommendations,
+  recoveryActions,
 }: Props) {
   const { t } = useTranslation();
   const r = useRouter();
@@ -48,20 +54,14 @@ export default function SurveyResultsCard({
     return t("metaphor_very_high");
   }, [kg, t]);
 
-  // 3) Top 3 improvements
-  const top3 = useMemo(() => {
-    const fallbackKey = sentiment === 'good' ? 'improvements_low' : sentiment === 'mid' ? 'improvements_medium' : 'improvements_high';
-    return t(fallbackKey, { returnObjects: true }) as string[];
-  }, [t, sentiment]);
-
-  // 4) Recovery actions if score is bad
-  const recovery3 = useMemo(() => (sentiment === "bad" ? t("recovery_actions", { returnObjects: true }) as string[] : []), [sentiment, t]);
-
   const { min, avg, max } = REGIONS[region];
   const isPenalty = basePoints <= 0;
   
-  const analysisKey = sentiment === 'good' ? 'default_analysis_good' : sentiment === 'mid' ? 'default_analysis_mid' : 'default_analysis_bad';
   const analysisTitleKey = sentiment === 'good' ? 'analysis_good_title' : sentiment === 'mid' ? 'analysis_mid_title' : 'analysis_bad_title';
+
+  const finalRecommendations = recommendations && recommendations.length > 0 ? recommendations : (t(sentiment === 'good' ? 'improvements_low' : sentiment === 'mid' ? 'improvements_medium' : 'improvements_high', { returnObjects: true }) as string[]);
+  const finalRecoveryActions = recoveryActions && recoveryActions.length > 0 ? recoveryActions : (t("recovery_actions", { returnObjects: true }) as string[]);
+  const finalAnalysis = analysis || t(sentiment === 'good' ? 'default_analysis_good' : sentiment === 'mid' ? 'default_analysis_mid' : 'default_analysis_bad');
 
 
   return (
@@ -116,16 +116,16 @@ export default function SurveyResultsCard({
             {t(analysisTitleKey)}
           </AlertTitle>
           <AlertDescription>
-            {t(analysisKey)}
+            {finalAnalysis}
           </AlertDescription>
         </Alert>
 
         {/* 3 recommendations */}
-        {top3.length > 0 && (
+        {finalRecommendations.length > 0 && (
             <div>
             <h3 className="font-semibold mb-2">{t("survey_recommendations_title")}</h3>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                {top3.map((rec, i) => (
+                {finalRecommendations.map((rec, i) => (
                 <li key={i}>{rec}</li>
                 ))}
             </ul>
@@ -133,7 +133,7 @@ export default function SurveyResultsCard({
         )}
 
         {/* If bad: 3 ways to recover points today */}
-        {recovery3.length > 0 && (
+        {finalRecoveryActions.length > 0 && (
           <>
             <Separator />
             <div>
@@ -141,7 +141,7 @@ export default function SurveyResultsCard({
                 {t("survey_recovery_title")}
               </h3>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                {recovery3.map((rec, i) => (
+                {finalRecoveryActions.map((rec, i) => (
                   <li key={i}>{rec}</li>
                 ))}
               </ul>

@@ -33,15 +33,18 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { VerificationCenter } from './verification-center';
 import SurveyResultsCard from './SurveyResultsCard';
+import { analyzeFootprint } from '@/ai/flows/carbon-footprint-analysis';
+import type { CarbonFootprintAnalysisOutput } from '@/ai/flows/carbon-footprint-analysis.types';
 
 interface CarbonFootprintSurveyProps {
   onBack: () => void;
   region: string;
+  language: string;
 }
 
 type SurveyStep = 'form' | 'loading' | 'results' | 'secondChance';
 
-export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyProps) {
+export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootprintSurveyProps) {
   const { t } = useTranslation();
   const { firestore } = useFirebase();
   const { user } = useUser();
@@ -50,7 +53,7 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   const [step, setStep] = useState<SurveyStep>('form');
   const [isPending, startTransition] = useTransition();
 
-  // Form state - changed to arrays for multiple selections
+  // Form state
   const [transport, setTransport] = useState<TransportOption[]>([]);
   const [diet, setDiet] = useState<DietOption[]>([]);
   const [drink, setDrink] = useState<DrinkOption[]>([]);
@@ -62,6 +65,7 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   const [estimatedFootprint, setEstimatedFootprint] = useState(0);
   const [basePoints, setBasePoints] = useState(0);
   const [penaltyPoints, setPenaltyPoints] = useState(0);
+  const [aiAnalysis, setAiAnalysis] = useState<CarbonFootprintAnalysisOutput | null>(null);
 
 
   const userProfileRef = useMemoFirebase(
@@ -80,28 +84,40 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
     );
   };
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setStep('loading');
-    startTransition(() => {
-      const energyOption: EnergyOption = noEnergy ? 'no_energy' : 'some_energy';
-      
-      const kg = computeKg(transport, diet, drink, energyOption);
-      setEstimatedFootprint(kg);
+    
+    const energyOption: EnergyOption = noEnergy ? 'no_energy' : 'some_energy';
+    const kg = computeKg(transport, diet, drink, energyOption);
+    setEstimatedFootprint(kg);
 
-      const regionKey = getRegionKey(region);
-      const { basePoints, penaltyPoints } = calculatePoints(kg, regionKey);
-      setBasePoints(basePoints);
-      setPenaltyPoints(penaltyPoints);
-      
+    const regionKey = getRegionKey(region);
+    const { basePoints, penaltyPoints } = calculatePoints(kg, regionKey as RegionKey);
+    setBasePoints(basePoints);
+    setPenaltyPoints(penaltyPoints);
+    
+    startTransition(async () => {
+      try {
+        const analysis = await analyzeFootprint({
+          language,
+          region,
+          transport,
+          diet,
+          energy: otherInfo,
+        });
+        setAiAnalysis(analysis);
+      } catch (e) {
+        console.error("AI analysis failed", e);
+        setAiAnalysis(null); // Set to null or some default state
+      }
+
       if (userProfileRef && userProfile) {
         const currentPoints = userProfile.totalPoints ?? 0;
         let pointsChange = 0;
 
         if (penaltyPoints < 0) {
-          // Apply penalty
           pointsChange = penaltyPoints;
         } else {
-          // Award full base points provisionally
           pointsChange = basePoints;
         }
         updateDocumentNonBlocking(userProfileRef, { 
@@ -115,7 +131,6 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
   };
   
   const handleSecondChance = () => {
-      // Reverses penalty and awards 10 bonus points.
       const pointsToReverse = Math.abs(penaltyPoints);
       const bonus = 10;
       const totalAward = pointsToReverse + bonus;
@@ -154,6 +169,9 @@ export function CarbonFootprintSurvey({ onBack, region }: CarbonFootprintSurveyP
             provisionalPoints={provisionalPoints}
             bonusMultiplier={3}
             onSecondChance={() => setStep('secondChance')}
+            analysis={aiAnalysis?.analysis}
+            recommendations={aiAnalysis?.recommendations}
+            recoveryActions={aiAnalysis?.recoveryActions}
         />
     )
   }

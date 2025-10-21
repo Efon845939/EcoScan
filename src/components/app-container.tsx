@@ -527,7 +527,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
       case 'verify':
         return <VerificationCenter onBack={() => setStep('scan')} />;
       case 'survey':
-        return <CarbonFootprintSurvey onBack={() => setStep('scan')} region={region}/>;
+        return <CarbonFootprintSurvey onBack={() => setStep('scan')} region={region} language={currentLanguage} />;
       default:
         return null;
     }
