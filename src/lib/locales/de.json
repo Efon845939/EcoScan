@@ -32,9 +32,6 @@
   "rewards_title": "Punkte einlösen",
   "rewards_description": "Nutzen Sie Ihre Punkte für Rabatte in unseren Partnergeschäften.",
   "rewards_redeem_button": "Einlösen",
-  "rewards_redeemed_title": "Belohnung eingefordert!",
-  "rewards_redeemed_description": "Genießen Sie Ihren Rabatt. Vielen Dank für Ihren Beitrag!",
-  "rewards_back_button": "Zurück zum Hauptmenü",
   "rewards": {
     "free_coffee": { "title": "Kostenloser Kaffee", "partner": "The Daily Grind" },
     "groceries_5_off": { "title": "5 $ Rabatt auf Lebensmittel", "partner": "Green Grocer" },
@@ -102,35 +99,40 @@
   "guide_survey_title": "CO2-Fußabdruck-Umfrage",
   "guide_survey_description": "Füllen Sie eine tägliche Umfrage aus, um vorläufige Punkte zu erhalten. Verifizieren Sie mit einem Beleg für einen riesigen Bonus!",
   "guide_survey_items_list": [
-    "<b>Strafe für hohen Fußabdruck:</b> Wenn Ihr Fußabdruck über dem regionalen Durchschnitt liegt, verlieren Sie Punkte (-1 bis -10).",
-    "<b>Vorläufige Belohnung:</b> Ohne Beleg erhalten Sie 10 % Ihrer Basispunktzahl.",
-    "<b>Belegverifizierungsbonus:</b> Die Verifizierung mit einem Beleg ersetzt Ihre vorläufigen Punkte durch Ihre vollen <b>Basispunkte x 3</b>.",
-    "<b>Zweite-Chance-Bonus:</b> Heben Sie eine Strafe auf und verdienen Sie <b>+15 Punkte</b>, indem Sie eine verifizierte nachhaltige Aktion durchführen."
+    "<b>Strafe für hohen Fußabdruck:</b> Wenn Ihr Fußabdruck über dem regionalen Durchschnitt liegt, verlieren Sie Punkte (<span class='text-destructive'>-1</span> bis <span class='text-destructive'>-10</span>).",
+    "<b>Vorläufige Belohnung:</b> Ohne Beleg erhalten Sie 10 % Ihrer Basispunktzahl, abgerundet.",
+    "<b>Belegverifizierungsbonus:</b> Die Verifizierung mit einem Beleg ersetzt Ihre vorläufigen Punkte durch Ihre vollen <b>Basispunkte <span class='text-primary'>x 3</span></b>.",
+    "<b>Zweite-Chance-Bonus:</b> Heben Sie eine Strafe auf und verdienen Sie <span class='text-primary'>+15 Punkte</span>, indem Sie eine verifizierte nachhaltige Aktion durchführen."
   ],
-  "guide_survey_footer": "Das System berechnet aus Ihrer Umfrage einen „Basispunktwert“. Ohne Beleg erhalten Sie 10% davon. Mit Beleg erhalten Sie das 3-fache der Basispunkte.",
+  "guide_survey_footer": "Das System berechnet aus Ihrer Umfrage einen „Basispunktwert“. Ohne Beleg erhalten Sie 10% davon. Mit Beleg erhalten Sie das <span class='text-primary'>3-fache</span> der Basispunkte.",
+  "guide_verification_title": "Verifizierungszentrum & Fairplay",
+  "guide_verification_description": "Um die Community fair zu halten und die Belohnungen sinnvoll zu gestalten, müssen alle punkteträchtigen Aktionen verifiziert werden. Versuche, das System zu manipulieren, führen zu Punktabzügen.",
+  "guide_verification_items_list": [
+    "<b>Nur Live-Fotos:</b> Alle Verifizierungen müssen Live-Fotos sein, die über die App aufgenommen wurden. Galerie-Uploads, Screenshots und KI-generierte Bilder sind deaktiviert und werden abgelehnt.",
+    "<b>Recycling:</b> Ein Foto von Ihnen (oder Ihrer Hand), wie Sie den gescannten Artikel in den richtigen Behälter legen.",
+    "<b>CO2-Aktionen:</b> Ein Foto Ihrer nachhaltigen Aktion (z. B. Ihr Busticket, Ihr Fahrrad, Ihr hausgemachtes Essen).",
+    "<b>Doppelbestrafung:</b> Das mehrfache Einreichen derselben Aktion führt zu einer Strafe von <span class='text-destructive'>-50 Punkten</span>.",
+    "<b>Betrugsstrafe:</b> Das Einreichen von offensichtlich gefälschten oder KI-generierten Bildern führt zu einer Strafe von <span class='text-destructive'>-200 Punkten</span> und kann zur Sperrung des Kontos führen."
+  ],
+  "guide_verification_footer": "Unser KI-Moderationssystem überprüft jede Einreichung. Strafen werden automatisch angewendet.",
   "guide_redemption_title": "Belohnungseinlösung",
   "guide_redemption_description": "Verwenden Sie Ihre hart verdienten Punkte, um echte Rabatte und Belohnungen von unseren Partnern zu erhalten.",
-  "guide_rules_title": "Allgemeine Regeln & Fairplay",
-  "guide_rules_description": "Um die Community fair zu halten und die Belohnungen sinnvoll zu gestalten, befolgen Sie bitte diese Regeln.",
-  "guide_rules_list": [
-    "Alle Einreichungen müssen echt sein und Ihre eigenen, in Echtzeit durchgeführten Handlungen darstellen.",
-    "Senden Sie keine Fotos aus Ihrer Galerie, Screenshots oder KI-generierte Bilder.",
-    "Jeder Recyclingvorgang und jede tägliche Umfrage sollte nur einmal protokolliert werden. Unser System verfügt über Prüfungen auf doppelte Einreichungen.",
-    "Der Versuch, das Punktesystem durch Einreichung betrügerischer Bilder zu manipulieren, führt zu einer <b>-50-Punkte-Strafe</b> und kann zur Sperrung des Kontos führen."
-  ],
   "guide_howto_title": "Anleitungen",
   "guide_howto_recycle_title": "Wie man recycelt & verdient:",
-  "guide_howto_recycle_step1": "Tippen Sie im Hauptmenü auf die Schaltfläche '{button}'.",
-  "guide_howto_recycle_step2": "Verwenden Sie Ihre Kamera, um die Verpackung des Artikels zu scannen. Unsere KI identifiziert das Material.",
-  "guide_howto_recycle_step3": "Tippen Sie auf die Schaltfläche '{button}'. Dadurch wird Ihre Kamera erneut geöffnet.",
-  "guide_howto_recycle_step4": "Machen Sie ein klares Foto von sich (oder Ihrer Hand), wie Sie den Artikel in einen Recyclingbehälter legen.",
-  "guide_howto_recycle_step5": "Unsere KI überprüft Ihre Aktion. Punkte werden sofort nach erfolgreicher Überprüfung gutgeschrieben!",
-  "guide_howto_footprint_title": "So überprüfen Sie Ihren CO2-Fußabdruck:",
-  "guide_howto_footprint_step1": "Tippen Sie im Hauptmenü auf die Schaltfläche '{button}' und füllen Sie die tägliche Umfrage aus.",
-  "guide_howto_footprint_step2": "Erhalten Sie Ihre erste Analyse und vorläufige Punkte.",
-  "guide_howto_footprint_step3": "Tippen Sie auf die Schaltfläche '{button}', um die Kamera zu öffnen.",
-  "guide_howto_footprint_step4": "Scannen Sie einen Beleg von heute, der Ihre täglichen Aktivitäten widerspiegelt (z. B. Lebensmittel, Fahrkarten).",
-  "guide_howto_footprint_step5": "Wenn der Beleg validiert wird, werden Ihre vorläufigen Punkte durch die vollen Punkte plus einen 3x-Bonus ersetzt!",
+  "guide_howto_recycle_steps": [
+    "Tippen Sie im Hauptmenü auf die Schaltfläche 'Produktverpackung scannen'.",
+    "Verwenden Sie Ihre Kamera, um die Verpackung des Artikels zu scannen. Unsere KI identifiziert das Material.",
+    "Tippen Sie auf die Schaltfläche 'Entsorgung überprüfen'. Dadurch wird Ihre Kamera erneut geöffnet.",
+    "Machen Sie ein klares Foto von sich (oder Ihrer Hand), wie Sie den Artikel in einen Recyclingbehälter legen.",
+    "Unsere KI überprüft Ihre Aktion. Punkte werden sofort nach erfolgreicher Überprüfung gutgeschrieben!"
+  ],
+  "guide_howto_footprint_steps": [
+    "Tippen Sie im Hauptmenü auf die Schaltfläche 'Ihren CO2-Fußabdruck sehen' und füllen Sie die tägliche Umfrage aus.",
+    "Erhalten Sie Ihre erste Analyse und vorläufige Punkte.",
+    "Tippen Sie auf die Schaltfläche 'Beleg scannen, um zu verifizieren & Bonus zu erhalten', um das Verifizierungszentrum zu öffnen.",
+    "Senden Sie einen Live-Fotonachweis Ihrer Aktivitäten (z. B. Busfahrt, vegetarisches Essen).",
+    "Wenn Ihre Aktion verifiziert wird, werden Ihre vorläufigen Punkte durch die vollen Punkte plus einen <span class='text-primary'>3x-Bonus</span> ersetzt!"
+  ],
   "settings_title": "Einstellungen",
   "settings_description": "Verwalten Sie Ihre Anwendungseinstellungen und Präferenzen.",
   "settings_guide_button": "App-Anleitung & Regeln",
@@ -168,5 +170,5 @@
   "toast_not_enough_points_title": "Nicht genügend Punkte",
   "toast_not_enough_points_description": "Sie benötigen {points} Punkte, um diese Belohnung einzulösen.",
   "toast_reward_redeemed_title": "Belohnung eingelöst!",
-  "toast_reward_redeemed_description": "Sie haben \"{title}\" erfolgreich eingelöst."
+  "toast_reward_redeemed_description": "Sie haben '{title}' erfolgreich eingelöst."
 }
