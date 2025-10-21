@@ -37,16 +37,18 @@ type RegionData = {
     penaltyThreshold: number;
 }
 
-export type RegionKey = 'turkey' | 'germany' | 'usa' | 'uae' | 'kuwait' | 'default';
+export type RegionKey = 'turkey' | 'europe' | 'usa' | 'uae' | 'kuwait' | 'japan' | 'uk' | 'default';
 
 
 export const REGIONS: Record<string, RegionData> = {
-    'turkey': { min: 10, avg: 24, max: 40, penaltyThreshold: 30 },
-    'germany': { min: 12, avg: 27, max: 45, penaltyThreshold: 35 },
-    'usa': { min: 20, avg: 45, max: 70, penaltyThreshold: 55 },
-    'uae': { min: 25, avg: 55, max: 85, penaltyThreshold: 65 },
-    'kuwait': { min: 30, avg: 70, max: 100, penaltyThreshold: 80 },
-    'default': { min: 10, avg: 25, max: 50, penaltyThreshold: 30 },
+    'turkey': { min: 5,  avg: 10,  max: 25, penaltyThreshold: 25 },
+    'europe': { min: 8,  avg: 20,  max: 40, penaltyThreshold: 40 },
+    'usa':    { min: 15, avg: 40,  max: 60, penaltyThreshold: 60 },
+    'uae':    { min: 20, avg: 50,  max: 70, penaltyThreshold: 70 },
+    'kuwait': { min: 25, avg: 65,  max: 85, penaltyThreshold: 85 },
+    'japan':  { min: 6,  avg: 15,  max: 35, penaltyThreshold: 35 },
+    'uk':     { min: 7,  avg: 18,  max: 38, penaltyThreshold: 38 },
+    'default':{ min: 10, avg: 25, max: 50, penaltyThreshold: 50 },
 }
 
 export function getRegionKey(regionDisplayName: string): string {
@@ -54,8 +56,10 @@ export function getRegionKey(regionDisplayName: string): string {
     if (lowerCaseName.includes('dubai')) return 'uae';
     if (lowerCaseName.includes('kuwait')) return 'kuwait';
     if (lowerCaseName.includes('turkey')) return 'turkey';
-    if (lowerCaseName.includes('germany')) return 'germany';
+    if (lowerCaseName.includes('germany')) return 'europe';
     if (lowerCaseName.includes('usa')) return 'usa';
+    if (lowerCaseName.includes('japan')) return 'japan';
+    if (lowerCaseName.includes('united kingdom')) return 'uk';
     return 'default';
 }
 
@@ -78,20 +82,26 @@ export function calculatePoints(
 ): { basePoints: number; penaltyPoints: number } {
     const region = REGIONS[regionKey] || REGIONS['default'];
     
-    // 1. Check for penalty first
-    if (estimatedFootprintKg > region.penaltyThreshold) {
-        const penalty = Math.round((estimatedFootprintKg - region.penaltyThreshold) / 2);
-        const penaltyPoints = Math.max(-10, -penalty); // Capped at -10, can be -1, -2, etc.
-        return { basePoints: penaltyPoints, penaltyPoints: penaltyPoints };
+    // 1. Check for penalty first: Penalty applies only if KG is ABOVE max.
+    if (estimatedFootprintKg > region.max) {
+        // Sliding scale penalty: starts at -1 and gets larger, capped at -10.
+        const diff = estimatedFootprintKg - region.max;
+        const penalty = Math.round(diff / 2); // 1 point lost for every 2kg over
+        const finalPenalty = Math.max(-10, -penalty);
+        return { basePoints: finalPenalty, penaltyPoints: finalPenalty };
     }
 
-    // 2. If no penalty, calculate base points
-    // Scale points: max points (30) for min footprint, low points (1) for footprint near penalty threshold
-    const a = (1 - 30) / (region.penaltyThreshold - region.min);
-    const b = 30 - a * region.min;
-    let basePoints = a * estimatedFootprintKg + b;
+    // 2. If no penalty, calculate base points on a curve from min to max.
+    // Score is 30 at `min` kg, and 0 at `max` kg.
+    if (estimatedFootprintKg <= region.min) {
+        return { basePoints: 30, penaltyPoints: 0 };
+    }
     
-    basePoints = Math.max(1, Math.min(30, basePoints));
+    // Linear interpolation between min and max
+    const range = region.max - region.min;
+    const points = 30 * (1 - (estimatedFootprintKg - region.min) / range);
+    
+    const finalPoints = Math.max(0, Math.round(points));
 
-    return { basePoints: Math.round(basePoints), penaltyPoints: 0 };
+    return { basePoints: finalPoints, penaltyPoints: 0 };
 }
