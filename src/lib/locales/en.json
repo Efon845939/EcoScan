@@ -72,10 +72,11 @@
   "survey_penalty_title": "High Footprint Penalty",
   "survey_penalty_description": "Your footprint exceeded the regional bound. A <span style='color:hsl(var(--destructive))'>{points} point penalty</span> has been applied.",
   "survey_provisional_title": "Provisional Points Granted",
-  "survey_provisional_description": "You received <span style='color:hsl(var(--primary))'>{points} provisional points</span>.",
-  "survey_bonus_hint": "Verify with a receipt to get a <span style='color:hsl(var(--primary))'>x{x} bonus</span> for a total of <span style='color:hsl(var(--primary))'>{bonus} points!</span>",
+  "survey_provisional_description_points": "Today's <b>provisional</b> reward: <b style='color:hsl(var(--primary))'>{points}</b>",
+  "survey_provisional_description_details": "Today's <b>base</b> score: <b style='color:hsl(var(--primary))'>{base}</b> pts · Receipt Bonus: <b style='color:hsl(var(--primary))'>x{x}</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> pts",
   "survey_recommendations_title": "3 ways to improve",
   "survey_recovery_title": "Regain points today",
+  "survey_bonus_title": "Earn more points today",
   "analysis_good_title": "Great choices today",
   "analysis_mid_title": "Decent, but room to improve",
   "analysis_bad_title": "High impact — needs improvement",
@@ -107,6 +108,7 @@
     "Submit extra proof by photographing a drink or its receipt.",
     "Take a short walk/bike ride and verify it with a photo."
   ],
+
   "go_to_verify": "Go to Verification Center",
   "back_to_lobby": "Back to Lobby",
   "take_second_chance_button": "Take Second Chance",
@@ -209,5 +211,8 @@
   "toast_not_enough_points_title": "Not enough points",
   "toast_not_enough_points_description": "You need {points} points to redeem this reward.",
   "toast_reward_redeemed_title": "Reward Redeemed!",
-  "toast_reward_redeemed_description": "You've successfully redeemed '{title}'."
+  "toast_reward_redeemed_description": "You've successfully redeemed '{title}'.",
+  "toast_reward_confirm_title": "Confirm Redemption",
+  "toast_reward_confirm_description": "Are you sure you want to spend {cost} points to redeem '{title}'?",
+  "toast_reward_confirm_cancel": "Cancel"
 }

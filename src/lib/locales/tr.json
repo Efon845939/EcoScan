@@ -74,13 +74,14 @@
   "survey_penalty_title": "Yüksek Ayak İzi Cezası",
   "survey_penalty_description": "Ayak iziniz bölgesel sınırı aştı. <span style='color:hsl(var(--destructive))'>{points} puanlık bir ceza</span> uygulandı.",
   "survey_provisional_title": "Geçici Puanlar Verildi!",
-  "survey_provisional_description": "<span style='color:hsl(var(--primary))'>{points} geçici puan</span> kazandınız.",
-  "survey_bonus_hint": "Fiş ile doğrulayarak toplamda <span style='color:hsl(var(--primary))'>{bonus} puan</span> için <span style='color:hsl(var(--primary))'>x{x} bonus</span> kazanın!",
+  "survey_provisional_description_points": "Bugünün <b>geçici</b> ödülü: <b style='color:hsl(var(--primary))'>{points}</b>",
+  "survey_provisional_description_details": "Bugünün <b>temel</b> puanı: <b style='color:hsl(var(--primary))'>{base}</b> puan · Fiş Bonusu: <b style='color:hsl(var(--primary))'>x{x}</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> puan",
   "analysis_good_title": "Bugün harika seçimler",
   "analysis_mid_title": "İyi, ama geliştirilebilir",
   "analysis_bad_title": "Yüksek etki — iyileştirme gerekiyor",
   "survey_recommendations_title": "İyileştirmek için 3 yol",
   "survey_recovery_title": "Bugün puanları geri kazan",
+  "survey_bonus_title": "Bugün daha fazla puan kazan",
   "metaphor_low": "Bu, 2 yetişkin ağacın bir yılda emdiği CO₂ gibi.",
   "metaphor_medium_low": "Kısa bir şehir içi araba yolculuğuna (≈100–150 km) benzer.",
   "metaphor_medium": "Evde yoğun bir enerji kullanım gününe eşdeğer.",
@@ -211,5 +212,8 @@
   "toast_not_enough_points_title": "Yeterli puan yok",
   "toast_not_enough_points_description": "Bu ödülü kullanmak için {points} puana ihtiyacınız var.",
   "toast_reward_redeemed_title": "Ödül Kullanıldı!",
-  "toast_reward_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız."
+  "toast_reward_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız.",
+  "toast_reward_confirm_title": "Kullanımı Onayla",
+  "toast_reward_confirm_description": "'{title}' için {cost} puan harcamak istediğinizden emin misiniz?",
+  "toast_reward_confirm_cancel": "İptal"
 }

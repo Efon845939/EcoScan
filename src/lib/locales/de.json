@@ -74,13 +74,14 @@
   "survey_penalty_title": "Strafe für hohen Fußabdruck",
   "survey_penalty_description": "Ihr Fußabdruck hat die regionale Grenze überschritten. Eine Strafe von <span style='color:hsl(var(--destructive))'>{points} Punkten</span> wurde angewendet.",
   "survey_provisional_title": "Vorläufige Punkte vergeben!",
-  "survey_provisional_description": "Sie haben <span style='color:hsl(var(--primary))'>{points} vorläufige Punkte</span> verdient.",
-  "survey_bonus_hint": "Bestätigen Sie mit einem Beleg, um einen <span style='color:hsl(var(--primary))'>x{x}-Bonus</span> für insgesamt <span style='color:hsl(var(--primary))'>{bonus} Punkte</span> zu erhalten!",
+  "survey_provisional_description_points": "Heutige <b>vorläufige</b> Belohnung: <b style='color:hsl(var(--primary))'>{points}</b>",
+  "survey_provisional_description_details": "Heutige <b>Basis</b>-Punktzahl: <b style='color:hsl(var(--primary))'>{base}</b> Pkt. · Belegbonus: <b style='color:hsl(var(--primary))'>x{x}</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> Pkt.",
   "analysis_good_title": "Großartige Entscheidungen heute",
   "analysis_mid_title": "Anständig, aber verbesserungsfähig",
   "analysis_bad_title": "Hohe Auswirkung - verbesserungsbedürftig",
   "survey_recommendations_title": "3 Wege zur Verbesserung",
   "survey_recovery_title": "Punkte heute zurückgewinnen",
+  "survey_bonus_title": "Heute mehr Punkte verdienen",
   "metaphor_low": "Das ist wie der CO₂-Ausstoß, den 2 ausgewachsene Bäume in einem Jahr absorbieren.",
   "metaphor_medium_low": "Ähnlich wie eine kurze Stadtfahrt (≈100–150 km).",
   "metaphor_medium": "Entspricht einem anstrengenden Tag mit hohem Energieverbrauch zu Hause.",
@@ -211,5 +212,8 @@
   "toast_not_enough_points_title": "Nicht genügend Punkte",
   "toast_not_enough_points_description": "Sie benötigen {points} Punkte, um diese Belohnung einzulösen.",
   "toast_reward_redeemed_title": "Belohnung eingelöst!",
-  "toast_reward_redeemed_description": "Sie haben '{title}' erfolgreich eingelöst."
+  "toast_reward_redeemed_description": "Sie haben '{title}' erfolgreich eingelöst.",
+  "toast_reward_confirm_title": "Einlösung bestätigen",
+  "toast_reward_confirm_description": "Sind Sie sicher, dass Sie {cost} Punkte ausgeben möchten, um '{title}' einzulösen?",
+  "toast_reward_confirm_cancel": "Abbrechen"
 }

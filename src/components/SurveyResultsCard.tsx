@@ -39,7 +39,7 @@ export default function SurveyResultsCard({
   // 1) Sentiment/icon mapping
   const sentiment = useMemo(() => {
     if (basePoints >= 20) return "good";
-    if (basePoints > 0) return "mid";
+    if (basePoints >= 10) return "mid";
     return "bad";
   }, [basePoints]);
 
@@ -100,10 +100,8 @@ export default function SurveyResultsCard({
               {t("survey_provisional_title") || "Provisional points granted"}
             </AlertTitle>
             <AlertDescription>
-              <span dangerouslySetInnerHTML={{ __html: t("survey_provisional_description", { points: provisionalPoints })}} />
-              <div className="mt-1 text-xs text-muted-foreground">
-                 <span dangerouslySetInnerHTML={{ __html: t("survey_bonus_hint", { bonus: (provisionalPoints || 0) * bonusMultiplier, x: bonusMultiplier }) }} />
-              </div>
+                <span dangerouslySetInnerHTML={{ __html: t("survey_provisional_description_points", { points: provisionalPoints })}} />
+                <div className="mt-1 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t("survey_provisional_description_details", { base: basePoints, bonus: basePoints * bonusMultiplier, x: bonusMultiplier })}} />
             </AlertDescription>
           </Alert>
         )}
@@ -138,7 +136,7 @@ export default function SurveyResultsCard({
             <Separator />
             <div>
               <h3 className="font-semibold mb-2">
-                {t("survey_recovery_title")}
+                {isPenalty ? t("survey_recovery_title") : t("survey_bonus_title")}
               </h3>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 {finalRecoveryActions.map((rec, i) => (

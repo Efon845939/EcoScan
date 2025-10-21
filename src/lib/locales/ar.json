@@ -74,13 +74,14 @@
   "survey_penalty_title": "عقوبة البصمة العالية",
   "survey_penalty_description": "تجاوزت بصمتك الحد الإقليمي. تم تطبيق عقوبة <span style='color:hsl(var(--destructive))'>{points} نقطة</span>.",
   "survey_provisional_title": "تم منح نقاط مؤقتة!",
-  "survey_provisional_description": "لقد ربحت <span style='color:hsl(var(--primary))'>{points} نقطة مؤقتة</span>.",
-  "survey_bonus_hint": "تحقق من خلال إيصال للحصول على مكافأة <span style='color:hsl(var(--primary))'>x{x}</span> بإجمالي <span style='color:hsl(var(--primary))'>{bonus} نقطة!</span>",
+  "survey_provisional_description_points": "مكافأة اليوم <b>المؤقتة</b>: <b style='color:hsl(var(--primary))'>{points}</b>",
+  "survey_provisional_description_details": "نتيجة اليوم <b>الأساسية</b>: <b style='color:hsl(var(--primary))'>{base}</b> نقاط · مكافأة الإيصال: <b style='color:hsl(var(--primary))'>x{x}</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> نقاط",
   "analysis_good_title": "خيارات رائعة اليوم",
   "analysis_mid_title": "لائق، ولكن هناك مجال للتحسين",
   "analysis_bad_title": "تأثير كبير - يحتاج إلى تحسين",
   "survey_recommendations_title": "3 طرق للتحسين",
   "survey_recovery_title": "استعادة النقاط اليوم",
+  "survey_bonus_title": "اكسب المزيد من النقاط اليوم",
   "metaphor_low": "هذا مثل ثاني أكسيد الكربون الذي تمتصه شجرتان ناضجتان في عام واحد.",
   "metaphor_medium_low": "على غرار رحلة قصيرة بالسيارة في المدينة (≈100-150 كم).",
   "metaphor_medium": "يعادل يومًا ثقيلًا من استخدام الطاقة المنزلية.",
@@ -211,5 +212,8 @@
   "toast_not_enough_points_title": "نقاط غير كافية",
   "toast_not_enough_points_description": "أنت بحاجة إلى {points} نقطة لاستبدال هذه المكافأة.",
   "toast_reward_redeemed_title": "تم استبدال المكافأة!",
-  "toast_reward_redeemed_description": "لقد نجحت في استبدال '{title}'."
+  "toast_reward_redeemed_description": "لقد نجحت في استبدال '{title}'.",
+  "toast_reward_confirm_title": "تأكيد الاستبدال",
+  "toast_reward_confirm_description": "هل أنت متأكد أنك تريد إنفاق {cost} نقطة لاستبدال '{title}'؟",
+  "toast_reward_confirm_cancel": "إلغاء"
 }
