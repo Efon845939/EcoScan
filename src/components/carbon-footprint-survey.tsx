@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { useState, useTransition } from 'react';
 import {
   Card,
@@ -21,26 +21,18 @@ import { useTranslation } from '@/hooks/use-translation';
 import { useFirebase, useUser, updateDocumentNonBlocking, serverTimestamp, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import {
-  computeKgDeterministic,
   calculatePoints,
-  computeProvisional,
-  getRegionKey,
   type TransportOption,
   type DietOption,
   type DrinkOption,
   RegionKey,
-  TRANSPORT_KG,
-  DIET_KG,
-  DRINK_KG,
 } from '@/lib/carbon-calculator';
 import { useToast } from '@/hooks/use-toast';
 import { VerificationCenter } from './verification-center';
 import SurveyResultsCard from './SurveyResultsCard';
 import { analyzeFootprint } from '@/ai/flows/carbon-footprint-analysis';
 import type { CarbonFootprintAnalysisOutput } from '@/ai/flows/carbon-footprint-analysis.types';
-import { pickOne } from '@/lib/survey-normalize';
-import { toEnergyEnum } from '@/lib/energy-map';
-import { enforceWorstFloor } from '@/lib/carbon-guards';
+import { normalizeRegion } from "@/lib/region-map";
 
 interface CarbonFootprintSurveyProps {
   onBack: () => void;
@@ -70,7 +62,6 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
   const [results, setResults] = useState({
     kg: 0,
     basePoints: 0,
-    provisionalPoints: 0,
     penaltyPoints: 0,
     aiAnalysis: null as CarbonFootprintAnalysisOutput | null,
   });
@@ -96,40 +87,64 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
     setStep('loading');
 
     startTransition(async () => {
-      // Normalize user selections to the 'worst' case for calculation
-      const worstTransport = pickOne(transport, TRANSPORT_KG, "worst");
-      const worstDiet = pickOne(diet, DIET_KG, "worst");
-      const worstDrink = pickOne(drink, DRINK_KG, "worst");
-      const energyEnum = noEnergy ? 'none' : toEnergyEnum(energyText);
-
-      const regionKey = getRegionKey(region) as RegionKey;
-
-      // Calculate deterministic footprint and enforce floor for worst-case scenarios
-      let kg = computeKgDeterministic(regionKey, worstTransport, worstDiet, worstDrink, energyEnum);
-      kg = enforceWorstFloor(kg, regionKey, worstTransport, worstDiet, worstDrink, energyEnum);
+      
+      const regionKey = normalizeRegion(region);
 
       let aiAnalysisResult: CarbonFootprintAnalysisOutput | null = null;
+      let kgForPoints: number;
+      let basePointsForDb: number;
+      let penaltyPointsForDb: number;
+
       try {
+        // We still call the AI for the qualitative analysis
         aiAnalysisResult = await analyzeFootprint({
           language,
-          region,
+          region: regionKey,
           transport,
           diet,
-          energy: energyText,
+          energy: noEnergy ? "none" : energyText,
           other: '',
         });
-      } catch (e) {
-        console.error("AI analysis failed", e);
+        
+        // SERVER-SIDE CALCULATION IS THE TRUTH
+        const payload = {
+          region: regionKey,
+          transport,
+          diet,
+          drink,
+          energy: noEnergy ? "none" : energyText,
+          aiKg: aiAnalysisResult?.estimatedFootprintKg, // Pass AI estimate for blending
+        };
+
+        const res = await fetch("/api/carbon/estimate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        
+        const { ok, kg, base, error } = await res.json();
+        
+        if (!ok) {
+          toast({ variant: "destructive", title: "Carbon Calculation Failed", description: String(error) });
+          setStep('form');
+          return;
+        }
+
+        kgForPoints = kg;
+        const { basePoints, penaltyPoints } = calculatePoints(kgForPoints, regionKey);
+        basePointsForDb = basePoints;
+        penaltyPointsForDb = penaltyPoints;
+
+      } catch (e: any) {
+        toast({ variant: "destructive", title: "Analysis Failed", description: e.message });
+        setStep('form');
+        return;
       }
-
-      // Calculate points based on the corrected kg value
-      const { basePoints, penaltyPoints } = calculatePoints(aiAnalysisResult?.estimatedFootprintKg ?? kg, regionKey);
-      const provisionalPoints = computeProvisional(basePoints);
-
-      // Award provisional points or apply penalty
+      
+      // Award base points or apply penalty
       if (userProfileRef && userProfile) {
         const currentPoints = userProfile.totalPoints ?? 0;
-        const pointsChange = penaltyPoints < 0 ? penaltyPoints : provisionalPoints;
+        const pointsChange = penaltyPointsForDb < 0 ? penaltyPointsForDb : basePointsForDb;
         
         updateDocumentNonBlocking(userProfileRef, { 
           totalPoints: Math.max(0, currentPoints + pointsChange),
@@ -138,10 +153,9 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
       }
 
       setResults({
-        kg,
-        basePoints,
-        provisionalPoints,
-        penaltyPoints,
+        kg: kgForPoints,
+        basePoints: basePointsForDb,
+        penaltyPoints: penaltyPointsForDb,
         aiAnalysis: aiAnalysisResult,
       });
 
@@ -167,23 +181,6 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
       }
   }
 
-  const handleFinalizeWithReceipt = () => {
-    if (userProfileRef && userProfile) {
-        const currentPoints = userProfile.totalPoints ?? 0;
-        // Reverse the provisional points and add the full bonus
-        const finalPoints = (currentPoints - results.provisionalPoints) + (results.basePoints * 5);
-        updateDocumentNonBlocking(userProfileRef, { totalPoints: Math.max(0, finalPoints) });
-
-        toast({
-            title: t('toast_bonus_applied_title'),
-            description: t('toast_bonus_applied_description', { points: results.basePoints * 5 }),
-        });
-        setStep('form');
-        onBack();
-    }
-  };
-
-
   if (step === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center p-8">
@@ -194,14 +191,11 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
   }
 
   if (step === 'results' && userProfile) {
-    const finalScore = results.penaltyPoints < 0 ? results.penaltyPoints : results.provisionalPoints;
-    
     return (
         <SurveyResultsCard 
-            region={getRegionKey(region) as RegionKey}
+            region={normalizeRegion(region)}
             kg={results.kg}
             basePoints={results.basePoints}
-            provisionalPoints={results.provisionalPoints}
             penaltyPoints={results.penaltyPoints}
             bonusMultiplier={5}
             onSecondChance={() => setStep('secondChance')}
@@ -317,3 +311,5 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
     </Card>
   );
 }
+
+    
