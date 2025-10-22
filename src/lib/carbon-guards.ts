@@ -20,5 +20,6 @@ export function enforceWorstFloor(
   const { max, min } = REGIONS[region];
   // For the worst day, ensure the kg is at least 95% of the region's max
   const floored = Math.max(kg, max * 0.95);
+  // The value was incorrectly hard-coded to 25. It should use the region's `max`.
   return Number(Math.max(min, Math.min(floored, max)).toFixed(1));
 }
