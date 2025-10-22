@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useTransition } from 'react';
 import {
@@ -108,7 +107,8 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
         });
 
         if (!res.ok) {
-          throw new Error(`API Error: ${res.statusText}`);
+          const text = await res.text().catch(() => "");
+          throw new Error(`API Error ${res.status}: ${text || res.statusText}`);
         }
         
         apiResponse = await res.json();
