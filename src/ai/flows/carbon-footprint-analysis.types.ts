@@ -25,20 +25,21 @@ export const CarbonFootprintAnalysisOutputSchema = z.object({
   analysis: z
     .string()
     .optional()
+    .nullable()
     .describe(
       "A brief, one-paragraph analysis of the user's footprint in the specified language."
     ),
   recommendations: z
     .array(z.string())
-    .length(3)
     .optional()
+    .nullable()
     .describe(
       'An array of three personalized recommendations for improvement, in the specified language.'
     ),
   recoveryActions: z
     .array(z.string())
-    .length(3)
     .optional()
+    .nullable()
     .describe(
       'An array of three actionable steps the user can take today to earn bonus points, in the specified language.'
     ),

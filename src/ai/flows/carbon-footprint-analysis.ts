@@ -20,6 +20,7 @@ import { pickOne } from '@/lib/select-normalize';
 import { toEnergyEnum } from '@/lib/energy-map';
 import { enforceWorstFloor } from '@/lib/carbon-guards';
 import { normalizeRegion } from '@/lib/region-map';
+import { sanitizeAiResponse } from '@/lib/ai-schema';
 
 export async function analyzeFootprint(
   input: CarbonFootprintAnalysisInput
@@ -31,16 +32,19 @@ const prompt = ai.definePrompt({
   name: 'carbonFootprintPrompt',
   input: { schema: CarbonFootprintAnalysisInputSchema },
   output: { schema: CarbonFootprintAnalysisOutputSchema },
-  prompt: `You are an expert, empathetic, and encouraging environmental analyst for the EcoScan Rewards app.
-Your main goal is to analyze a user's daily activities, provide a detailed and insightful analysis of their carbon footprint, and give actionable, personalized recommendations.
+  prompt: `You are an environmental analyst. Output JSON ONLY with this exact shape:
 
-**CRITICAL INSTRUCTIONS:**
-1.  **Language:** All output text ('analysis', 'recommendations', 'recoveryActions') MUST be in the requested language: {{{language}}}.
-2.  **Tone:** Your tone must always be positive and encouraging, even if the user's footprint is high. Avoid judgmental language. Frame high-impact days as opportunities for improvement. Give longer, more descriptive recommendations (2-3 detailed sentences each).
-3.  **Worst-Case Scenario:** If the user's inputs represent a "worst-case day" (e.g., car_gasoline, red_meat, high energy use), your 'estimatedFootprintKg' MUST be high enough to exceed the region's 'max' benchmark to ensure the user receives a penalty. For example, for Turkey (max: 40), a worst-case day should be estimated at 43-45 kg.
-4.  **Analysis Quality:** Your 'analysis' must be insightful and directly reference the user's provided activities and region. Use the Regional Benchmarks below to give context. For example: "Your travel choices were great for a resident of Dubai, but your diet contributed significantly to your footprint today."
-5.  **Recommendations Quality:** The 'recommendations' should be specific, actionable, and long-term suggestions. They must be detailed and explain the "why" behind the suggestion.
-6.  **Recovery Actions Quality:** The 'recoveryActions' MUST be concrete, verifiable actions a user can do *today* to earn points via the app's Verification Center. These should be framed as immediate opportunities, like "Take a live photo of your bus ride to earn back some points," or "Verify your plant-based meal with a receipt in the Verification Center for a bonus."
+{
+  "estimatedFootprintKg": number,
+  "analysis": "string (non-empty, 1 short paragraph)",
+  "recommendations": ["string","string","string"],
+  "recoveryActions": ["string","string","string"]
+}
+
+Rules:
+- NEVER return null. If unsure, return "" for analysis and generic tips for lists.
+- Each array MUST have exactly 3 non-empty strings.
+- No extra fields, no commentary outside JSON.
 
 **REGIONAL BENCHMARKS (Source of Truth for CO2 Context):**
 - Turkey: Min: 5 kg, Avg: 10 kg, Max: 40 kg
@@ -58,9 +62,12 @@ Your main goal is to analyze a user's daily activities, provide a detailed and i
 - Diet: {{{diet}}}
 - Energy Use: {{{energy}}}
 - Other Info: {{{other}}}
-
-Based on this, provide the 'analysis', 'recommendations', and 'recoveryActions' in the specified JSON format. Ensure your response is high-quality, detailed, and empathetic. Critically, you MUST provide an 'estimatedFootprintKg' based on all the inputs.
 `,
+    config: {
+    temperature: 0,
+    topK: 1,
+    topP: 0,
+  }
 });
 
 const analyzeFootprintFlow = ai.defineFlow(
@@ -77,7 +84,7 @@ const analyzeFootprintFlow = ai.defineFlow(
     };
     try {
       const { output } = await prompt(processedInput);
-      return output!;
+      return sanitizeAiResponse(output);
     } catch (error) {
       console.error('AI analysis failed, falling back to deterministic calculation.', error);
       
@@ -94,12 +101,12 @@ const analyzeFootprintFlow = ai.defineFlow(
       let kg = computeKgDeterministic(regionKey, worstTransport, worstDiet, worstDrink, energyEnum);
       kg = enforceWorstFloor(kg, regionKey, worstTransport, worstDiet, worstDrink, energyEnum);
 
-      return {
+      return sanitizeAiResponse({
         estimatedFootprintKg: kg,
         analysis: null,
         recommendations: null,
         recoveryActions: null,
-      };
+      });
     }
   }
 );

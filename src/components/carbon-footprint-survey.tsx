@@ -1,4 +1,5 @@
-"use client";
+
+'use client';
 import { useState, useTransition } from 'react';
 import {
   Card,
@@ -25,12 +26,10 @@ import {
   type TransportOption,
   type DietOption,
   type DrinkOption,
-  RegionKey,
 } from '@/lib/carbon-calculator';
 import { useToast } from '@/hooks/use-toast';
 import { VerificationCenter } from './verification-center';
 import SurveyResultsCard from './SurveyResultsCard';
-import { analyzeFootprint } from '@/ai/flows/carbon-footprint-analysis';
 import type { CarbonFootprintAnalysisOutput } from '@/ai/flows/carbon-footprint-analysis.types';
 import { normalizeRegion } from "@/lib/region-map";
 
@@ -90,61 +89,47 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
       
       const regionKey = normalizeRegion(region);
 
-      let aiAnalysisResult: CarbonFootprintAnalysisOutput | null = null;
-      let kgForPoints: number;
-      let basePointsForDb: number;
-      let penaltyPointsForDb: number;
-
+      let apiResponse: (CarbonFootprintAnalysisOutput & { ok: boolean, error?: string }) | null = null;
+      
       try {
-        // We still call the AI for the qualitative analysis
-        aiAnalysisResult = await analyzeFootprint({
-          language,
-          region: regionKey,
-          transport,
-          diet,
-          energy: noEnergy ? "none" : energyText,
-          other: '',
-        });
-        
-        // SERVER-SIDE CALCULATION IS THE TRUTH
         const payload = {
+          language,
           region: regionKey,
           transport,
           diet,
           drink,
           energy: noEnergy ? "none" : energyText,
-          aiKg: aiAnalysisResult?.estimatedFootprintKg, // Pass AI estimate for blending
         };
 
-        const res = await fetch("/api/carbon/estimate", {
+        const res = await fetch("/api/carbon/analysis", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        
-        const { ok, kg, base, error } = await res.json();
-        
-        if (!ok) {
-          toast({ variant: "destructive", title: "Carbon Calculation Failed", description: String(error) });
-          setStep('form');
-          return;
+
+        if (!res.ok) {
+          throw new Error(`API Error: ${res.statusText}`);
         }
+        
+        apiResponse = await res.json();
 
-        kgForPoints = kg;
-        const { basePoints, penaltyPoints } = calculatePoints(kgForPoints, regionKey);
-        basePointsForDb = basePoints;
-        penaltyPointsForDb = penaltyPoints;
-
+        if (!apiResponse || !apiResponse.ok) {
+          throw new Error(apiResponse?.error || "Failed to get analysis from server.");
+        }
+        
       } catch (e: any) {
         toast({ variant: "destructive", title: "Analysis Failed", description: e.message });
         setStep('form');
         return;
       }
       
+      const { estimatedFootprintKg } = apiResponse;
+      const { basePoints, penaltyPoints } = calculatePoints(estimatedFootprintKg, regionKey);
+      
       // Award base points or apply penalty
       if (userProfileRef && userProfile) {
         const currentPoints = userProfile.totalPoints ?? 0;
-        const pointsChange = penaltyPointsForDb < 0 ? penaltyPointsForDb : basePointsForDb;
+        const pointsChange = penaltyPoints < 0 ? penaltyPoints : basePoints;
         
         updateDocumentNonBlocking(userProfileRef, { 
           totalPoints: Math.max(0, currentPoints + pointsChange),
@@ -153,10 +138,10 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
       }
 
       setResults({
-        kg: kgForPoints,
-        basePoints: basePointsForDb,
-        penaltyPoints: penaltyPointsForDb,
-        aiAnalysis: aiAnalysisResult,
+        kg: estimatedFootprintKg,
+        basePoints,
+        penaltyPoints,
+        aiAnalysis: apiResponse,
       });
 
       setStep('results');
@@ -311,5 +296,3 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
     </Card>
   );
 }
-
-    

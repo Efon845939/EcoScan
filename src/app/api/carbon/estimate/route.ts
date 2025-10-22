@@ -6,7 +6,6 @@ import { normalizeRegion } from "@/lib/region-map";
 import { pickOne } from "@/lib/select-normalize";
 import { toEnergyEnum } from "@/lib/energy-map";
 import { calibrateKg } from "@/lib/kg-calibration";
-import { analyzeFootprint } from "@/ai/flows/carbon-footprint-analysis";
 
 export async function POST(req: NextRequest) {
   try {
