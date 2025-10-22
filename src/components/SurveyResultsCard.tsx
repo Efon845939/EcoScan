@@ -14,20 +14,18 @@ type Props = {
   region: RegionKey;
   kg: number;
   basePoints: number;
-  provisionalPoints: number;
   penaltyPoints: number;
   bonusMultiplier?: number;
   onSecondChance: () => void;
-  analysis?: string;
-  recommendations?: string[];
-  recoveryActions?: string[];
+  analysis?: string | null;
+  recommendations?: string[] | null;
+  recoveryActions?: string[] | null;
 };
 
 export default function SurveyResultsCard({
   region,
   kg,
   basePoints,
-  provisionalPoints,
   penaltyPoints,
   bonusMultiplier = 5,
   onSecondChance,
@@ -101,11 +99,10 @@ export default function SurveyResultsCard({
           <Alert variant="default" className="border-green-400/50 text-center bg-green-50/50 dark:bg-green-900/10">
             <Sparkles className="h-4 w-4 text-green-500" />
             <AlertTitle className="text-green-600 dark:text-green-400">
-              {t('survey_provisional_points_title')}
+              {t('survey_base_points_title')}
             </AlertTitle>
             <AlertDescription>
-                <span dangerouslySetInnerHTML={{ __html: t('survey_provisional_points_description', { points: provisionalPoints })}} />
-                <div className="mt-1 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t("survey_bonus_description_details", { base: basePoints, bonus: basePoints * bonusMultiplier, x: bonusMultiplier })}} />
+                <span dangerouslySetInnerHTML={{ __html: t('survey_base_points_description', { points: basePoints, x: bonusMultiplier })}} />
             </AlertDescription>
           </Alert>
         )}

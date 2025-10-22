@@ -21,21 +21,24 @@ export type CarbonFootprintAnalysisInput = z.infer<
 >;
 
 export const CarbonFootprintAnalysisOutputSchema = z.object({
-  estimatedFootprintKg: z.number().optional().describe('A numerical estimate of the CO2 footprint in kg.'),
+  estimatedFootprintKg: z.number().describe('A numerical estimate of the CO2 footprint in kg.'),
   analysis: z
     .string()
+    .optional()
     .describe(
       "A brief, one-paragraph analysis of the user's footprint in the specified language."
     ),
   recommendations: z
     .array(z.string())
     .length(3)
+    .optional()
     .describe(
       'An array of three personalized recommendations for improvement, in the specified language.'
     ),
   recoveryActions: z
     .array(z.string())
     .length(3)
+    .optional()
     .describe(
       'An array of three actionable steps the user can take today to earn bonus points, in the specified language.'
     ),
