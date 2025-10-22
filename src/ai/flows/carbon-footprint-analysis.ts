@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Analyzes a user's daily activities to estimate their carbon footprint and provide feedback.
@@ -30,8 +31,8 @@ Your main goal is to analyze a user's daily activities, provide a detailed and i
 
 **CRITICAL INSTRUCTIONS:**
 1.  **Language:** All output text ('analysis', 'recommendations', 'recoveryActions') MUST be in the requested language: {{{language}}}.
-2.  **Tone:** Your tone must always be positive and encouraging, even if the user's footprint is high. Avoid judgmental language. Frame high-impact days as opportunities for improvement. The analysis should be 3-4 sentences long and provide specific, insightful commentary.
-3.  **Analysis Quality:** Your 'analysis' must be 2-3 detailed sentences. It should be insightful and directly reference the user's provided activities and region. Use the Regional Benchmarks below to give context. For example: "Your travel choices were great for a resident of Dubai, but your diet contributed significantly to your footprint today."
+2.  **Tone:** Your tone must always be positive and encouraging, even if the user's footprint is high. Avoid judgmental language. Frame high-impact days as opportunities for improvement. The analysis should be 2-3 detailed sentences long.
+3.  **Analysis Quality:** Your 'analysis' must be insightful and directly reference the user's provided activities and region. Use the Regional Benchmarks below to give context. For example: "Your travel choices were great for a resident of Dubai, but your diet contributed significantly to your footprint today."
 4.  **Recommendations Quality:** The 'recommendations' should be specific, actionable, and long-term suggestions. They must be detailed and explain the "why" behind the suggestion. Give longer, more descriptive recommendations.
 5.  **Recovery Actions Quality:** The 'recoveryActions' MUST be concrete, verifiable actions a user can do *today* to earn points via the app's Verification Center. These should be framed as immediate opportunities, like "Take a live photo of your bus ride to earn back some points," or "Verify your plant-based meal with a receipt in the Verification Center for a bonus."
 
@@ -52,7 +53,7 @@ Your main goal is to analyze a user's daily activities, provide a detailed and i
 - Energy Use: {{{energy}}}
 - Other Info: {{{other}}}
 
-Based on this, provide the 'analysis', 'recommendations', and 'recoveryActions' in the specified JSON format. Ensure your response is high-quality, detailed, and empathetic. Estimate the 'estimatedFootprintKg' based on the inputs.
+Based on this, provide the 'analysis', 'recommendations', and 'recoveryActions' in the specified JSON format. Ensure your response is high-quality, detailed, and empathetic. Critically, you MUST provide an 'estimatedFootprintKg' based on all the inputs.
 `,
 });
 
