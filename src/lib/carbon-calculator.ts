@@ -14,14 +14,14 @@ export const ENERGY_KG: Record<EnergyOption, number> = { 'none': 0, 'no_energy':
 export type RegionKey = 'turkey' | 'europe' | 'usa' | 'uae' | 'kuwait' | 'japan' | 'uk' | 'default';
 
 export const REGIONS: Record<string, { min: number; avg: number; max: number; penaltyThreshold: number; }> = {
-    'turkey': { min: 5,  avg: 10,  max: 25, penaltyThreshold: 25 },
-    'europe': { min: 8,  avg: 20,  max: 40, penaltyThreshold: 40 },
-    'usa':    { min: 15, avg: 40,  max: 60, penaltyThreshold: 60 },
-    'uae':    { min: 20, avg: 50,  max: 70, penaltyThreshold: 70 },
-    'kuwait': { min: 25, avg: 65,  max: 85, penaltyThreshold: 85 },
-    'japan':  { min: 6,  avg: 15,  max: 35, penaltyThreshold: 35 },
-    'uk':     { min: 7,  avg: 18,  max: 38, penaltyThreshold: 38 },
-    'default':{ min: 10, avg: 25, max: 50, penaltyThreshold: 50 },
+    'turkey': { min: 5,  avg: 10,  max: 25, penaltyThreshold: 30 },
+    'europe': { min: 8,  avg: 20,  max: 40, penaltyThreshold: 45 },
+    'usa':    { min: 15, avg: 40,  max: 60, penaltyThreshold: 65 },
+    'uae':    { min: 20, avg: 50,  max: 70, penaltyThreshold: 75 },
+    'kuwait': { min: 25, avg: 65,  max: 85, penaltyThreshold: 90 },
+    'japan':  { min: 6,  avg: 15,  max: 35, penaltyThreshold: 40 },
+    'uk':     { min: 7,  avg: 18,  max: 38, penaltyThreshold: 42 },
+    'default':{ min: 10, avg: 25, max: 50, penaltyThreshold: 55 },
 }
 
 const REGION_FINE_TUNE: Partial<Record<RegionKey, number>> = {
@@ -62,7 +62,6 @@ export function computeKgDeterministic(
     const base = transportKg + dietKg + drinkKg + energyKg;
     const scale = avg / 20; // neutral anchor = EU avg 20
     let kg = base * scale;
-    kg = Math.max(min, Math.min(kg, max));
     return Number(kg.toFixed(1));
 }
 
@@ -102,9 +101,9 @@ export function calculatePoints(
 ): { basePoints: number; penaltyPoints: number } {
     const region = REGIONS[regionKey] || REGIONS['default'];
     
-    // Penalty is only applied if KG is ABOVE max.
-    if (estimatedFootprintKg > region.max) {
-        const diff = estimatedFootprintKg - region.max;
+    // Penalty is only applied if KG is ABOVE the penalty threshold
+    if (estimatedFootprintKg > region.penaltyThreshold) {
+        const diff = estimatedFootprintKg - region.penaltyThreshold;
         const penalty = Math.round(diff / 2); // 1 point lost for every 2kg over
         const finalPenalty = Math.max(-10, -penalty); // Cap penalty at -10
         return { basePoints: 0, penaltyPoints: finalPenalty };
@@ -112,20 +111,22 @@ export function calculatePoints(
 
     // If no penalty, calculate base points on a curve from min to max.
     const { min, avg, max } = region;
+    // Clamp the kg value within the min/max range for point calculation
     const v = Math.max(min, Math.min(estimatedFootprintKg, max));
 
     if (v <= min) return { basePoints: 30, penaltyPoints: 0 };
-    if (v >= max) return { basePoints: 0, penaltyPoints: 0 };
+    // If at or above max, but below penalty threshold, give minimum points
+    if (v >= max) return { basePoints: 5, penaltyPoints: 0 };
 
     let points: number;
     if (v <= avg) {
-        // From min (30 pts) to avg (15 pts)
+        // Curve from 30 (at min) down to 15 (at avg)
         const t = (v - min) / (avg - min);
         points = 30 - 15 * t;
     } else {
-        // From avg (15 pts) to max (0 pts)
+        // Curve from 15 (at avg) down to 5 (at max)
         const t = (v - avg) / (max - avg);
-        points = 15 - 15 * t;
+        points = 15 - 10 * t; // Scale from 15 down to 5
     }
     
     return { basePoints: Math.round(points), penaltyPoints: 0 };
