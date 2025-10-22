@@ -16,11 +16,13 @@ export type RegionKey = 'turkey' | 'europe' | 'usa' | 'uae' | 'kuwait' | 'japan'
 export const REGIONS: Record<string, { min: number; avg: number; max: number; }> = {
     'turkey': { min: 5,  avg: 10,  max: 25 },
     'europe': { min: 8,  avg: 20,  max: 40 },
+    'germany': { min: 8,  avg: 20,  max: 40 },
     'usa':    { min: 15, avg: 40,  max: 60 },
     'uae':    { min: 20, avg: 50,  max: 70 },
     'kuwait': { min: 25, avg: 65,  max: 85 },
     'japan':  { min: 6,  avg: 15,  max: 35 },
     'uk':     { min: 7,  avg: 18,  max: 38 },
+    'united kingdom': { min: 7,  avg: 18,  max: 38 },
     'default':{ min: 10, avg: 25, max: 50 },
 }
 
@@ -85,11 +87,15 @@ export function calibrateAiKg(
   if (aiKg == null || Number.isNaN(aiKg)) return det;
 
   const { min, max } = REGIONS[region];
-  let ai = Math.max(min, Math.min(aiKg, max));
+  // Allow AI to go above max for penalty calculation, but not absurdly so.
+  let ai = Math.max(min, Math.min(aiKg, max * 1.5)); 
 
   let kg = 0.7 * det + 0.3 * ai;
 
-  kg = applyFineTune(kg, region);
+  // Don't apply fine-tuning that would pull a penalty-worthy score back into the safe zone
+  if (kg <= max) {
+    kg = applyFineTune(kg, region);
+  }
 
   return Number(kg.toFixed(1));
 }
@@ -101,7 +107,7 @@ export function calculatePoints(
 ): { basePoints: number; penaltyPoints: number } {
     const region = REGIONS[regionKey] || REGIONS['default'];
     
-    // Penalty is only applied if KG is ABOVE the max
+    // Penalty is only applied if KG is STRICTLY GREATER THAN the max
     if (estimatedFootprintKg > region.max) {
         const diff = estimatedFootprintKg - region.max;
         const penalty = Math.round(diff / 2); // 1 point lost for every 2kg over
@@ -115,7 +121,8 @@ export function calculatePoints(
     const v = Math.max(min, Math.min(estimatedFootprintKg, max));
 
     if (v <= min) return { basePoints: 30, penaltyPoints: 0 };
-    if (v >= max) return { basePoints: 0, penaltyPoints: 0 }; // 0 points at max, no penalty
+    // This now returns 1 point at the max, not 0.
+    if (v >= max) return { basePoints: 1, penaltyPoints: 0 };
 
     let points: number;
     if (v <= avg) {
@@ -123,9 +130,9 @@ export function calculatePoints(
         const t = (v - min) / (avg - min);
         points = 30 - 15 * t;
     } else {
-        // Curve from 15 (at avg) down to 0 (at max)
+        // Curve from 15 (at avg) down to 1 (at max)
         const t = (v - avg) / (max - avg);
-        points = 15 - 15 * t;
+        points = 15 - 14 * t;
     }
     
     return { basePoints: Math.round(points), penaltyPoints: 0 };
