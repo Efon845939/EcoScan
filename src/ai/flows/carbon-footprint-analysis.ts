@@ -84,17 +84,18 @@ const analyzeFootprintFlow = ai.defineFlow(
     };
     try {
       const { output } = await prompt(processedInput);
-      return sanitizeAiResponse(output);
+      // Even if AI returns nulls, our sanitizer will fix it.
+      return sanitizeAiResponse(output, output?.estimatedFootprintKg ?? 0);
     } catch (error) {
       console.error('AI analysis failed, falling back to deterministic calculation.', error);
       
-      const safeTransport = input.transport.length > 0 ? input.transport : ['car_gasoline'];
-      const safeDiet = input.diet.length > 0 ? input.diet : ['red_meat'];
-      const safeDrink = (input as any).drink?.length > 0 ? (input as any).drink : ['drink_bottled'];
+      const safeTransport = input.transport.length > 0 ? input.transport as any : ['car_gasoline'];
+      const safeDiet = input.diet.length > 0 ? input.diet as any : ['red_meat'];
+      const safeDrink = (input as any).drink?.length > 0 ? (input as any).drink as any : ['drink_bottled'];
 
-      const worstTransport = pickOne(safeTransport as any, TRANSPORT_KG, 'worst');
-      const worstDiet = pickOne(safeDiet as any, DIET_KG, 'worst');
-      const worstDrink = pickOne(safeDrink as any, DRINK_KG, 'worst');
+      const worstTransport = pickOne(safeTransport, TRANSPORT_KG, 'worst');
+      const worstDiet = pickOne(safeDiet, DIET_KG, 'worst');
+      const worstDrink = pickOne(safeDrink, DRINK_KG, 'worst');
       const energyEnum = toEnergyEnum(input.energy);
       const regionKey = normalizeRegion(input.region);
 
@@ -106,7 +107,7 @@ const analyzeFootprintFlow = ai.defineFlow(
         analysis: null,
         recommendations: null,
         recoveryActions: null,
-      });
+      }, kg);
     }
   }
 );

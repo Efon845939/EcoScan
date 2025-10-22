@@ -1,12 +1,14 @@
+
 export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { sanitizeAiResponse } from "@/lib/ai-schema";
 import { calibrateKg } from "@/lib/kg-calibration"; 
 import { normalizeRegion } from "@/lib/region-map";
 import { pickOne } from "@/lib/select-normalize";
-import { TRANSPORT_KG, DIET_KG, DRINK_KG, ENERGY_KG } from "@/lib/carbon-calculator";
+import { TRANSPORT_KG, DIET_KG, DRINK_KG } from "@/lib/carbon-calculator";
 import { analyzeFootprint } from "@/ai/flows/carbon-footprint-analysis";
 import { toEnergyEnum } from "@/lib/energy-map";
+import { extractJsonObject } from "@/lib/json-sanitize";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,31 +22,23 @@ export async function POST(req: NextRequest) {
     // compute finalKg yourself; model only writes text
     const finalKg = calibrateKg(region, transport, diet, drink, energy);
 
+    // This call returns an object, which might have nulls
     const aiRaw = await analyzeFootprint({
       ...body,
       language: body.language || 'en',
       region: body.region || 'Europe',
     });
 
-    const safe = sanitizeAiResponse({ ...aiRaw, estimatedFootprintKg: finalKg });
+    const safe = sanitizeAiResponse(aiRaw, finalKg);
     return NextResponse.json({ ok:true, ...safe });
   } catch (e:any) {
     // absolute fallback if the model dies
     console.error("Carbon analysis API failed:", e);
-    return NextResponse.json({
-      ok:true,
-      estimatedFootprintKg: 0,
-      analysis: "Unable to generate analysis right now. Here are general tips.",
-      recommendations: [
-        "Walk short distances instead of driving.",
-        "Use tap water or unsweetened tea instead of bottled soda.",
-        "Turn off unused lights and devices."
-      ],
-      recoveryActions: [
-        "Scan today’s receipt for bonus points.",
-        "Complete Verification Center actions.",
-        "Lower A/C or heating by 1–2°C today."
-      ]
-    });
+    const finalKg = 0; // Or calculate a deterministic one here as a last resort
+    return NextResponse.json(
+      sanitizeAiResponse({
+        estimatedFootprintKg: finalKg
+      }, finalKg)
+    );
   }
 }
