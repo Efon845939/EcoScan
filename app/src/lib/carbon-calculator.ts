@@ -19,6 +19,7 @@ export const REGIONS: Record<string, { min: number; avg: number; max: number; }>
     'germany': { min: 8,  avg: 20,  max: 40 },
     'usa':    { min: 15, avg: 40,  max: 60 },
     'uae':    { min: 20, avg: 50,  max: 70 },
+    'dubai, uae': { min: 20, avg: 50,  max: 70 },
     'kuwait': { min: 25, avg: 65,  max: 85 },
     'japan':  { min: 6,  avg: 15,  max: 35 },
     'uk':     { min: 7,  avg: 18,  max: 38 },
@@ -34,18 +35,6 @@ const REGION_FINE_TUNE: Partial<Record<RegionKey, number>> = {
   kuwait: -0.05,
   japan: 0,
 };
-
-export function getRegionKey(regionDisplayName: string): string {
-    const lowerCaseName = regionDisplayName.toLowerCase();
-    if (lowerCaseName.includes('dubai')) return 'uae';
-    if (lowerCaseName.includes('kuwait')) return 'kuwait';
-    if (lowerCaseName.includes('turkey')) return 'turkey';
-    if (lowerCaseName.includes('germany')) return 'europe';
-    if (lowerCaseName.includes('usa')) return 'usa';
-    if (lowerCaseName.includes('japan')) return 'japan';
-    if (lowerCaseName.includes('united kingdom')) return 'uk';
-    return 'default';
-}
 
 export function computeKgDeterministic(
     region: RegionKey,

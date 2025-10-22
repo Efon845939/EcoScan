@@ -15,6 +15,11 @@ import {
   CarbonFootprintAnalysisOutput,
   CarbonFootprintAnalysisOutputSchema,
 } from './carbon-footprint-analysis.types';
+import { computeKgDeterministic, RegionKey, TRANSPORT_KG, DIET_KG, DRINK_KG } from '@/lib/carbon-calculator';
+import { pickOne } from '@/lib/survey-normalize';
+import { toEnergyEnum } from '@/lib/energy-map';
+import { enforceWorstFloor } from '@/lib/carbon-guards';
+import { normalizeRegion } from '@/lib/region-map';
 
 export async function analyzeFootprint(
   input: CarbonFootprintAnalysisInput
@@ -65,13 +70,32 @@ const analyzeFootprintFlow = ai.defineFlow(
     outputSchema: CarbonFootprintAnalysisOutputSchema,
   },
   async (input) => {
-    // Pre-process the input to stringify arrays before passing to the prompt
     const processedInput = {
       ...input,
       transport: JSON.stringify(input.transport),
       diet: JSON.stringify(input.diet),
     };
-    const { output } = await prompt(processedInput);
-    return output!;
+    try {
+      const { output } = await prompt(processedInput);
+      return output!;
+    } catch (error) {
+      console.error('AI analysis failed, falling back to deterministic calculation.', error);
+      
+      const worstTransport = pickOne(input.transport as any, TRANSPORT_KG, 'worst');
+      const worstDiet = pickOne(input.diet as any, DIET_KG, 'worst');
+      const worstDrink = pickOne((input as any).drink as any, DRINK_KG, 'worst');
+      const energyEnum = toEnergyEnum(input.energy);
+      const regionKey = normalizeRegion(input.region);
+
+      let kg = computeKgDeterministic(regionKey, worstTransport, worstDiet, worstDrink, energyEnum);
+      kg = enforceWorstFloor(kg, regionKey, worstTransport, worstDiet, worstDrink, energyEnum);
+
+      return {
+        estimatedFootprintKg: kg,
+        analysis: null,
+        recommendations: null,
+        recoveryActions: null,
+      };
+    }
   }
 );
