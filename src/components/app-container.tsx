@@ -13,6 +13,7 @@ import {
   Globe,
   ShieldCheck,
   User,
+  LogIn,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -54,7 +55,7 @@ import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { getPointsForMaterial } from '@/lib/points';
 import SurveyButton from './survey-button';
 import { CarbonFootprintSurvey } from './carbon-footprint-survey';
-import { ProfilePage } from './profile-page';
+import { useRouter } from 'next/navigation';
 
 export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey' | 'profile';
 
@@ -106,6 +107,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const router = useRouter();
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
@@ -189,7 +191,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
     }
   
     // Create a new profile if the user is authenticated but doesn't have one
-    if (user && !userProfile && !isProfileLoading) {
+    if (user && !user.isAnonymous && !userProfile && !isProfileLoading) {
       const newProfile = {
         email: user.email || '',
         displayName: user.displayName || 'Anonymous User',
@@ -356,7 +358,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   }
 
   const renderContent = () => {
-    if (isUserLoading || isProfileLoading) {
+    if (isUserLoading || (user && !user.isAnonymous && isProfileLoading)) {
         return (
             <div className="flex flex-col items-center justify-center p-8">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -385,10 +387,17 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
               />
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
-               <Button variant="link" onClick={() => setStep('rewards')}>
-                <Award className="mr-2" />
-                {t('scan_card_rewards_link')} ({userPoints} {t('header_points')})
-              </Button>
+                {user && !user.isAnonymous ? (
+                    <Button variant="link" onClick={() => router.push('/profile')}>
+                        <User className="mr-2" />
+                        View Profile
+                    </Button>
+                ) : (
+                    <Button variant="outline" onClick={() => router.push('/login')}>
+                        <LogIn className="mr-2" />
+                        Sign In to Save Progress
+                    </Button>
+                )}
             </CardFooter>
           </Card>
         );
@@ -529,8 +538,6 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
         return <VerificationCenter onBack={() => setStep('scan')} />;
       case 'survey':
         return <CarbonFootprintSurvey onBack={() => setStep('scan')} region={region} language={currentLanguage} />;
-      case 'profile':
-        return <ProfilePage onBack={() => setStep('scan')} />;
       default:
         return null;
     }
@@ -603,10 +610,12 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                   <BookCopy className="mr-2" />
                   {t('settings_guide_button')}
                </Button>
-               <Button variant="outline" className="justify-start" onClick={() => { setStep('profile'); setShowSettingsModal(false); }}>
-                  <User className="mr-2" />
-                  Profile
-               </Button>
+                {user && !user.isAnonymous && (
+                    <Button variant="outline" className="justify-start" onClick={() => { router.push('/profile'); setShowSettingsModal(false); }}>
+                        <User className="mr-2" />
+                        Profile
+                    </Button>
+                )}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
                    <Globe />

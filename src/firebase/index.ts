@@ -18,8 +18,6 @@ import {
   import {FirestorePermissionError} from '@/firebase/errors';
   import {
     signInAnonymously,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
   } from 'firebase/auth';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
@@ -62,7 +60,7 @@ export function getSdks(firebaseApp: FirebaseApp) {
  * Does NOT await the write operation internally.
  */
 export function setDocumentNonBlocking(docRef: DocumentReference, data: any, options: SetOptions) {
-    setDoc(docRef, data, options).catch(error => {
+    return setDoc(docRef, data, options).catch(error => {
       errorEmitter.emit(
         'permission-error',
         new FirestorePermissionError({
@@ -72,7 +70,6 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
         })
       )
     })
-    // Execution continues immediately
   }
   
   
@@ -102,7 +99,7 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
    * Does NOT await the write operation internally.
    */
   export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) {
-    updateDoc(docRef, data)
+    return updateDoc(docRef, data)
       .catch(error => {
         errorEmitter.emit(
           'permission-error',
@@ -135,32 +132,11 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
   
   /** Initiate anonymous sign-in (non-blocking). */
   export function initiateAnonymousSignIn(authInstance: Auth): void {
-    // CRITICAL: Call signInAnonymously directly. Do NOT use 'await signInAnonymously(...)'.
     signInAnonymously(authInstance).catch(error => {
       console.error("Anonymous sign-in failed:", error);
-      // Optionally, you can emit a custom error event here if you have a global error handler for auth
     });
-    // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
   }
   
-  /** Initiate email/password sign-up (non-blocking). */
-  export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
-    // CRITICAL: Call createUserWithEmailAndPassword directly. Do NOT use 'await createUserWithEmailAndPassword(...)'.
-    createUserWithEmailAndPassword(authInstance, email, password).catch(error => {
-        console.error("Email sign-up failed:", error);
-    });
-    // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
-  }
-  
-  /** Initiate email/password sign-in (non-blocking). */
-  export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-    // CRITICAL: Call signInWithEmailAndPassword directly. Do NOT use 'await signInWithEmailAndPassword(...)'.
-    signInWithEmailAndPassword(authInstance, email, password).catch(error => {
-        console.error("Email sign-in failed:", error);
-    });
-    // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
-  }
-
 export * from './provider';
 export * from './client-provider';
 export * from './firestore/use-collection';

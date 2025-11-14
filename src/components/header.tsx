@@ -1,7 +1,9 @@
-import { Recycle, Settings, Award } from 'lucide-react';
+import { Recycle, Settings, Award, User, LogIn } from 'lucide-react';
 import { Button } from './ui/button';
 import type { Step } from './app-container';
 import { useTranslation } from '@/hooks/use-translation';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 type HeaderProps = {
   points: number;
@@ -11,6 +13,9 @@ type HeaderProps = {
 
 export function Header({ points, onNavigate, onShowSettings }: HeaderProps) {
   const { t } = useTranslation();
+  const { user } = useUser();
+  const router = useRouter();
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -28,6 +33,17 @@ export function Header({ points, onNavigate, onShowSettings }: HeaderProps) {
             <span className="text-lg font-bold">{points}</span>
             <span className="text-sm text-muted-foreground hidden sm:inline-block">{t('header_points')}</span>
           </div>
+           {user && !user.isAnonymous ? (
+             <Button variant="ghost" size="icon" onClick={() => router.push('/profile')}>
+                <User />
+                <span className="sr-only">Profile</span>
+             </Button>
+           ) : (
+            <Button variant="ghost" size="icon" onClick={() => router.push('/login')}>
+                <LogIn />
+                <span className="sr-only">Sign In</span>
+            </Button>
+           )}
           <Button variant="ghost" size="icon" onClick={onShowSettings}>
               <Settings />
               <span className="sr-only">Settings</span>

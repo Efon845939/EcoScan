@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   useFirebase,
   useUser,
@@ -18,16 +19,16 @@ import {
   updateDocumentNonBlocking,
 } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { getAuth, signOut } from 'firebase/auth';
+import { getAuth, signOut, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, User, LogOut, Award } from 'lucide-react';
+import { ChevronLeft, User, LogOut, Award, Loader2, MailCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type ProfilePageProps = {
   onBack: () => void;
 };
 
-export function ProfilePage({ onBack }: ProfilePageProps) {
+export function ProfilePageContent({ onBack }: ProfilePageProps) {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const { toast } = useToast();
@@ -36,10 +37,11 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
     [firestore, user]
   );
-  const { data: userProfile } = useDoc(userProfileRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
   const [displayName, setDisplayName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     if (userProfile?.displayName) {
@@ -50,10 +52,14 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
   }, [userProfile, user]);
 
   const handleSave = async () => {
-    if (!userProfileRef) return;
+    if (!userProfileRef || !user) return;
     setIsSaving(true);
     try {
+      // Update both Firestore and Auth profile
       await updateDocumentNonBlocking(userProfileRef, { displayName });
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName });
+      }
       toast({
         title: 'Profile Updated',
         description: 'Your display name has been saved.',
@@ -70,20 +76,43 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
     }
   };
 
+  const handleSendVerification = async () => {
+    if (!user) return;
+    setIsVerifying(true);
+    try {
+        await sendEmailVerification(user);
+        toast({
+            title: "Verification Email Sent",
+            description: "Please check your inbox to verify your email address."
+        })
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message || "Failed to send verification email."
+        })
+    } finally {
+        setIsVerifying(false);
+    }
+  }
+
+  const auth = getAuth();
   const handleSignOut = () => {
-    const auth = getAuth();
     signOut(auth).then(() => {
-        // Sign-out successful.
-        // Handled by the onAuthStateChanged listener in the provider
+        toast({title: "Signed Out", description: "You have been successfully signed out."})
     }).catch((error) => {
-        // An error happened.
         console.error("Sign out error", error);
         toast({variant: 'destructive', title: "Sign Out Error", description: "Failed to sign out."})
     });
   };
 
+  if (isProfileLoading) {
+    return <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+  }
+
   return (
-    <Card className="w-full">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+    <Card className="w-full max-w-lg">
       <CardHeader>
         <div className="relative flex items-center justify-center">
           <Button
@@ -112,6 +141,19 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           <span className="text-base text-muted-foreground">Total Points</span>
         </div>
 
+        {user && !user.emailVerified && (
+            <Alert>
+                <MailCheck className="h-4 w-4" />
+                <AlertTitle>Verify Your Email</AlertTitle>
+                <AlertDescription className="flex items-center justify-between">
+                    Your email is unverified. Please check your inbox or resend the verification link.
+                    <Button variant="secondary" size="sm" onClick={handleSendVerification} disabled={isVerifying}>
+                        {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Resend"}
+                    </Button>
+                </AlertDescription>
+            </Alert>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="displayName">Display Name</Label>
           <Input
@@ -132,7 +174,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           onClick={handleSave}
           disabled={isSaving}
         >
-          {isSaving ? 'Saving...' : 'Save Changes'}
+          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Changes'}
         </Button>
         <Button
           variant="destructive"
@@ -144,5 +186,6 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
         </Button>
       </CardFooter>
     </Card>
+    </div>
   );
 }
