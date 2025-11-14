@@ -218,19 +218,37 @@
   "toast_reward_confirm_cancel": "Cancel",
   "auth": {
     "login": {
-      "title": "Sign in to EcoScan",
-      "subtitle": "Log in to track your rewards and footprint.",
+      "tab": "Sign in",
+      "title": "Sign in to your EcoScan account",
+      "subtitle": "Track your points and carbon footprint.",
       "cta": "Sign in",
-      "footer": "Forgot your password? You can reset it via email.",
-      "signup_link": "Don't have an account? Sign up"
+      "footer": "Forgot your password? You can reset it via email."
+    },
+    "signup": {
+      "tab": "Sign up",
+      "title": "Create a new EcoScan account",
+      "subtitle": "Set up your profile and start earning rewards.",
+      "cta": "Sign up",
+      "footer": "Already have an account? Switch to the login tab."
     },
     "fields": {
+      "username": "Username",
+      "country": "Country",
+      "phone": "Phone",
       "email": "Email",
       "password": "Password"
     },
     "placeholders": {
+      "username": "Your username",
+      "phone": "+1 555 000 0000",
       "email": "you@example.com",
       "password": "Enter your password"
+    },
+    "countries": {
+      "tr": "Turkey",
+      "kw": "Kuwait",
+      "us": "United States",
+      "de": "Germany"
     },
     "error": {
       "unknown": "Something went wrong. Please try again."

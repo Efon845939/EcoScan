@@ -1,36 +1,130 @@
 'use client';
 
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslation } from "@/hooks/use-translation";
-import { useAuth as useFirebaseAuth } from "@/hooks/use-auth";
-import { useUser } from "@/firebase";
-import { LogIn, Loader2 } from "lucide-react"; 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { LogIn, UserPlus } from 'lucide-react';
+import { useUser } from '@/firebase';
+// Kendi firebase client import’un:
+import { auth, firestore as db } from '@/firebase'; // sende src/firebase/index.ts varsa burası doğru
+
+// Eğer react-i18next / next-i18next kullanıyorsan:
+import { useTranslation } from '@/hooks/use-translation';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const { t } = useTranslation();
-  const { login, loading, error } = useFirebaseAuth();
-  const { user, isUserLoading } = useUser();
   const router = useRouter();
+  // i18n yoksa şimdilik aşağı satırı commentle ve t = (s:string) => s yap.
+  const { t } = useTranslation();
+  const { user, isUserLoading } = useUser();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+
+  // Ortak alanlar
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  // Signup alanları
+  const [username, setUsername] = useState('');
+  const [country, setCountry] = useState('TR');
+  const [phone, setPhone] = useState('');
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // If user is loaded and not anonymous, redirect to home.
     if (!isUserLoading && user && !user.isAnonymous) {
       router.push('/');
     }
   }, [user, isUserLoading, router]);
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleLogin(e: FormEvent) {
     e.preventDefault();
-    const success = await login(email, password);
-    if (success) {
+    setLoading(true);
+    setError(null);
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const user = cred.user;
+
+      // Profil dokümanı var mı, yoksa minimal oluştur
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
+
+      if (!snap.exists()) {
+        await setDoc(userRef, {
+          uid: user.uid,
+          displayName: user.displayName || email.split('@')[0],
+          email: user.email,
+          emailVerified: user.emailVerified ?? false,
+          phone: null,
+          phoneVerified: false,
+          country: 'TR',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          totalPoints: 0,
+          isDisabled: false,
+          roles: ['user'],
+        });
+      }
+
+      // Giriş başarılı → dashboard / ana sayfa nereye gidiyorsa oraya yönlendir
       router.push('/');
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.code || 'auth.error.unknown');
+    } finally {
+      setLoading(false);
     }
   }
-  
+
+  async function handleSignup(e: FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      // 1) Auth kullanıcısını oluştur
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const user = cred.user;
+
+      // 2) displayName güncelle
+      await updateProfile(user, { displayName: username });
+
+      // 3) Firestore profilini oluştur
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, {
+        uid: user.uid,
+        username,
+        email: user.email,
+        emailVerified: user.emailVerified ?? false,
+        phone: phone || null,
+        phoneVerified: false,
+        country,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        totalPoints: 0,
+        isDisabled: false,
+        roles: ['user'],
+      });
+
+      // 4) İstersen email verification burada tetiklersin (client’ta):
+      // await sendEmailVerification(user);
+
+      router.push('/');
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.code || 'auth.error.unknown');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const isLogin = mode === 'login';
+
   if (isUserLoading || (user && !user.isAnonymous)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
@@ -41,87 +135,156 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-sky-50 dark:from-neutral-950 dark:to-neutral-900 p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md mx-auto bg-card rounded-2xl shadow-lg p-6 space-y-6"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-primary">
-            <LogIn className="w-6 h-6" aria-hidden="true" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold">
-              {t("auth.login.title")}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {t("auth.login.subtitle")}
-            </p>
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-sky-50 dark:from-neutral-950 dark:to-neutral-900 px-4">
+      <div className="w-full max-w-md bg-white/80 dark:bg-neutral-900/80 rounded-2xl shadow-xl p-6 space-y-6">
+        {/* Mode switch */}
+        <div className="flex rounded-full bg-neutral-100 dark:bg-neutral-800 p-1">
+          <button
+            type="button"
+            onClick={() => setMode('login')}
+            className={`flex-1 inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition ${
+              isLogin
+                ? 'bg-white dark:bg-neutral-900 shadow text-emerald-600'
+                : 'text-neutral-600 dark:text-neutral-300'
+            }`}
+          >
+            <LogIn className="w-4 h-4" />
+            <span>{t('auth.login.tab')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('signup')}
+            className={`flex-1 inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition ${
+              !isLogin
+                ? 'bg-white dark:bg-neutral-900 shadow text-emerald-600'
+                : 'text-neutral-600 dark:text-neutral-300'
+            }`}
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>{t('auth.signup.tab')}</span>
+          </button>
         </div>
 
-        <div className="space-y-4">
+        <div>
+          <h1 className="text-xl font-semibold">
+            {isLogin ? t('auth.login.title') : t('auth.signup.title')}
+          </h1>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            {isLogin ? t('auth.login.subtitle') : t('auth.signup.subtitle')}
+          </p>
+        </div>
+
+        <form
+          onSubmit={isLogin ? handleLogin : handleSignup}
+          className="space-y-4"
+        >
+          {/* SIGNUP MODE: username & country & phone */}
+          {!isLogin && (
+            <>
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                  {t('auth.fields.username')}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder={t('auth.placeholders.username') as string}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                    {t('auth.fields.country')}
+                  </label>
+                  <select
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="TR">{t('auth.countries.tr')}</option>
+                    <option value="KW">{t('auth.countries.kw')}</option>
+                    <option value="US">{t('auth.countries.us')}</option>
+                    <option value="DE">{t('auth.countries.de')}</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                    {t('auth.fields.phone')}
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder={t('auth.placeholders.phone') as string}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* COMMON: email & password */}
           <div className="space-y-1">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium"
-            >
-              {t("auth.fields.email")}
+            <label className="block text-sm font-medium text-neutral-800 dark:text-neutral-200">
+              {t('auth.fields.email')}
             </label>
             <input
-              id="email"
               type="email"
-              autoComplete="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder={t("auth.placeholders.email") as string}
+              placeholder={t('auth.placeholders.email') as string}
             />
           </div>
 
           <div className="space-y-1">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium"
-            >
-              {t("auth.fields.password")}
+            <label className="block text-sm font-medium text-neutral-800 dark:text-neutral-200">
+              {t('auth.fields.password')}
             </label>
             <input
-              id="password"
               type="password"
-              autoComplete="current-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete={isLogin ? 'current-password' : 'new-password'}
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder={t("auth.placeholders.password") as string}
+              placeholder={t('auth.placeholders.password') as string}
             />
           </div>
 
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400">
-              {t(error)}
+              {t(`auth.error.${error}`, {
+                defaultValue: t('auth.error.unknown'),
+              })}
             </p>
           )}
-        </div>
 
-        <div className="flex flex-col gap-4">
-            <button
+          <button
             type="submit"
             disabled={loading}
             className="w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition"
-            >
+          >
             {loading && (
-                <Loader2 className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             )}
-            <span>{t("auth.login.cta")}</span>
-            </button>
-             <button type="button" onClick={() => router.push('/signup')} className="w-full text-sm text-muted-foreground hover:text-primary transition">
-                {t("auth.login.signup_link")}
-            </button>
-        </div>
-      </form>
+            <span>
+              {isLogin ? t('auth.login.cta') : t('auth.signup.cta')}
+            </span>
+          </button>
+        </form>
+
+        <p className="text-xs text-muted-foreground text-center">
+          {isLogin ? t('auth.login.footer') : t('auth.signup.footer')}
+        </p>
+      </div>
     </div>
   );
 }

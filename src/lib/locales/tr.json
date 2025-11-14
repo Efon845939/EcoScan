@@ -220,19 +220,37 @@
   "toast_reward_confirm_cancel": "İptal",
   "auth": {
     "login": {
-      "title": "EcoScan'a giriş yap",
-      "subtitle": "Hesabına giriş yap ve puanlarını takip et.",
+      "tab": "Giriş yap",
+      "title": "EcoScan hesabına giriş yap",
+      "subtitle": "Puanlarını ve karbon ayak izini buradan takip et.",
       "cta": "Giriş yap",
-      "footer": "Şifreni mi unuttun? Sıfırlamak için e-posta ile devam edebilirsin.",
-      "signup_link": "Hesabın yok mu? Kayıt ol"
+      "footer": "Şifreni mi unuttun? E-posta ile sıfırlayabilirsin."
+    },
+    "signup": {
+      "tab": "Kayıt ol",
+      "title": "Yeni EcoScan hesabı oluştur",
+      "subtitle": "Profilini oluştur, puan kazanmaya başla.",
+      "cta": "Kayıt ol",
+      "footer": "Zaten hesabın var mı? Giriş sekmesine geç."
     },
     "fields": {
+      "username": "Kullanıcı adı",
+      "country": "Ülke",
+      "phone": "Telefon",
       "email": "E-posta",
       "password": "Şifre"
     },
     "placeholders": {
+      "username": "Kullanıcı adın",
+      "phone": "+90 5xx xxx xx xx",
       "email": "ornek@mail.com",
       "password": "Şifreni gir"
+    },
+    "countries": {
+      "tr": "Türkiye",
+      "kw": "Kuveyt",
+      "us": "Amerika",
+      "de": "Almanya"
     },
     "error": {
       "unknown": "Bir hata oluştu. Lütfen tekrar dene."
