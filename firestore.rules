@@ -6,8 +6,8 @@
  *   - /users/{userId}: User profile information, owned by the user with matching UID.
  *   - /verificationCodes/{codeId}: Server-side only collection for OTPs. No client access.
  * @key_security_decisions
- *   - User profiles are strictly owned by the user, enforced through path-based authorization.
- *   - Users cannot modify their own roles, points, or disabled status.
+ *   - User profiles are strictly owned by the user, with exceptions for anonymous survey takers.
+ *   - Users cannot modify their own roles, points, or disabled status unless anonymous.
  *   - Listing of all users is disallowed to protect user privacy.
  */
 rules_version = '2';
@@ -21,34 +21,36 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
+    
+    function isAnonymousUser() {
+      return request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
 
     /**
      * @description Enforces access control for user profile documents.
      * @path /users/{userId}
-     * @allow (get) Authenticated user can read their own profile.
-     * @allow (create) Authenticated user can create their own profile.
-     * @allow (update) Authenticated user can update their own profile, but cannot change immutable or admin-only fields.
+     * @allow (get, create) Authenticated user can read/create their own profile.
+     * @allow (update) Authenticated user can update their own profile, but cannot change immutable or admin-only fields. Anonymous users can only update survey-related fields.
      * @deny (list, delete) Listing or deleting user profiles is disallowed for clients.
      */
     match /users/{userId} {
       allow get, create: if isOwner(userId);
       allow list, delete: if false;
 
-      allow update: if isOwner(userId) &&
-        // Fields a user IS allowed to change
-        request.resource.data.keys().hasOnly([
-          'uid', 'username', 'email', 'emailVerified',
-          'phone', 'phoneVerified', 'country', 'createdAt',
-          'updatedAt', 'totalPoints', 'isDisabled', 'roles',
-          'displayName', 'lastCarbonSurveyDate' // Allow existing fields
-        ]) &&
-        // Fields a user is NOT allowed to change
-        request.resource.data.uid == resource.data.uid &&
-        request.resource.data.email == resource.data.email &&
-        request.resource.data.totalPoints == resource.data.totalPoints &&
-        request.resource.data.isDisabled == resource.data.isDisabled &&
-        request.resource.data.roles.size() == resource.data.roles.size() &&
-        request.resource.data.roles[0] == resource.data.roles[0];
+      allow update: if isOwner(userId) && (
+        // Fully authenticated users can update their own, non-critical fields
+        (
+          request.resource.data.keys().hasOnly([
+            'displayName', 'country', 'phone', 'phoneVerified', 'updatedAt'
+          ]) &&
+          request.resource.data.phoneVerified == resource.data.phoneVerified // Cannot set phoneVerified to true manually
+        ) ||
+        // Anonymous users can ONLY update their points and survey date after a survey
+        (
+          isAnonymousUser() &&
+          request.resource.data.keys().hasOnly(['totalPoints', 'lastCarbonSurveyDate'])
+        )
+      );
     }
     
     /**
