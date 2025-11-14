@@ -7,8 +7,8 @@ import { Toaster } from "@/components/ui/toaster";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-background text-foreground">
+    <html lang="tr">
+      <body className="min-h-screen bg-white text-black">
         <FirebaseClientProvider>
           <TranslationProvider>
             {children}
