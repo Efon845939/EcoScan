@@ -5,6 +5,11 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { TranslationProvider } from '@/hooks/use-translation';
 import { Toaster } from "@/components/ui/toaster";
 
+export const metadata = {
+  title: 'EcoScan',
+  description: 'EcoScan Rewards',
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>

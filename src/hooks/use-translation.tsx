@@ -38,9 +38,14 @@ export function TranslationProvider({
 
   // 2. When language state changes, update translations and html attributes (client-side only)
   useEffect(() => {
-    // Update HTML attributes
-    document.documentElement.lang = language;
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    const html = document.documentElement;
+
+    if (language === 'ar') {
+        html.setAttribute('dir', 'rtl');
+    } else {
+        html.setAttribute('dir', 'ltr');
+    }
+    html.setAttribute('lang', language);
     
     // Load translation file
     async function loadTranslations() {
