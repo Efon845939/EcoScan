@@ -19,7 +19,7 @@ import {
   updateDocumentNonBlocking,
 } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { getAuth, signOut, sendEmailVerification, updateProfile } from 'firebase/auth';
+import { signOut, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, User, LogOut, Award, Loader2, MailCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -29,8 +29,8 @@ type ProfilePageProps = {
 };
 
 export function ProfilePageContent({ onBack }: ProfilePageProps) {
-  const { firestore } = useFirebase();
-  const { user } = useUser();
+  const { auth, firestore } = useFirebase();
+  const { user, isUserLoading } = useUser();
   const { toast } = useToast();
 
   const userProfileRef = useMemoFirebase(
@@ -52,7 +52,7 @@ export function ProfilePageContent({ onBack }: ProfilePageProps) {
   }, [userProfile, user]);
 
   const handleSave = async () => {
-    if (!userProfileRef || !user) return;
+    if (!userProfileRef || !user || !auth) return;
     setIsSaving(true);
     try {
       // Update both Firestore and Auth profile
@@ -96,8 +96,8 @@ export function ProfilePageContent({ onBack }: ProfilePageProps) {
     }
   }
 
-  const auth = getAuth();
   const handleSignOut = () => {
+    if (!auth) return;
     signOut(auth).then(() => {
         toast({title: "Signed Out", description: "You have been successfully signed out."})
     }).catch((error) => {
@@ -106,7 +106,7 @@ export function ProfilePageContent({ onBack }: ProfilePageProps) {
     });
   };
 
-  if (isProfileLoading) {
+  if (isProfileLoading || isUserLoading) {
     return <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
   }
 
