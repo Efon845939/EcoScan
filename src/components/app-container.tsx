@@ -44,7 +44,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { TranslationProvider, useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/hooks/use-translation';
 import { MaterialIcon } from './material-icon';
 import { RewardsSection } from './rewards-section';
 import { GuideSection } from './guide-section';
@@ -57,38 +57,10 @@ import SurveyButton from './survey-button';
 import { CarbonFootprintSurvey } from './carbon-footprint-survey';
 import { useRouter } from 'next/navigation';
 
+
 export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey' | 'profile';
 
-const AppContainerWithTranslations = ({ initialStep }: { initialStep?: Step }) => {
-    const [language, setLanguage] = useState('en');
-
-    useEffect(() => {
-        const savedLanguage = localStorage.getItem('app-language');
-        if (savedLanguage) {
-            setLanguage(savedLanguage);
-        }
-    }, []);
-    
-    useEffect(() => {
-        document.documentElement.lang = language;
-        document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    }, [language]);
-
-
-    const handleLanguageChange = (newLanguage: string) => {
-        setLanguage(newLanguage);
-        localStorage.setItem('app-language', newLanguage);
-    };
-    
-    return (
-        <TranslationProvider language={language}>
-            <AppContainer onLanguageChange={handleLanguageChange} currentLanguage={language} initialStep={initialStep} />
-        </TranslationProvider>
-    )
-}
-
-
-function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' }: { onLanguageChange: (lang: string) => void, currentLanguage: string, initialStep?: Step}) {
+function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   const [step, setStep] = useState<Step>(initialStep);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [barcodeNumber, setBarcodeNumber] = useState('');
@@ -111,7 +83,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
-  const { t } = useTranslation();
+  const { t, setLanguage, language: currentLanguage } = useTranslation();
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -137,7 +109,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   };
 
   const handleLanguageChange = (newLanguage: string) => {
-    onLanguageChange(newLanguage);
+    setLanguage(newLanguage);
     toast({
       title: t('toast_language_updated_title'),
       description: t('toast_language_updated_description'),
@@ -666,4 +638,4 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   );
 }
 
-export { AppContainerWithTranslations as AppContainer };
+export { AppContainer };

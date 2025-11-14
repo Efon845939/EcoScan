@@ -17,17 +17,24 @@ const TranslationContext = createContext<TranslationContextType | undefined>(und
 
 // The provider component
 export function TranslationProvider({
-  children,
-  language,
-  setLanguage,
+  children
 }: {
   children: ReactNode;
-  language: string;
-  setLanguage: (language: string) => void;
 }) {
+  const [language, setLanguage] = useState('en');
   const [translations, setTranslations] = useState(en);
 
   useEffect(() => {
+    const savedLanguage = localStorage.getItem('app-language');
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    
     async function loadTranslations() {
       try {
         const localeModule = await import(`@/lib/locales/${language}.json`);
@@ -76,8 +83,13 @@ export function TranslationProvider({
     return final_text;
   };
 
+  const handleSetLanguage = (lang: string) => {
+    setLanguage(lang);
+    localStorage.setItem('app-language', lang);
+  }
+
   return (
-    <TranslationContext.Provider value={{ translations, t, language, setLanguage }}>
+    <TranslationContext.Provider value={{ translations, t, language, setLanguage: handleSetLanguage }}>
       {children}
     </TranslationContext.Provider>
   );

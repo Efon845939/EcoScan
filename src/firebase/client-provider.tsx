@@ -1,39 +1,19 @@
 'use client';
 
-import React, { useMemo, type ReactNode, useState, useEffect } from 'react';
-import { FirebaseProvider } from '@/firebase/provider';
+import { ReactNode, useMemo } from 'react';
 import { initializeFirebase } from '@/firebase';
-import { TranslationProvider } from '@/hooks/use-translation';
+import { FirebaseProvider } from '@/firebase/provider';
 
-interface FirebaseClientProviderProps {
-  children: ReactNode;
-}
-
-export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
+/**
+ * This provider is responsible for initializing Firebase on the client-side.
+ * It ensures that `initializeApp` is called only once.
+ * It should be used at the root of your client-side component tree.
+ */
+export function FirebaseClientProvider({ children }: { children: ReactNode }) {
   const firebaseServices = useMemo(() => {
-    // Initialize Firebase on the client side, once per component mount.
+    // This hook ensures that Firebase is initialized only once per client session.
     return initializeFirebase();
-  }, []); // Empty dependency array ensures this runs only once on mount
-
-  const [language, setLanguage] = useState('en');
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('app-language');
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
-    }
   }, []);
-
-  const handleSetLanguage = (lang: string) => {
-    setLanguage(lang);
-    localStorage.setItem('app-language', lang);
-  }
-
-  useEffect(() => {
-    document.documentElement.lang = language;
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-  }, [language]);
-
 
   return (
     <FirebaseProvider
@@ -41,9 +21,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       auth={firebaseServices.auth}
       firestore={firebaseServices.firestore}
     >
-      <TranslationProvider language={language} setLanguage={handleSetLanguage}>
-        {children}
-      </TranslationProvider>
+      {children}
     </FirebaseProvider>
   );
 }
