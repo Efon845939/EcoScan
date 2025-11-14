@@ -21,20 +21,28 @@ export function TranslationProvider({
 }: {
   children: ReactNode;
 }) {
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguageState] = useState('en');
   const [translations, setTranslations] = useState(en);
 
+  // 1. On mount, read language from localStorage (client-side only)
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('app-language');
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
+    try {
+      const storedLang = window.localStorage.getItem('app-language');
+      if (storedLang) {
+        setLanguageState(storedLang);
+      }
+    } catch (e) {
+      console.warn("Could not access localStorage to get language.");
     }
   }, []);
 
+  // 2. When language state changes, update translations and html attributes (client-side only)
   useEffect(() => {
+    // Update HTML attributes
     document.documentElement.lang = language;
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     
+    // Load translation file
     async function loadTranslations() {
       try {
         const localeModule = await import(`@/lib/locales/${language}.json`);
@@ -46,6 +54,16 @@ export function TranslationProvider({
     }
     loadTranslations();
   }, [language]);
+
+  // Function to set language and persist it
+  const setLanguage = (lang: string) => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem('app-language', lang);
+    } catch (e) {
+       console.warn("Could not access localStorage to set language.");
+    }
+  }
 
   const t = (key: string, options: Record<string, string | number | boolean | object> = {}) => {
     const keys = key.split('.');
@@ -87,13 +105,8 @@ export function TranslationProvider({
     return final_text;
   };
 
-  const handleSetLanguage = (lang: string) => {
-    setLanguage(lang);
-    localStorage.setItem('app-language', lang);
-  }
-
   return (
-    <TranslationContext.Provider value={{ translations, t, language, setLanguage: handleSetLanguage }}>
+    <TranslationContext.Provider value={{ translations, t, language, setLanguage }}>
       {children}
     </TranslationContext.Provider>
   );
