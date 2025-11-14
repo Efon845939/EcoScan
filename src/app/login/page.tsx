@@ -12,7 +12,7 @@ export default function LoginPage() {
 
   const [tab, setTab] = useState<'email' | 'phone'>('email');
 
-  const [identifier, setIdentifier] = useState(''); // email (şimdilik)
+  const [identifier, setIdentifier] = useState(''); // email (for now)
   const [password, setPassword] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -25,16 +25,16 @@ export default function LoginPage() {
 
     try {
       if (!identifier.trim() || !password.trim()) {
-        throw new Error('Lütfen e-posta ve şifre gir.');
+        throw new Error('Please enter email and password.');
       }
 
-      // Şimdilik sadece e-posta ile login
+      // For now, only email login
       const email = identifier.trim();
 
       const cred = await signInWithEmailAndPassword(auth, email, password);
       const user = cred.user;
 
-      // Firestore profil dokümanı var mı, yoksa oluştur
+      // Check if Firestore profile document exists, if not create it
       const userRef = doc(db, 'users', user.uid);
       const snap = await getDoc(userRef);
 
@@ -58,7 +58,7 @@ export default function LoginPage() {
       router.push('/');
     } catch (err: any) {
       console.error(err);
-      setError(err?.code || err?.message || 'Giriş yapılamadı.');
+      setError(err?.code || err?.message || 'Login failed.');
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function LoginPage() {
       className="min-h-screen flex items-center justify-center bg-gray-50"
     >
       <div className="w-full max-w-md bg-[#fdfdfd] rounded-2xl shadow-lg p-8 space-y-6 border border-gray-200">
-        {/* Başlık */}
+        {/* Header */}
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-bold text-slate-800">
             Welcome Back!
@@ -105,14 +105,14 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Şimdilik sadece email tab aktif, phone boş/disable */}
+        {/* For now only email tab is active, phone is empty/disabled */}
         {tab === 'phone' && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 text-center">
             Phone login is not implemented yet. Please use the Email tab.
           </div>
         )}
 
-        {/* Email login formu */}
+        {/* Email login form */}
         {tab === 'email' && (
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
@@ -181,7 +181,7 @@ export default function LoginPage() {
           Social login buttons (e.g., Google, Apple)
         </div>
 
-        {/* Alt metin: hesabın yok mu? */}
+        {/* Bottom text: don't have an account? */}
         <p className="text-sm text-slate-600 text-center">
           Don’t have an account?{' '}
           <button
