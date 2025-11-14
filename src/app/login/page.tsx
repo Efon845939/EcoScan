@@ -1,4 +1,3 @@
-// src/app/login/page.tsx
 'use client';
 
 import { useState, FormEvent } from 'react';
@@ -15,19 +14,13 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 export default function LoginPage() {
   const router = useRouter();
 
-  // login / signup modu
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
-
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // sadece signup’ta kullanılacak
-  const [username, setUsername] = useState('');
+  const [code, setCode] = useState(''); // onay kodu
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const isLogin = mode === 'login';
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -35,19 +28,33 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      if (isLogin) {
-        // ---- LOGIN ----
-        const cred = await signInWithEmailAndPassword(auth, email, password);
-        const user = cred.user;
+      if (!username.trim()) {
+        throw new Error('KULLANICI_ADI_GEREKLI');
+      }
+      if (!code.trim()) {
+        // Şimdilik “kod boş olmasın” şartı. Gerçek OTP’yi backend’e bağlayınca burada kontrol edeceksin.
+        throw new Error('ONAY_KODU_GEREKLI');
+      }
 
-        // Firestore profil dokümanı var mı, yoksa oluştur
-        const userRef = doc(db, 'users', user.uid);
-        const snap = await getDoc(userRef);
+      let cred;
 
-        if (!snap.exists()) {
+      // 1) Önce giriş dene
+      try {
+        cred = await signInWithEmailAndPassword(auth, email, password);
+      } catch (err: any) {
+        if (err?.code === 'auth/user-not-found') {
+          // 2) Kullanıcı yoksa → KAYIT OL
+          cred = await createUserWithEmailAndPassword(auth, email, password);
+          const user = cred.user;
+
+          // Auth displayName
+          await updateProfile(user, { displayName: username });
+
+          // Firestore profil dokümanı
+          const userRef = doc(db, 'users', user.uid);
           await setDoc(userRef, {
             uid: user.uid,
-            username: user.displayName || email.split('@')[0],
+            username,
             email: user.email,
             emailVerified: user.emailVerified ?? false,
             phone: null,
@@ -59,42 +66,25 @@ export default function LoginPage() {
             isDisabled: false,
             roles: ['user'],
           });
+        } else {
+          // Diğer login hatalarını fırlat
+          throw err;
         }
-      } else {
-        // ---- SIGNUP ----
-        if (!username.trim()) {
-          throw new Error('USERNAME_REQUIRED');
-        }
-
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        const user = cred.user;
-
-        // Auth displayName
-        await updateProfile(user, { displayName: username });
-
-        const userRef = doc(db, 'users', user.uid);
-        await setDoc(userRef, {
-          uid: user.uid,
-          username,
-          email: user.email,
-          emailVerified: user.emailVerified ?? false,
-          phone: null,
-          phoneVerified: false,
-          country: 'TR',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          totalPoints: 0,
-          isDisabled: false,
-          roles: ['user'],
-        });
       }
 
-      // başarı → ana sayfaya
+      // TODO: Buraya gerçek OTP doğrulama entegrasyonunu eklersin.
+      // Şu an sadece "kod boş değilse" geçiyor.
+
       router.push('/');
     } catch (err: any) {
       console.error(err);
-      const code = err?.code || err?.message || 'Bilinmeyen hata';
-      setError(code);
+      const msg =
+        err?.message === 'KULLANICI_ADI_GEREKLI'
+          ? 'Lütfen bir kullanıcı adı gir.'
+          : err?.message === 'ONAY_KODU_GEREKLI'
+          ? 'Lütfen onay kodunu gir.'
+          : err?.code || err?.message || 'Bilinmeyen hata';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -121,55 +111,6 @@ export default function LoginPage() {
           boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
         }}
       >
-        {/* Mode switch */}
-        <div
-          style={{
-            display: 'flex',
-            marginBottom: 16,
-            backgroundColor: '#f3f4f6',
-            borderRadius: 999,
-            padding: 4,
-            gap: 4,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setMode('login')}
-            style={{
-              flex: 1,
-              padding: '6px 10px',
-              borderRadius: 999,
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 14,
-              fontWeight: 600,
-              backgroundColor: isLogin ? '#ffffff' : 'transparent',
-              color: isLogin ? '#047857' : '#4b5563',
-              boxShadow: isLogin ? '0 2px 6px rgba(0,0,0,0.09)' : 'none',
-            }}
-          >
-            Giriş
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('signup')}
-            style={{
-              flex: 1,
-              padding: '6px 10px',
-              borderRadius: 999,
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 14,
-              fontWeight: 600,
-              backgroundColor: !isLogin ? '#ffffff' : 'transparent',
-              color: !isLogin ? '#047857' : '#4b5563',
-              boxShadow: !isLogin ? '0 2px 6px rgba(0,0,0,0.09)' : 'none',
-            }}
-          >
-            Kayıt ol
-          </button>
-        </div>
-
         <h1
           style={{
             fontSize: 20,
@@ -177,7 +118,7 @@ export default function LoginPage() {
             marginBottom: 8,
           }}
         >
-          EcoScan {isLogin ? 'Giriş' : 'Kayıt'}
+          EcoScan Giriş & Kaydol
         </h1>
         <p
           style={{
@@ -186,36 +127,32 @@ export default function LoginPage() {
             marginBottom: 16,
           }}
         >
-          {isLogin
-            ? 'Hesabına giriş yap ve puanlarını takip et.'
-            : 'Yeni hesabını oluştur, kullanıcı adını seç ve puan kazanmaya başla.'}
+          Kullanıcı adını, e-posta adresini, şifreni ve onay kodunu gir. Hesabın
+          varsa giriş yaparsın, yoksa aynı bilgilerle yeni hesap açılır.
         </p>
 
         <form
           onSubmit={handleSubmit}
           style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
         >
-          {/* sadece signup modunda kullanıcı adı */}
-          {!isLogin && (
-            <label style={{ fontSize: 14 }}>
-              Kullanıcı adı
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                style={{
-                  width: '100%',
-                  marginTop: 4,
-                  padding: '8px 10px',
-                  borderRadius: 8,
-                  border: '1px solid #d1d5db',
-                  fontSize: 14,
-                }}
-                placeholder="örnek: eco_efon"
-                required
-              />
-            </label>
-          )}
+          <label style={{ fontSize: 14 }}>
+            Kullanıcı adı
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              style={{
+                width: '100%',
+                marginTop: 4,
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid #d1d5db',
+                fontSize: 14,
+              }}
+              placeholder="örnek: eco_efon"
+              required
+            />
+          </label>
 
           <label style={{ fontSize: 14 }}>
             E-posta
@@ -255,6 +192,25 @@ export default function LoginPage() {
             />
           </label>
 
+          <label style={{ fontSize: 14 }}>
+            Onay kodu
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              style={{
+                width: '100%',
+                marginTop: 4,
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid #d1d5db',
+                fontSize: 14,
+              }}
+              placeholder="6 haneli kod"
+              required
+            />
+          </label>
+
           {error && (
             <div
               style={{
@@ -266,7 +222,7 @@ export default function LoginPage() {
                 padding: '6px 8px',
               }}
             >
-              Hata: {error}
+              {error}
             </div>
           )}
 
@@ -286,11 +242,7 @@ export default function LoginPage() {
               cursor: loading ? 'default' : 'pointer',
             }}
           >
-            {loading
-              ? 'İşleniyor...'
-              : isLogin
-              ? 'Giriş yap'
-              : 'Kayıt ol ve giriş yap'}
+            {loading ? 'İşleniyor...' : 'Giriş yap / Kaydol'}
           </button>
         </form>
       </div>
