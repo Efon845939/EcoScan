@@ -12,7 +12,7 @@ export default function LoginPage() {
 
   const [tab, setTab] = useState<'email' | 'phone'>('email');
 
-  const [identifier, setIdentifier] = useState(''); // email (şimdilik)
+  const [identifier, setIdentifier] = useState(''); // email (for now)
   const [password, setPassword] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -25,16 +25,16 @@ export default function LoginPage() {
 
     try {
       if (!identifier.trim() || !password.trim()) {
-        throw new Error('Lütfen e-posta ve şifre gir.');
+        throw new Error('Please enter your email and password.');
       }
 
-      // Şimdilik sadece e-posta ile login
+      // For now, only email login is supported
       const email = identifier.trim();
 
       const cred = await signInWithEmailAndPassword(auth, email, password);
       const user = cred.user;
 
-      // Firestore profil dokümanı var mı, yoksa oluştur
+      // Check for and create a Firestore profile if it doesn't exist
       const userRef = doc(db, 'users', user.uid);
       const snap = await getDoc(userRef);
 
@@ -46,7 +46,7 @@ export default function LoginPage() {
           emailVerified: user.emailVerified ?? false,
           phone: null,
           phoneVerified: false,
-          country: 'TR',
+          country: 'TR', // Default country, can be changed later
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           totalPoints: 0,
@@ -58,7 +58,7 @@ export default function LoginPage() {
       router.push('/');
     } catch (err: any) {
       console.error(err);
-      setError(err?.code || err?.message || 'Giriş yapılamadı.');
+      setError(err?.code || err?.message || 'Failed to log in.');
     } finally {
       setLoading(false);
     }
@@ -73,13 +73,13 @@ export default function LoginPage() {
       }}
     >
       <div className="w-full max-w-md bg-[#fdf7ec] rounded-2xl shadow-xl p-6 space-y-6 border border-[#e5dcc7]">
-        {/* Başlık */}
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold text-slate-900">
+        {/* Header */}
+        <div className="space-y-1 text-center">
+          <h1 className="text-2xl font-bold text-slate-900">
             Welcome Back!
           </h1>
           <p className="text-sm text-slate-600">
-            Enter your credentials to access your account.
+            Enter your credentials to access your account
           </p>
         </div>
 
@@ -88,10 +88,10 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setTab('email')}
-            className={`flex-1 py-2 border-r border-[#d6cfbf] ${
+            className={`flex-1 py-2.5 border-r border-[#d6cfbf] transition-colors ${
               tab === 'email'
-                ? 'bg-white text-slate-900'
-                : 'bg-transparent text-slate-600'
+                ? 'bg-white text-slate-900 shadow-inner'
+                : 'bg-transparent text-slate-600 hover:bg-white/50'
             }`}
           >
             Email
@@ -99,24 +99,24 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setTab('phone')}
-            className={`flex-1 py-2 ${
+            className={`flex-1 py-2.5 transition-colors ${
               tab === 'phone'
-                ? 'bg-white text-slate-900'
-                : 'bg-transparent text-slate-600'
+                ? 'bg-white text-slate-900 shadow-inner'
+                : 'bg-transparent text-slate-600 hover:bg-white/50'
             }`}
           >
             Phone
           </button>
         </div>
 
-        {/* Şimdilik sadece email tab aktif */}
+        {/* Phone Tab Notice */}
         {tab === 'phone' && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 text-center">
             Phone login is not implemented yet. Please use the Email tab.
           </div>
         )}
 
-        {/* Email login formu */}
+        {/* Email Login Form */}
         {tab === 'email' && (
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1">
@@ -127,7 +127,7 @@ export default function LoginPage() {
                 type="email"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                className="w-full rounded-lg border border-[#d4cbb5] bg-[#fdfaf2] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#d4cbb5] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 placeholder="name@example.com"
                 autoComplete="email"
                 required
@@ -142,12 +142,12 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-[#d4cbb5] bg-[#fdfaf2] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#d4cbb5] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 placeholder="Your password"
                 autoComplete="current-password"
                 required
               />
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-1">
                 <button
                   type="button"
                   className="text-xs text-emerald-700 hover:underline"
@@ -180,12 +180,13 @@ export default function LoginPage() {
           <div className="h-px flex-1 bg-[#e2d9c4]" />
         </div>
 
-        <div className="text-center text-xs text-slate-400">
-          (Social login buttons can be added here later)
+        {/* Placeholder for Social Logins */}
+        <div className="h-8 rounded-lg bg-slate-200/50 flex items-center justify-center text-xs text-slate-400 border border-slate-200">
         </div>
 
-        {/* Alt metin: hesabın yok mu? */}
-        <p className="text-xs text-slate-600 text-center">
+
+        {/* Sign up Link */}
+        <p className="text-sm text-slate-600 text-center">
           Don’t have an account?{' '}
           <button
             type="button"
