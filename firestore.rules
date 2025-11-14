@@ -9,5 +9,10 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
+
+    match /verificationCodes/{codeId} {
+      // Bu koleksiyona SADECE Cloud Functions (Admin SDK) erişsin.
+      allow read, write: if false;
+    }
   }
 }
