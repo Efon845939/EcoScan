@@ -217,5 +217,25 @@
   "toast_reward_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız.",
   "toast_reward_confirm_title": "Kullanımı Onayla",
   "toast_reward_confirm_description": "'{title}' için {cost} puan harcamak istediğinizden emin misiniz?",
-  "toast_reward_confirm_cancel": "İptal"
+  "toast_reward_confirm_cancel": "İptal",
+  "auth": {
+    "login": {
+      "title": "EcoScan'a giriş yap",
+      "subtitle": "Hesabına giriş yap ve puanlarını takip et.",
+      "cta": "Giriş yap",
+      "footer": "Şifreni mi unuttun? Sıfırlamak için e-posta ile devam edebilirsin.",
+      "signup_link": "Hesabın yok mu? Kayıt ol"
+    },
+    "fields": {
+      "email": "E-posta",
+      "password": "Şifre"
+    },
+    "placeholders": {
+      "email": "ornek@mail.com",
+      "password": "Şifreni gir"
+    },
+    "error": {
+      "unknown": "Bir hata oluştu. Lütfen tekrar dene."
+    }
+  }
 }

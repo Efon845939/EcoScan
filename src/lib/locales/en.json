@@ -110,7 +110,6 @@
     "Submit extra proof by photographing a drink or its receipt.",
     "Take a short walk/bike ride and verify it with a photo."
   ],
-
   "go_to_verify": "Go to Verification Center",
   "back_to_lobby": "Back to Lobby",
   "take_second_chance_button": "Take Second Chance",
@@ -216,5 +215,25 @@
   "toast_reward_redeemed_description": "You've successfully redeemed '{title}'.",
   "toast_reward_confirm_title": "Confirm Redemption",
   "toast_reward_confirm_description": "Are you sure you want to spend {cost} points to redeem '{title}'?",
-  "toast_reward_confirm_cancel": "Cancel"
+  "toast_reward_confirm_cancel": "Cancel",
+  "auth": {
+    "login": {
+      "title": "Sign in to EcoScan",
+      "subtitle": "Log in to track your rewards and footprint.",
+      "cta": "Sign in",
+      "footer": "Forgot your password? You can reset it via email.",
+      "signup_link": "Don't have an account? Sign up"
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Password"
+    },
+    "placeholders": {
+      "email": "you@example.com",
+      "password": "Enter your password"
+    },
+    "error": {
+      "unknown": "Something went wrong. Please try again."
+    }
+  }
 }
