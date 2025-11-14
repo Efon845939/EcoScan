@@ -12,8 +12,6 @@ import {
   Languages,
   Globe,
   ShieldCheck,
-  User,
-  LogIn,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -55,12 +53,11 @@ import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { getPointsForMaterial } from '@/lib/points';
 import SurveyButton from './survey-button';
 import { CarbonFootprintSurvey } from './carbon-footprint-survey';
-import { useRouter } from 'next/navigation';
 
+export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey';
 
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey' | 'profile';
-
-function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
+export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
+  const { language, setLanguage } = useTranslation();
   const [step, setStep] = useState<Step>(initialStep);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [barcodeNumber, setBarcodeNumber] = useState('');
@@ -79,11 +76,10 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const router = useRouter();
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
-  const { t, setLanguage, language: currentLanguage } = useTranslation();
+  const { t } = useTranslation();
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -158,22 +154,24 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   }, [isUserLoading, user, auth]);
   
   useEffect(() => {
-    if (isUserLoading || isProfileLoading || !user || !userProfileRef) {
+    if (isUserLoading || isProfileLoading || !user || user.isAnonymous) {
       return;
     }
   
-    // Create a new profile if the user is authenticated but doesn't have one
-    if (user && !user.isAnonymous && !userProfile && !isProfileLoading) {
+    if (user && !userProfile) {
       const newProfile = {
         email: user.email || '',
-        displayName: user.displayName || 'Anonymous User',
+        firstName: user.displayName?.split(' ')[0] || '',
+        lastName: user.displayName?.split(' ')[1] || '',
         totalPoints: 0,
         createdAt: serverTimestamp(),
       };
-      setDocumentNonBlocking(userProfileRef, newProfile, { merge: false });
+  
+      if (userProfileRef) {
+        setDocumentNonBlocking(userProfileRef, newProfile, { merge: false });
+      }
     }
   }, [user, userProfile, isUserLoading, isProfileLoading, userProfileRef]);
-
 
   const lastSurveyTimestamp = userProfile?.lastCarbonSurveyDate as Timestamp | undefined;
 
@@ -279,8 +277,8 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
             const pointsAwarded = getPointsForMaterial(identifiedMaterial.material);
             setAnimatePoints(`+${pointsAwarded}`);
             
-            if (userProfileRef) {
-              const newPoints = userPoints + pointsAwarded;
+            if (userProfileRef && userProfile) {
+              const newPoints = (userProfile.totalPoints || 0) + pointsAwarded;
               updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
             }
             toast({
@@ -298,8 +296,8 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
 
             if (result.reason.toLowerCase().includes('duplicate') || result.reason.toLowerCase().includes('generated')) {
               setAnimatePoints('-50');
-              if (userProfileRef) {
-                 const newPoints = Math.max(0, userPoints - 50);
+              if (userProfileRef && userProfile) {
+                 const newPoints = Math.max(0, (userProfile.totalPoints || 0) - 50);
                  updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
               }
             }
@@ -330,7 +328,7 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   }
 
   const renderContent = () => {
-    if (isUserLoading || (user && !user.isAnonymous && isProfileLoading)) {
+    if (isUserLoading || isProfileLoading) {
         return (
             <div className="flex flex-col items-center justify-center p-8">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -353,23 +351,13 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
                 <Camera className="mr-2" />
                 {t('scan_card_scan_button')}
               </Button>
-              <SurveyButton 
-                  cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} 
-                  onClick={() => setStep('survey')}
-              />
+              <SurveyButton cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} />
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
-                {user && !user.isAnonymous ? (
-                    <Button variant="link" onClick={() => router.push('/profile')}>
-                        <User className="mr-2" />
-                        View Profile
-                    </Button>
-                ) : (
-                    <Button variant="outline" onClick={() => router.push('/login')}>
-                        <LogIn className="mr-2" />
-                        Sign In to Save Progress
-                    </Button>
-                )}
+               <Button variant="link" onClick={() => setStep('rewards')}>
+                <Award className="mr-2" />
+                {t('scan_card_rewards_link')} ({userPoints} {t('header_points')})
+              </Button>
             </CardFooter>
           </Card>
         );
@@ -509,7 +497,7 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
       case 'verify':
         return <VerificationCenter onBack={() => setStep('scan')} />;
       case 'survey':
-        return <CarbonFootprintSurvey onBack={() => setStep('scan')} region={region} language={currentLanguage} />;
+        return <CarbonFootprintSurvey onBack={() => setStep('scan')} region={region} language={language} />;
       default:
         return null;
     }
@@ -549,9 +537,9 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
         <Dialog open={showLowConfidenceModal} onOpenChange={setShowLowConfidenceModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-headline">{t('low_confidence_title')}</DialogTitle>
+              <DialogTitle className="font-headline">{t('confirm_card_title')}</DialogTitle>
               <DialogDescription>
-                {t('low_confidence_description')}
+                {t('confirm_card_description')}
               </DialogDescription>
             </DialogHeader>
             <Input
@@ -563,7 +551,7 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
             <DialogFooter>
               <Button onClick={handleBarcodeSubmit} disabled={isPending || !barcodeNumber}>
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {t('low_confidence_submit_button')}
+                Submit Barcode
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -582,12 +570,10 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
                   <BookCopy className="mr-2" />
                   {t('settings_guide_button')}
                </Button>
-                {user && !user.isAnonymous && (
-                    <Button variant="outline" className="justify-start" onClick={() => { router.push('/profile'); setShowSettingsModal(false); }}>
-                        <User className="mr-2" />
-                        Profile
-                    </Button>
-                )}
+               <Button variant="outline" className="justify-start" onClick={() => { setStep('verify'); setShowSettingsModal(false); }}>
+                  <ShieldCheck className="mr-2" />
+                  Verification Center
+               </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
                    <Globe />
@@ -613,7 +599,7 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
                     <Languages />
                    {t('settings_language_label')}
                 </Label>
-                <Select value={currentLanguage} onValueChange={handleLanguageChange}>
+                <Select value={language} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a language" />
                   </SelectTrigger>
@@ -637,5 +623,3 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
     </div>
   );
 }
-
-export { AppContainer };

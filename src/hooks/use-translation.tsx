@@ -73,6 +73,10 @@ export function TranslationProvider({
       return text;
     }
 
+    if (typeof text !== 'string') {
+        return key; // Return key if translation is not a string
+    }
+
     let final_text = String(text);
     for(const option in options) {
         if (option !== 'returnObjects') {
