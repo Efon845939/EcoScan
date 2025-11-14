@@ -3,60 +3,35 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-
 import { auth, firestore as db } from '@/firebase';
-import {
-  signInWithEmailAndPassword,
-} from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-
-// Cloud Functions base URL (env ile yönet)
-// Örn: NEXT_PUBLIC_FUNCTIONS_BASE_URL=https://europe-west4-<PROJECT_ID>.cloudfunctions.net
-const FUNCTIONS_BASE_URL =
-  process.env.NEXT_PUBLIC_FUNCTIONS_BASE_URL ||
-  'https://europe-west4-<PROJECT_ID>.cloudfunctions.net'; // <PROJECT_ID>’yi güncelle
 
 export default function LoginPage() {
   const router = useRouter();
 
-  // mode: login / signup
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [tab, setTab] = useState<'email' | 'phone'>('email');
 
-  // LOGIN form state
-  const [loginIdentifier, setLoginIdentifier] = useState(''); // kullanıcı adı veya e-posta
-  const [loginPassword, setLoginPassword] = useState('');
-
-  // SIGNUP form state
-  const [suUsername, setSuUsername] = useState('');
-  const [suEmail, setSuEmail] = useState('');
-  const [suPassword, setSuPassword] = useState('');
-  const [suCode, setSuCode] = useState('');
-
-  const [signupStep, setSignupStep] = useState<'form' | 'code'>('form'); // önce form, sonra kod
+  const [identifier, setIdentifier] = useState(''); // email (şimdilik)
+  const [password, setPassword] = useState('');
 
   const [loading, setLoading] = useState(false);
-  const [signupLoading, setSignupLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [signupMessage, setSignupMessage] = useState<string | null>(null);
 
-  const isLogin = mode === 'login';
-
-  // ---------- LOGIN FLOW ----------
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      if (!loginIdentifier.trim() || !loginPassword.trim()) {
-        throw new Error('Lütfen e-posta / kullanıcı adı ve şifre gir.');
+      if (!identifier.trim() || !password.trim()) {
+        throw new Error('Lütfen e-posta ve şifre gir.');
       }
 
-      // Basit versiyon: loginIdentifier’ı e-posta kabul ediyoruz.
-      // Eğer username login istiyorsan backend tarafında mapping tablosu kurarsın.
-      const email = loginIdentifier;
+      // Şimdilik sadece e-posta ile login
+      const email = identifier.trim();
 
-      const cred = await signInWithEmailAndPassword(auth, email, loginPassword);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
       const user = cred.user;
 
       // Firestore profil dokümanı var mı, yoksa oluştur
@@ -89,85 +64,6 @@ export default function LoginPage() {
     }
   }
 
-  // ---------- SIGNUP: STEP 1 – KOD GÖNDER ----------
-  async function handleSendCode(e: FormEvent) {
-    e.preventDefault();
-    setSignupLoading(true);
-    setError(null);
-    setSignupMessage(null);
-
-    try {
-      if (!suUsername.trim() || !suEmail.trim() || !suPassword.trim()) {
-        throw new Error('Lütfen kullanıcı adı, e-posta ve şifre gir.');
-      }
-
-      // Cloud Function: requestEmailCode
-      const res = await fetch(`${FUNCTIONS_BASE_URL}/requestEmailCode`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: suEmail,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Kod gönderilemedi.');
-      }
-
-      setSignupMessage(
-        'Onay kodu e-posta adresine gönderildi. Lütfen gelen kutunu kontrol et.'
-      );
-      setSignupStep('code');
-    } catch (err: any) {
-      console.error(err);
-      setError(err?.message || 'Kod gönderilirken bir hata oluştu.');
-    } finally {
-      setSignupLoading(false);
-    }
-  }
-
-  // ---------- SIGNUP: STEP 2 – KAYIT OL ----------
-  async function handleSignup(e: FormEvent) {
-    e.preventDefault();
-    setSignupLoading(true);
-    setError(null);
-
-    try {
-      if (!suCode.trim()) {
-        throw new Error('Lütfen e-postana gelen onay kodunu gir.');
-      }
-
-      // Cloud Function: signupWithEmailCode
-      const res = await fetch(`${FUNCTIONS_BASE_URL}/signupWithEmailCode`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: suEmail,
-          password: suPassword,
-          username: suUsername,
-          code: suCode,
-        }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Kayıt işlemi başarısız.');
-      }
-
-      // Backend başarılıysa auth tarafında zaten oturum açtırmış olabilir.
-      // Eğer custom token döndürürsen burada signInWithCustomToken ile devam edersin.
-      // Şimdilik success varsayıp /'a atıyoruz:
-      router.push('/');
-    } catch (err: any) {
-      console.error(err);
-      setError(err?.message || 'Kayıt sırasında bir hata oluştu.');
-    } finally {
-      setSignupLoading(false);
-    }
-  }
-
   return (
     <div
       className="min-h-screen flex items-center justify-center"
@@ -176,224 +72,133 @@ export default function LoginPage() {
           'radial-gradient(circle at top left, #d1fae5, transparent), radial-gradient(circle at top right, #bfdbfe, transparent)',
       }}
     >
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 space-y-6">
-        {/* TAB BAR */}
-        <div className="flex rounded-full bg-slate-100 p-1 text-sm font-medium">
+      <div className="w-full max-w-md bg-[#fdf7ec] rounded-2xl shadow-xl p-6 space-y-6 border border-[#e5dcc7]">
+        {/* Başlık */}
+        <div className="space-y-1">
+          <h1 className="text-xl font-semibold text-slate-900">
+            Welcome Back!
+          </h1>
+          <p className="text-sm text-slate-600">
+            Hesabına erişmek için bilgilerini gir.
+          </p>
+        </div>
+
+        {/* Tab bar: Email / Phone */}
+        <div className="flex rounded-lg bg-[#e4dfd1] text-sm font-medium overflow-hidden">
           <button
             type="button"
-            onClick={() => {
-              setMode('login');
-              setError(null);
-            }}
-            className={`flex-1 py-2 rounded-full ${
-              isLogin
-                ? 'bg-white shadow text-emerald-600'
-                : 'text-slate-600 hover:text-slate-800'
+            onClick={() => setTab('email')}
+            className={`flex-1 py-2 border-r border-[#d6cfbf] ${
+              tab === 'email'
+                ? 'bg-white text-slate-900'
+                : 'bg-transparent text-slate-600'
             }`}
           >
-            Giriş yap
+            Email
           </button>
           <button
             type="button"
-            onClick={() => {
-              setMode('signup');
-              setError(null);
-            }}
-            className={`flex-1 py-2 rounded-full ${
-              !isLogin
-                ? 'bg-white shadow text-emerald-600'
-                : 'text-slate-600 hover:text-slate-800'
+            onClick={() => setTab('phone')}
+            className={`flex-1 py-2 ${
+              tab === 'phone'
+                ? 'bg-white text-slate-900'
+                : 'bg-transparent text-slate-600'
             }`}
           >
-            Kayıt ol
+            Phone
           </button>
         </div>
 
-        {/* LOGIN FORM */}
-        {isLogin && (
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-xl font-semibold">EcoScan Giriş</h1>
-              <p className="text-sm text-slate-600">
-                Kullanıcı adın veya e-posta adresin ve şifrenle giriş yap.
-              </p>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">
-                  Kullanıcı adı veya e-posta
-                </label>
-                <input
-                  type="text"
-                  value={loginIdentifier}
-                  onChange={(e) => setLoginIdentifier(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="kullanici_adi veya ornek@mail.com"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Şifre</label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
-              {error && (
-                <div className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-2 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Giriş yapılıyor...' : 'Giriş yap'}
-              </button>
-            </form>
-
-            <p className="text-xs text-slate-500 text-center">
-              Hesabın yok mu?{' '}
-              <button
-                type="button"
-                className="text-emerald-600 font-semibold"
-                onClick={() => {
-                  setMode('signup');
-                  setError(null);
-                }}
-              >
-                Kayıt ol
-              </button>
-            </p>
+        {/* Şimdilik sadece email tab aktif, phone boş/disable */}
+        {tab === 'phone' && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Telefonla giriş henüz aktif değil. Şimdilik e-posta sekmesini
+            kullan.
           </div>
         )}
 
-        {/* SIGNUP FORM */}
-        {!isLogin && (
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-xl font-semibold">EcoScan Kayıt</h1>
-              <p className="text-sm text-slate-600">
-                Kullanıcı adı, e-posta ve şifreni gir. E-posta adresine gelen
-                onay kodunu yazarak kaydını tamamla.
-              </p>
+        {/* Email login formu */}
+        {tab === 'email' && (
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-800">
+                Email
+              </label>
+              <input
+                type="email"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="w-full rounded-lg border border-[#d4cbb5] bg-[#fdfaf2] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="name@example.com"
+                autoComplete="email"
+                required
+              />
             </div>
 
-            {/* STEP 1: FORM + “Kodu Gönder” */}
-            {signupStep === 'form' && (
-              <form onSubmit={handleSendCode} className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">Kullanıcı adı</label>
-                  <input
-                    type="text"
-                    value={suUsername}
-                    onChange={(e) => setSuUsername(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="örnek: eco_efon"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">E-posta</label>
-                  <input
-                    type="email"
-                    value={suEmail}
-                    onChange={(e) => setSuEmail(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="ornek@mail.com"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">Şifre</label>
-                  <input
-                    type="password"
-                    value={suPassword}
-                    onChange={(e) => setSuPassword(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-
-                {error && (
-                  <div className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
-                    {error}
-                  </div>
-                )}
-
-                {signupMessage && (
-                  <div className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-                    {signupMessage}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={signupLoading}
-                  className="mt-2 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {signupLoading ? 'Kod gönderiliyor...' : 'Onay kodu gönder'}
-                </button>
-              </form>
-            )}
-
-            {/* STEP 2: CODE + “Kayıt ol” */}
-            {signupStep === 'code' && (
-              <form onSubmit={handleSignup} className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">
-                    E-postana gelen onay kodu
-                  </label>
-                  <input
-                    type="text"
-                    value={suCode}
-                    onChange={(e) => setSuCode(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="6 haneli kod"
-                    required
-                  />
-                </div>
-
-                {error && (
-                  <div className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={signupLoading}
-                  className="mt-2 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {signupLoading ? 'Kayıt yapılıyor...' : 'Kayıt ol'}
-                </button>
-
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-800">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-[#d4cbb5] bg-[#fdfaf2] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Your password"
+                autoComplete="current-password"
+                required
+              />
+              <div className="flex justify-end">
                 <button
                   type="button"
-                  className="w-full text-xs text-slate-500 underline mt-1"
-                  onClick={() => {
-                    setSignupStep('form');
-                    setError(null);
-                  }}
+                  className="text-xs text-emerald-700 hover:underline"
+                  // ileride /reset-password'e yönlendirirsin
+                  onClick={() => alert('Şifre sıfırlama ekranı henüz yapılmadı.')}
                 >
-                  E-postayı değiştirmek istiyorum
+                  Forgot password?
                 </button>
-              </form>
+              </div>
+            </div>
+
+            {error && (
+              <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+                {error}
+              </div>
             )}
-          </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-[#256029] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1d4f21] disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Logging in...' : 'Login with Email'}
+            </button>
+          </form>
         )}
+
+        {/* OR Divider */}
+        <div className="flex items-center gap-3 text-xs text-slate-400">
+          <div className="h-px flex-1 bg-[#e2d9c4]" />
+          <span>OR</span>
+          <div className="h-px flex-1 bg-[#e2d9c4]" />
+        </div>
+
+        {/* Buraya istersen Google / Apple butonları eklersin */}
+        <div className="text-center text-xs text-slate-400">
+          (Buraya Google / Apple ile giriş butonları gelebilir)
+        </div>
+
+        {/* Alt metin: hesabın yok mu? */}
+        <p className="text-xs text-slate-600 text-center">
+          Don’t have an account?{' '}
+          <button
+            type="button"
+            className="font-semibold text-emerald-700 hover:underline"
+            onClick={() => router.push('/signup')}
+          >
+            Sign up
+          </button>
+        </p>
       </div>
     </div>
   );

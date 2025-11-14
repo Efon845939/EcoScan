@@ -1,111 +1,264 @@
+// src/app/signup/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useFirebase, setDocumentNonBlocking } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, serverTimestamp } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { auth, firestore as db } from '@/firebase';
+import { signInWithCustomToken } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-export default function SignUpPage() {
+// Cloud Functions base URL
+const FUNCTIONS_BASE_URL =
+  process.env.NEXT_PUBLIC_FUNCTIONS_BASE_URL ||
+  'https://europe-west4-studio-8170073529-138bb.cloudfunctions.net'; // <PROJECT_ID>’yi değiştir
+
+export default function SignupPage() {
+  const router = useRouter();
+
+  const [step, setStep] = useState<'form' | 'code'>('form');
+
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-  const { auth, firestore } = useFirebase();
-  const { toast } = useToast();
 
-  const handleSignUp = async () => {
-    if (!auth || !firestore) return;
-    setIsLoading(true);
+  const [code, setCode] = useState('');
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // 1. adım: kod gönder
+  async function handleSendCode(e: FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Update Firebase Auth profile
-      await updateProfile(user, { displayName });
+      if (!username.trim() || !email.trim() || !password.trim()) {
+        throw new Error('Lütfen kullanıcı adı, e-posta ve şifre gir.');
+      }
 
-      // Create user profile document in Firestore
-      const userProfileRef = doc(firestore, 'users', user.uid);
-      const newProfile = {
-        email: user.email,
-        displayName: displayName,
-        totalPoints: 0,
-        createdAt: serverTimestamp(),
-      };
-      await setDocumentNonBlocking(userProfileRef, newProfile, { merge: false });
+      const res = await fetch(`${FUNCTIONS_BASE_URL}/requestEmailCode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Onay kodu gönderilemedi.');
+      }
+
+      setMessage(
+        'Onay kodu e-posta adresine gönderildi. Lütfen gelen kutunu kontrol et.'
+      );
+      setStep('code');
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || 'Kod gönderilirken hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // 2. adım: kodla kayıt ol
+  async function handleSignup(e: FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (!code.trim()) {
+        throw new Error('Lütfen e-posta kodunu gir.');
+      }
+
+      const res = await fetch(`${FUNCTIONS_BASE_URL}/signupWithEmailCode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, username, code }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Kayıt işlemi başarısız.');
+      }
+
+      // Eğer backend customToken döndürüyorsa:
+      if (data.token && data.uid) {
+        await signInWithCustomToken(auth, data.token);
+
+        // profil yoksa oluştur (çoğu durumda CF tarafında zaten set etmiş olacaksın)
+        const userRef = doc(db, 'users', data.uid);
+        await setDoc(
+          userRef,
+          {
+            uid: data.uid,
+            username,
+            email,
+            emailVerified: true,
+            phone: null,
+            phoneVerified: false,
+            country: 'TR',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            totalPoints: 0,
+            isDisabled: false,
+            roles: ['user'],
+          },
+          { merge: true }
+        );
+      }
 
       router.push('/');
-      toast({ title: 'Success', description: 'Your account has been created.' });
-    } catch (error: any) {
-      console.error('Sign up error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Sign Up Failed',
-        description: error.message || 'Please check your details and try again.',
-      });
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || 'Kayıt sırasında hata oluştu.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
-          <CardDescription>Join EcoScan to start earning rewards for your green actions.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
-            <Input
-              id="displayName"
-              type="text"
-              placeholder="Your Name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full" onClick={handleSignUp} disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign Up
-          </Button>
-          <Button variant="link" className="w-full" onClick={() => router.push('/login')}>
-            Already have an account? Sign in
-          </Button>
-        </CardFooter>
-      </Card>
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{
+        background:
+          'radial-gradient(circle at top left, #d1fae5, transparent), radial-gradient(circle at top right, #bfdbfe, transparent)',
+      }}
+    >
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 space-y-4">
+        <div className="space-y-1">
+          <h1 className="text-xl font-semibold text-slate-900">
+            Create your EcoScan account
+          </h1>
+          <p className="text-sm text-slate-600">
+            Kullanıcı adını, e-posta adresini ve şifreni belirle. E-postana
+            gelen kod ile kaydını tamamla.
+          </p>
+        </div>
+
+        {step === 'form' && (
+          <form onSubmit={handleSendCode} className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-800">
+                Kullanıcı adı
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="örnek: eco_efon"
+                required
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-800">
+                E-posta
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="ornek@mail.com"
+                required
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-800">
+                Şifre
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+                {error}
+              </div>
+            )}
+            {message && (
+              <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                {message}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Kod gönderiliyor...' : 'Onay kodu gönder'}
+            </button>
+          </form>
+        )}
+
+        {step === 'code' && (
+          <form onSubmit={handleSignup} className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-800">
+                E-postana gelen onay kodu
+              </label>
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="6 haneli kod"
+                required
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Kayıt yapılıyor...' : 'Kayıt ol'}
+            </button>
+
+            <button
+              type="button"
+              className="w-full text-xs text-slate-500 underline mt-1"
+              onClick={() => {
+                setStep('form');
+                setError(null);
+                setMessage(null);
+              }}
+            >
+              E-postayı veya şifreyi değiştirmek istiyorum
+            </button>
+          </form>
+        )}
+
+        <p className="text-xs text-slate-600 text-center">
+          Zaten hesabın var mı?{' '}
+          <button
+            type="button"
+            className="font-semibold text-emerald-700 hover:underline"
+            onClick={() => router.push('/login')}
+          >
+            Giriş yap
+          </button>
+        </p>
+      </div>
     </div>
   );
 }
