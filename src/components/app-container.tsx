@@ -12,6 +12,7 @@ import {
   Languages,
   Globe,
   ShieldCheck,
+  User,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -53,8 +54,9 @@ import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { getPointsForMaterial } from '@/lib/points';
 import SurveyButton from './survey-button';
 import { CarbonFootprintSurvey } from './carbon-footprint-survey';
+import { ProfilePage } from './profile-page';
 
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey';
+export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey' | 'profile';
 
 const AppContainerWithTranslations = ({ initialStep }: { initialStep?: Step }) => {
     const [language, setLanguage] = useState('en');
@@ -527,6 +529,8 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
         return <VerificationCenter onBack={() => setStep('scan')} />;
       case 'survey':
         return <CarbonFootprintSurvey onBack={() => setStep('scan')} region={region} language={currentLanguage} />;
+      case 'profile':
+        return <ProfilePage onBack={() => setStep('scan')} />;
       default:
         return null;
     }
@@ -598,6 +602,10 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                <Button variant="outline" className="justify-start" onClick={() => { setStep('guide'); setShowSettingsModal(false); }}>
                   <BookCopy className="mr-2" />
                   {t('settings_guide_button')}
+               </Button>
+               <Button variant="outline" className="justify-start" onClick={() => { setStep('profile'); setShowSettingsModal(false); }}>
+                  <User className="mr-2" />
+                  Profile
                </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
