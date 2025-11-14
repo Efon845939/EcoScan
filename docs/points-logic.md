@@ -27,7 +27,7 @@ This logic is located in `src/lib/points.ts`.
 
 ## 2. Carbon Footprint Survey Points
 
-Points from the daily carbon footprint survey are calculated based on a user's inputs and their region. The system awards a base score immediately, with a large bonus available for verifying activities with a receipt.
+Points from the daily carbon footprint survey are calculated based on a user's inputs and their region. The system is designed to provide a fair reward based on impact, with a bonus for verifying activities.
 
 ### Regional Benchmarks
 
@@ -35,9 +35,9 @@ To ensure fairness, penalties and rewards are scaled based on regional daily COâ
 
 | Region      | Avg (kg/day) | Penalty Threshold (kg/day) |
 |-------------|--------------|------------------------------|
-| Turkey      | 10           | 25                           |
-| Germany     | 20           | 40                           |
-| USA         | 40           | 60                           |
+| Turkey      | 40           | 70                           |
+| Germany     | 35           | 60                           |
+| USA         | 50           | 80                           |
 | UAE (Dubai) | 50           | 70                           |
 | Kuwait      | 65           | 85                           |
 | *Default*   | 25           | 50                           |
@@ -45,19 +45,19 @@ To ensure fairness, penalties and rewards are scaled based on regional daily COâ
 ### Point Calculation Rules:
 
 1.  **Base Points (No Receipt):**
-    *   A user's survey inputs are calculated into a `basePoints` value, ranging from 0 (at the regional max kg) to 30 (at or below the regional min kg).
-    *   These points are awarded to the user's total immediately upon completing the survey.
+    *   A user's survey inputs are calculated into a `basePoints` value using a tiered system (e.g., 0, 8, 15, 20, 30 points) based on their `estimatedFootprintKg` relative to their region's `min`, `avg`, and `max` values.
+    *   These points are awarded to the user's total immediately upon completing the survey. There is no longer incorrect clamping of values to 1.
 
 2.  **High Footprint Penalty (Sliding Scale):**
-    *   If `estimatedFootprintKg` is **greater than the region's Penalty Threshold**, the user starts losing points.
-    *   **Formula:** `Penalty = -round((estimatedFootprintKg - PenaltyThreshold) / 2)`
+    *   If `estimatedFootprintKg` is **greater than the region's `max` threshold**, the user starts losing points.
+    *   **Formula:** `Penalty = -round((estimatedFootprintKg - max) / 2)`
     *   The penalty is capped at a maximum of **-10 points**.
-    *   *Example (Dubai): 74kg -> -2 points. 80kg -> -5 points. 90kg -> -10 points.*
+    *   *Example (Kuwait): 89kg -> -2 points. 95kg -> -5 points. 105kg -> -10 points.*
 
 3.  **Receipt Verification Bonus:**
-    *   If a user successfully scans a receipt for one of their day's activities (e.g., a meal or drink), they receive a large bonus.
-    *   **Formula:** `Final Points = Base Points * 5`
-    *   This bonus replaces the initial base points. For example, if a user earned 11 base points, verifying with a receipt changes their total award for the survey to 55 points.
+    *   If a user successfully scans a receipt for one of their day's activities, they receive a bonus.
+    *   **Formula:** `Final Points = Base Points * 3`
+    *   This is a 3x multiplier on the initial `basePoints`.
 
 4.  **Second Chance Bonus:**
     *   If a user receives a penalty, they can perform one of the AI-recommended actions and submit photo proof.
@@ -65,16 +65,13 @@ To ensure fairness, penalties and rewards are scaled based on regional daily COâ
 
 ---
 
-## 3. Reward Redemption Costs
+## 3. Reward Redemption Costs & Fraud Penalties
 
-The cost of rewards is set to make them feel valuable and earned, encouraging continued participation in recycling activities.
-
-This logic is defined in `src/components/rewards-section.tsx`.
-
-| Reward                | Partner Store         | Points Cost |
-|-----------------------|-----------------------|-------------|
-| **Free Coffee**       | The Daily Grind       | 500         |
-| **$5 Off Groceries**  | Green Grocer          | 900         |
-| **$10 Off Clothes**   | Eco Threads           | 1200        |
-| **Free Movie Ticket** | Cineplex Green        | 1600        |
-| **$15 Off Shoes**     | Sustainable Soles     | 2000        |
+| Parameter                | Value      | Rationale / Description                          |
+|--------------------------|------------|--------------------------------------------------|
+| **Free Coffee**          | 500 points | Balances the economy for a frequent, small reward. |
+| **$5 Off Groceries**     | 900 points |                                                  |
+| **$10 Off Clothes**      | 1200 points|                                                  |
+| **Streak Bonus**         | +75 points | Awarded for a 7-day streak of completing tasks.  |
+| **Fraud Penalty**        | -200 points| Deters submission of AI-generated/fake images.   |
+| **Duplicate Penalty**    | -50 points | Prevents spamming the same verification photo.   |

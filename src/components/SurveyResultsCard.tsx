@@ -27,7 +27,7 @@ export default function SurveyResultsCard({
   kg,
   basePoints,
   penaltyPoints,
-  bonusMultiplier = 5,
+  bonusMultiplier = 3,
   onSecondChance,
   analysis,
   recommendations,
@@ -102,7 +102,7 @@ export default function SurveyResultsCard({
               {t('survey_base_points_title')}
             </AlertTitle>
             <AlertDescription>
-                <span dangerouslySetInnerHTML={{ __html: t('survey_base_points_description', { points: basePoints, x: bonusMultiplier })}} />
+                <span dangerouslySetInnerHTML={{ __html: t('survey_base_points_description', { points: basePoints, x: bonusMultiplier, bonus: basePoints * bonusMultiplier })}} />
             </AlertDescription>
           </Alert>
         )}

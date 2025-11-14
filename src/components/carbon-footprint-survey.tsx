@@ -23,6 +23,7 @@ import { useFirebase, useUser, updateDocumentNonBlocking, serverTimestamp, useDo
 import { doc } from 'firebase/firestore';
 import {
   calculatePoints,
+  RegionKey,
   type TransportOption,
   type DietOption,
   type DrinkOption,
@@ -30,6 +31,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { VerificationCenter } from './verification-center';
 import SurveyResultsCard from './SurveyResultsCard';
+import { analyzeFootprint } from '@/ai/flows/carbon-footprint-analysis';
 import type { CarbonFootprintAnalysisOutput } from '@/ai/flows/carbon-footprint-analysis.types';
 import { normalizeRegion } from "@/lib/region-map";
 
@@ -89,7 +91,7 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
       
       const regionKey = normalizeRegion(region);
 
-      let apiResponse: (CarbonFootprintAnalysisOutput & { ok: boolean, error?: string }) | null = null;
+      let apiResponse: (CarbonFootprintAnalysisOutput & { ok?: boolean, error?: string }) | null = null;
       
       try {
         const payload = {
@@ -100,23 +102,8 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
           drink,
           energy: noEnergy ? "none" : energyText,
         };
-
-        const res = await fetch("/api/carbon/analysis", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          throw new Error(`API Error ${res.status}: ${text || res.statusText}`);
-        }
         
-        apiResponse = await res.json();
-
-        if (!apiResponse || !apiResponse.ok) {
-          throw new Error(apiResponse?.error || "Failed to get analysis from server.");
-        }
+        apiResponse = await analyzeFootprint(payload);
         
       } catch (e: any) {
         toast({ variant: "destructive", title: "Analysis Failed", description: e.message });
@@ -125,15 +112,15 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
       }
       
       const { estimatedFootprintKg } = apiResponse;
-      const { basePoints, penaltyPoints } = calculatePoints(estimatedFootprintKg, regionKey);
+      const { basePoints, penaltyPoints } = calculatePoints(estimatedFootprintKg, regionKey as RegionKey);
       
       // Award base points or apply penalty
       if (userProfileRef && userProfile) {
         const currentPoints = userProfile.totalPoints ?? 0;
-        const pointsChange = penaltyPoints < 0 ? penaltyPoints : basePoints;
+        const awarded = penaltyPoints < 0 ? penaltyPoints : basePoints;
         
         updateDocumentNonBlocking(userProfileRef, { 
-          totalPoints: Math.max(0, currentPoints + pointsChange),
+          totalPoints: Math.max(0, currentPoints + awarded),
           lastCarbonSurveyDate: serverTimestamp() 
         });
       }
@@ -179,11 +166,11 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
   if (step === 'results' && userProfile) {
     return (
         <SurveyResultsCard 
-            region={normalizeRegion(region)}
+            region={normalizeRegion(region) as RegionKey}
             kg={results.kg}
             basePoints={results.basePoints}
             penaltyPoints={results.penaltyPoints}
-            bonusMultiplier={5}
+            bonusMultiplier={3}
             onSecondChance={() => setStep('secondChance')}
             analysis={results.aiAnalysis?.analysis}
             recommendations={results.aiAnalysis?.recommendations}
