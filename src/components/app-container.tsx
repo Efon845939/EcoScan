@@ -12,7 +12,6 @@ import {
   Languages,
   Globe,
   ShieldCheck,
-  Footprints,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
