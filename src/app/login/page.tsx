@@ -3,62 +3,94 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+
 import { auth, firestore as db } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [tab, setTab] = useState<'email' | 'phone'>('email');
-
-  const [identifier, setIdentifier] = useState(''); // email (for now)
+  // Form fields for the unified form
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleLogin(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      if (!identifier.trim() || !password.trim()) {
-        throw new Error('Please enter your email and password.');
+      if (!username.trim() || !email.trim() || !password.trim()) {
+        throw new Error('Lütfen tüm alanları doldurun: kullanıcı adı, e-posta ve şifre.');
       }
 
-      // For now, only email login is supported
-      const email = identifier.trim();
+      let cred;
 
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      const user = cred.user;
+      // 1. Attempt to sign in first
+      try {
+        cred = await signInWithEmailAndPassword(auth, email, password);
+      } catch (err: any) {
+        // 2. If user does not exist, create a new account (auto-signup)
+        if (err.code === 'auth/user-not-found') {
+          cred = await createUserWithEmailAndPassword(auth, email, password);
+          const user = cred.user;
 
-      // Check for and create a Firestore profile if it doesn't exist
-      const userRef = doc(db, 'users', user.uid);
-      const snap = await getDoc(userRef);
+          // Set the displayName in Firebase Auth
+          await updateProfile(user, { displayName: username });
 
-      if (!snap.exists()) {
-        await setDoc(userRef, {
-          uid: user.uid,
-          username: user.displayName || email.split('@')[0],
-          email: user.email,
-          emailVerified: user.emailVerified ?? false,
-          phone: null,
-          phoneVerified: false,
-          country: 'TR', // Default country, can be changed later
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          totalPoints: 0,
-          isDisabled: false,
-          roles: ['user'],
-        });
+          // Create the user profile document in Firestore
+          const userRef = doc(db, 'users', user.uid);
+          await setDoc(userRef, {
+            uid: user.uid,
+            username,
+            email: user.email,
+            emailVerified: user.emailVerified ?? false,
+            phone: null,
+            phoneVerified: false,
+            country: 'TR', // Default country
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            totalPoints: 0,
+            isDisabled: false,
+            roles: ['user'],
+          });
+        } else {
+          // For any other login error (e.g., wrong password), re-throw it
+          throw err;
+        }
       }
 
+      // If either login or signup was successful, redirect to home
       router.push('/');
+
     } catch (err: any) {
-      console.error(err);
-      setError(err?.code || err?.message || 'Failed to log in.');
+      console.error('Authentication error:', err);
+      // Provide a user-friendly error message
+      let friendlyMessage = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+      switch (err.code) {
+          case 'auth/wrong-password':
+              friendlyMessage = 'Girdiğiniz şifre yanlış. Lütfen kontrol edin.';
+              break;
+          case 'auth/invalid-email':
+              friendlyMessage = 'Girdiğiniz e-posta adresi geçersiz.';
+              break;
+          case 'auth/email-already-in-use':
+              friendlyMessage = 'Bu e-posta adresi zaten başka bir hesap tarafından kullanılıyor.';
+              break;
+          default:
+              friendlyMessage = err.message || 'Giriş veya kayıt sırasında bir hata oluştu.';
+      }
+      setError(friendlyMessage);
     } finally {
       setLoading(false);
     }
@@ -72,130 +104,63 @@ export default function LoginPage() {
           'radial-gradient(circle at top left, #d1fae5, transparent), radial-gradient(circle at top right, #bfdbfe, transparent)',
       }}
     >
-      <div className="w-full max-w-md bg-[#fdf7ec] rounded-2xl shadow-xl p-6 space-y-6 border border-[#e5dcc7]">
-        {/* Header */}
-        <div className="space-y-1 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">
-            Welcome Back!
-          </h1>
-          <p className="text-sm text-slate-600">
-            Enter your credentials to access your account
-          </p>
-        </div>
-
-        {/* Tab bar: Email / Phone */}
-        <div className="flex rounded-lg bg-[#e4dfd1] text-sm font-medium overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setTab('email')}
-            className={`flex-1 py-2.5 border-r border-[#d6cfbf] transition-colors ${
-              tab === 'email'
-                ? 'bg-white text-slate-900 shadow-inner'
-                : 'bg-transparent text-slate-600 hover:bg-white/50'
-            }`}
-          >
-            Email
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('phone')}
-            className={`flex-1 py-2.5 transition-colors ${
-              tab === 'phone'
-                ? 'bg-white text-slate-900 shadow-inner'
-                : 'bg-transparent text-slate-600 hover:bg-white/50'
-            }`}
-          >
-            Phone
-          </button>
-        </div>
-
-        {/* Phone Tab Notice */}
-        {tab === 'phone' && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 text-center">
-            Phone login is not implemented yet. Please use the Email tab.
-          </div>
-        )}
-
-        {/* Email Login Form */}
-        {tab === 'email' && (
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-800">
-                Email
-              </label>
-              <input
-                type="email"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                className="w-full rounded-lg border border-[#d4cbb5] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="name@example.com"
-                autoComplete="email"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-800">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-[#d4cbb5] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="Your password"
-                autoComplete="current-password"
-                required
-              />
-              <div className="flex justify-end pt-1">
-                <button
-                  type="button"
-                  className="text-xs text-emerald-700 hover:underline"
-                >
-                  Forgot password?
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-[#256029] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1d4f21] disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Logging in...' : 'Login with Email'}
-            </button>
-          </form>
-        )}
-
-        {/* OR Divider */}
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <div className="h-px flex-1 bg-[#e2d9c4]" />
-          <span>OR</span>
-          <div className="h-px flex-1 bg-[#e2d9c4]" />
-        </div>
-
-        {/* Placeholder for Social Logins */}
-        <div className="h-8 rounded-lg bg-slate-200/50 flex items-center justify-center text-xs text-slate-400 border border-slate-200">
-        </div>
-
-
-        {/* Sign up Link */}
-        <p className="text-sm text-slate-600 text-center">
-          Don’t have an account?{' '}
-          <button
-            type="button"
-            className="font-semibold text-emerald-700 hover:underline"
-            onClick={() => router.push('/signup')}
-          >
-            Sign up
-          </button>
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 space-y-4">
+        <h1 className="text-xl font-semibold">Giriş Yap veya Kaydol</h1>
+        <p className="text-sm text-slate-600">
+          Bilgilerinizi girin. Hesabınız varsa giriş yapılır, yoksa yeni bir hesap oluşturulur.
         </p>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Kullanıcı adı</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="örnek: eco_savascisi"
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium">E-posta</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="ornek@mail.com"
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Şifre</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          {error && (
+            <div className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-2 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? 'İşleniyor...' : 'Giriş Yap / Kaydol'}
+          </button>
+        </form>
       </div>
     </div>
   );
