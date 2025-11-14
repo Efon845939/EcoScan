@@ -11,13 +11,13 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If loading is finished and there's no user, redirect to login
-    if (!isUserLoading && !user) {
+    // If loading is finished and there's no user, or user is anonymous, redirect to login
+    if (!isUserLoading && (!user || user.isAnonymous)) {
       router.replace('/login');
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || !user || user.isAnonymous) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -26,6 +26,6 @@ export default function ProfilePage() {
     );
   }
 
-  // User is authenticated, render the profile content
+  // User is authenticated and not anonymous, render the profile content
   return <ProfilePageContent onBack={() => router.push('/')} />;
 }

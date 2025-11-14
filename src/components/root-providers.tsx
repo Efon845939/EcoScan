@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactNode } from 'react';
 import { FirebaseClientProvider } from '@/firebase';
-import { TranslationProvider, useTranslation as useTranslationHook } from '@/hooks/use-translation';
+import { TranslationProvider } from '@/hooks/use-translation';
 
 export function RootProviders({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState('en');

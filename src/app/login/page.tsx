@@ -8,28 +8,22 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { LogIn, UserPlus } from 'lucide-react';
-import { useUser } from '@/firebase';
-// Kendi firebase client import’un:
-import { auth, firestore as db } from '@/firebase'; // sende src/firebase/index.ts varsa burası doğru
-
-// Eğer react-i18next / next-i18next kullanıyorsan:
+import { LogIn, UserPlus, Loader2 } from 'lucide-react';
+import { useUser, auth, firestore as db } from '@/firebase';
 import { useTranslation } from '@/hooks/use-translation';
-import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  // i18n yoksa şimdilik aşağı satırı commentle ve t = (s:string) => s yap.
   const { t } = useTranslation();
   const { user, isUserLoading } = useUser();
 
   const [mode, setMode] = useState<'login' | 'signup'>('login');
 
-  // Ortak alanlar
+  // Common fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Signup alanları
+  // Signup fields
   const [username, setUsername] = useState('');
   const [country, setCountry] = useState('TR');
   const [phone, setPhone] = useState('');
@@ -41,7 +35,7 @@ export default function LoginPage() {
     if (!isUserLoading && user && !user.isAnonymous) {
       router.push('/');
     }
-  }, [user, isUserLoading, router]);
+  }, [user?.uid, user?.isAnonymous, isUserLoading, router]);
 
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
@@ -51,14 +45,13 @@ export default function LoginPage() {
       const cred = await signInWithEmailAndPassword(auth, email, password);
       const user = cred.user;
 
-      // Profil dokümanı var mı, yoksa minimal oluştur
       const userRef = doc(db, 'users', user.uid);
       const snap = await getDoc(userRef);
 
       if (!snap.exists()) {
         await setDoc(userRef, {
           uid: user.uid,
-          displayName: user.displayName || email.split('@')[0],
+          username: user.displayName || email.split('@')[0],
           email: user.email,
           emailVerified: user.emailVerified ?? false,
           phone: null,
@@ -72,7 +65,6 @@ export default function LoginPage() {
         });
       }
 
-      // Giriş başarılı → dashboard / ana sayfa nereye gidiyorsa oraya yönlendir
       router.push('/');
     } catch (err: any) {
       console.error(err);
@@ -87,14 +79,11 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      // 1) Auth kullanıcısını oluştur
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const user = cred.user;
 
-      // 2) displayName güncelle
       await updateProfile(user, { displayName: username });
 
-      // 3) Firestore profilini oluştur
       const userRef = doc(db, 'users', user.uid);
       await setDoc(userRef, {
         uid: user.uid,
@@ -110,10 +99,7 @@ export default function LoginPage() {
         isDisabled: false,
         roles: ['user'],
       });
-
-      // 4) İstersen email verification burada tetiklersin (client’ta):
-      // await sendEmailVerification(user);
-
+      
       router.push('/');
     } catch (err: any) {
       console.error(err);
@@ -137,7 +123,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-sky-50 dark:from-neutral-950 dark:to-neutral-900 px-4">
       <div className="w-full max-w-md bg-white/80 dark:bg-neutral-900/80 rounded-2xl shadow-xl p-6 space-y-6">
-        {/* Mode switch */}
         <div className="flex rounded-full bg-neutral-100 dark:bg-neutral-800 p-1">
           <button
             type="button"
@@ -178,7 +163,6 @@ export default function LoginPage() {
           onSubmit={isLogin ? handleLogin : handleSignup}
           className="space-y-4"
         >
-          {/* SIGNUP MODE: username & country & phone */}
           {!isLogin && (
             <>
               <div className="space-y-1">
@@ -228,7 +212,6 @@ export default function LoginPage() {
             </>
           )}
 
-          {/* COMMON: email & password */}
           <div className="space-y-1">
             <label className="block text-sm font-medium text-neutral-800 dark:text-neutral-200">
               {t('auth.fields.email')}
@@ -273,7 +256,7 @@ export default function LoginPage() {
             className="w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition"
           >
             {loading && (
-              <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
             <span>
               {isLogin ? t('auth.login.cta') : t('auth.signup.cta')}
