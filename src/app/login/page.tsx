@@ -79,7 +79,7 @@ export default function LoginPage() {
             Welcome Back!
           </h1>
           <p className="text-sm text-slate-600">
-            Hesabına erişmek için bilgilerini gir.
+            Enter your credentials to access your account.
           </p>
         </div>
 
@@ -109,11 +109,10 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Şimdilik sadece email tab aktif, phone boş/disable */}
+        {/* Şimdilik sadece email tab aktif */}
         {tab === 'phone' && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            Telefonla giriş henüz aktif değil. Şimdilik e-posta sekmesini
-            kullan.
+            Phone login is not implemented yet. Keep using the Email tab.
           </div>
         )}
 
@@ -152,8 +151,6 @@ export default function LoginPage() {
                 <button
                   type="button"
                   className="text-xs text-emerald-700 hover:underline"
-                  // ileride /reset-password'e yönlendirirsin
-                  onClick={() => alert('Şifre sıfırlama ekranı henüz yapılmadı.')}
                 >
                   Forgot password?
                 </button>
@@ -183,9 +180,8 @@ export default function LoginPage() {
           <div className="h-px flex-1 bg-[#e2d9c4]" />
         </div>
 
-        {/* Buraya istersen Google / Apple butonları eklersin */}
         <div className="text-center text-xs text-slate-400">
-          (Buraya Google / Apple ile giriş butonları gelebilir)
+          (Social login buttons can be added here later)
         </div>
 
         {/* Alt metin: hesabın yok mu? */}
