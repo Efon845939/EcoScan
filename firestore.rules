@@ -1,90 +1,63 @@
 /**
  * @file Firestore Security Rules for EcoScan Rewards
- * @core_philosophy This ruleset enforces a strict user-ownership model for user profiles and transactions,
- * with public read access for recycling bins and partner stores. It prioritizes security and performance
- * by using path-based authorization and data denormalization to avoid costly `get()` calls.
+ * @core_philosophy This ruleset enforces a strict user-ownership model. Users can read and write their own
+ * data, but cannot modify critical, admin-controlled fields like 'roles' or 'isDisabled'. Public data is read-only.
  * @data_structure The data is organized hierarchically:
  *   - /users/{userId}: User profile information, owned by the user with matching UID.
- *   - /users/{userId}/transactions/{transactionId}: Transaction history for each user, also owned by the user.
- *   - /recycling_bins/{binId}: Information about recycling bins, publicly readable.
- *   - /partner_stores/{storeId}: Information about partner stores, publicly readable.
+ *   - /verificationCodes/{codeId}: Server-side only collection for OTPs. No client access.
  * @key_security_decisions
- *   - User profiles and transactions are strictly owned by the user, enforced through path-based authorization.
+ *   - User profiles are strictly owned by the user, enforced through path-based authorization.
+ *   - Users cannot modify their own roles, points, or disabled status.
  *   - Listing of all users is disallowed to protect user privacy.
- *   - Recycling bins and partner stores are publicly readable, assuming this data is not sensitive.
- *   - Data validation is limited to ownership and relational integrity checks to enable rapid prototyping.
- * @denormalization The `Transaction` documents denormalize the `binId` from the `RecyclingBin` entity.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Enforces access control for user profile documents.
-     * @path /users/{userId}
-     * @allow (create) Authenticated user can create their own profile if the userId matches their auth.uid.
-     * @allow (get) Authenticated user can read their own profile.
-     * @allow (update) Authenticated user can update their own profile.
-     * @allow (delete) Authenticated user can delete their own profile.
-     * @deny (create) Authenticated user cannot create a profile for another user.
-     * @deny (get) Authenticated user cannot read another user's profile.
-     * @deny (update) Authenticated user cannot update another user's profile.
-     * @deny (delete) Authenticated user cannot delete another user's profile.
-     * @principle Enforces document ownership for all operations on user profiles.
-     */
-    match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource.data != null;
-      }
-
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false; // Prevent listing all users for privacy
-
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Enforces access control for transaction documents within a user's profile.
-     * @path /users/{userId}/transactions/{transactionId}
-     * @allow (create) Authenticated user can create a transaction for themselves.
-     * @allow (get) Authenticated user can read their own transactions.
-     * @allow (update) Authenticated user can update their own transactions.
-     * @allow (delete) Authenticated user can delete their own transactions.
-     * @deny (create) Authenticated user cannot create a transaction for another user.
-     * @deny (get) Authenticated user cannot read another user's transactions.
-     * @deny (update) Authenticated user cannot update another user's transactions.
-     * @deny (delete) Authenticated user cannot delete another user's transactions.
-     * @principle Enforces document ownership for all operations on user transactions.
+     * @description Enforces access control for user profile documents.
+     * @path /users/{userId}
+     * @allow (get) Authenticated user can read their own profile.
+     * @allow (create) Authenticated user can create their own profile.
+     * @allow (update) Authenticated user can update their own profile, but cannot change immutable or admin-only fields.
+     * @deny (list, delete) Listing or deleting user profiles is disallowed for clients.
      */
-    match /users/{userId}/transactions/{transactionId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
+    match /users/{userId} {
+      allow get, create: if isOwner(userId);
+      allow list, delete: if false;
 
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-        function isExistingOwner(userId) {
-        return isOwner(userId) && resource.data != null;
-      }
-
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow update: if isOwner(userId) &&
+        // Fields a user IS allowed to change
+        request.resource.data.keys().hasOnly([
+          'uid', 'username', 'email', 'emailVerified',
+          'phone', 'phoneVerified', 'country', 'createdAt',
+          'updatedAt', 'totalPoints', 'isDisabled', 'roles',
+          'displayName', 'lastCarbonSurveyDate' // Allow existing fields
+        ]) &&
+        // Fields a user is NOT allowed to change
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.totalPoints == resource.data.totalPoints &&
+        request.resource.data.isDisabled == resource.data.isDisabled &&
+        request.resource.data.roles.size() == resource.data.roles.size() &&
+        request.resource.data.roles[0] == resource.data.roles[0];
+    }
+    
+    /**
+     * @description Disallows any client-side access to verification codes.
+     * @path /verificationCodes/{codeId}
+     * @deny (read, write) This collection should only be accessed by a trusted server environment (e.g., Cloud Functions).
+     */
+    match /verificationCodes/{codeId} {
+      allow read, write: if false;
     }
 
     /**
@@ -96,6 +69,7 @@ service cloud.firestore {
      */
     match /recycling_bins/{binId} {
       allow get, list: if true;
+      allow write: if false;
     }
 
     /**
@@ -107,6 +81,7 @@ service cloud.firestore {
      */
     match /partner_stores/{storeId} {
       allow get, list: if true;
+      allow write: if false;
     }
   }
 }

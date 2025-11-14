@@ -1,240 +1,220 @@
-# EcoScan Puanlama Sistemi — Gerçek Çözüm Dokümanı
+# EcoScan User Profile & Auth System — Technical Specification
 
-Aşağıdaki teknik açıklama **ortam değişkenleri, puan hesaplama fonksiyonu, fallback hatası, Firestore transaction şeması ve test mantığını** tam, temiz, profesyonel şekilde içerir.
-
----
-
-## 1. Sorunun Kökü: 0–1’e Kelepçelenmiş Puanlama
-
-### Problem 1: “Minimum 1” clamp yüzünden tüm değerler çöp oldu
-
-Mevcut kodun büyük ihtimalle şöyle bir kısmı var:
-
-```ts
-let basePoints = pointsFromKgRegionAware(kg, region);
-
-if (basePoints > MAX_POINTS) {
-  basePoints = MAX_POINTS;
-}
-
-if (basePoints < 1) {
-  basePoints = 1;  // ← ZATEN tüm küçük değerleri 1’e sabitleyen hata
-}
-```
-
-Bu satır yüzünden:
-- 8 puan → 1
-- 15 puan → 1
-- 19.2 puan → 1
-- 0 puan → 1
-
-Yani sistem “küçük mü? 1 ver gitsin” şeklinde çalışıyor.
+This document outlines the architecture for a complete user account system using Firebase Authentication and Firestore, including OTP verification.
 
 ---
 
-### Problem 2: Fallback kodu puanı **bilerek** 1’e sabitliyor
+## 0. General Architecture
 
-Bazı build’lerde şu halt varsa:
+The user data is managed across two layers:
 
-```ts
-const awarded = Math.min(1, Math.floor(basePoints));
-```
+1.  **Firebase Auth**: Handles core authentication.
+    *   Email & password sign-in.
+    *   Email verification flows.
+    *   Optional phone authentication (SMS).
 
-Bu satır **hangi değeri verirsen ver** hep 0 ya da 1 döndürür.
-`Floor(basePoints)` 0–20 aralığında olabilir, ama `Math.min(1, x)` → daima 0 veya 1.
+2.  **Firestore `users` Collection**: Stores detailed user profile data.
+    *   `username`, `country`, `phone`
+    *   Syncs `email`, `emailVerified`, `phoneVerified` status with Firebase Auth.
+    *   Contains application-specific data like `totalPoints`.
 
-Bu tam anlamıyla scoring sistemini bıçaklamışsınız.
+A third collection handles one-time password (OTP) verification:
+
+3.  **Firestore `verificationCodes` Collection**:
+    *   Manages 6-digit codes for phone or email verification.
+    *   Codes are stored hashed and are automatically deleted via TTL.
+
+**Crucially, passwords are NEVER stored in Firestore.**
 
 ---
 
-## 2. Doğru Mantık Nasıl Olmalı? (Temiz Puanlama Pipeline)
+## 1. Firestore Schema
 
-Aşağıdaki **gerçek, düzeltilmiş versiyon**:
+### 1.1. `users/{uid}` Document
 
----
+-   **Collection**: `users`
+-   **Document ID**: `uid` (Matches the user's Firebase Auth UID)
 
-### 2.1. pointsFromKgRegionAware() temiz hali
+```typescript
+interface UserProfile {
+  uid: string;
+  username: string;          // Must be unique
+  email: string;
+  emailVerified: boolean;
+  phone?: string;            // E.164 format: +90...
+  phoneVerified: boolean;
+  country: string;           // ISO-2 code: "TR", "KW", etc.
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
 
-```ts
-export function pointsFromKgRegionAware(kg: number, region: Region): number {
-  const ranges = REGION_SCALING[region]; 
-  // example: { min: 25, avg: 60, max: 85 }
-
-  if (kg <= ranges.min) return 30;
-  if (kg <= ranges.avg) return 20;
-  if (kg <= ranges.avg + 10) return 15;
-  if (kg <= ranges.max) return 8;
-
-  return 0;  // high emissions
+  // EcoScan-specific fields
+  totalPoints: number;
+  isDisabled: boolean;
+  roles: string[];           // e.g., ["user"], with potential for ["admin"]
 }
 ```
 
-Notlar:
-- `MAX_POINTS` clamp kaldırıldı.
-- Minimum clamp **kaldırıldı**, çünkü 0 doğal bir sonuç.
+### 1.2. `verificationCodes/{codeId}` Document
 
----
+-   **Collection**: `verificationCodes` (globally, not a subcollection)
+-   **Document ID**: Auto-generated
 
-### 2.2. Günlük bonus/receipt multiplier
-
-```ts
-function computeFinalDailyPoints(base: number, hasReceipt: boolean) {
-  if (base === 0) return 0;
-  if (hasReceipt) return base * 3; // yeni multiplier 3
-  return base;
+```typescript
+interface VerificationCodeDoc {
+  target: string;           // The phone number or email address
+  type: "phone" | "email" | "passwordReset";
+  codeHash: string;         // SHA-256 hash of the 6-digit code
+  expiresAt: FirebaseFirestore.Timestamp; // TTL for automatic deletion
+  createdAt: FirebaseFirestore.Timestamp;
+  consumed: boolean;        // Flag to prevent reuse
 }
 ```
 
 ---
 
-### 2.3. Nihai awarded value — doğru rounding
+## 2. User Registration Flow (Client-Side)
 
-```ts
-const awarded = Math.round(basePoints);
-```
+This flow combines Firebase Auth user creation with Firestore profile creation.
 
-Kural:
-- `floor` kullanılmayacak
-- `min(1, x)` gibi fallback yok
-- clamp yok
-- `round` kullanılıyor
+```typescript
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "firebase/auth";
+import { setDoc, doc, serverTimestamp } from "firebase/firestore";
 
----
+async function signUp(email: string, password: string, username: string, country: string) {
+  // 1. Create user in Firebase Auth
+  const userCred = await createUserWithEmailAndPassword(auth, email, password);
+  const user = userCred.user;
 
-## 3. Firestore Transaction — Doğru Uygulama
+  // 2. (Optional) Set display name in Auth
+  await updateProfile(user, { displayName: username });
 
-**ŞU AN SİZDEKİ HATALI SÜRÜM:**
-Bazı projelerde transaction içinde şöyle çöp bir fallback yapılıyor:
-```ts
-tx.update(userRef, { totalPoints: total + 1 });
-```
-veya
-```ts
-tx.update(userRef, { totalPoints: total + Math.min(1, Math.floor(base)) });
-```
-Bu da skorları sabote ediyor.
+  // 3. Trigger email verification
+  await sendEmailVerification(user);
 
----
-
-### DOĞRU TRANSACTION (GÖMMEN GEREKEN BU)
-
-```ts
-await db.runTransaction(async (tx) => {
-  const userSnap = await tx.get(userRef);
-  const current = userSnap.data()?.totalPoints ?? 0;
-
-  // gerçek hesaplanan değer buraya geliyor
-  const updated = current + awarded;
-
-  tx.update(userRef, { totalPoints: updated });
-});
-```
-
-Açıklama:
-- **fallback yok**
-- **awarded değeri gerçek hesap sonucundan geliyor**
-- **transaction atomic**
-- **cezalar + bonuslar da transaction içinde işleniyor**
-
----
-
-## 4. Fraud / Ceza Sistemi Bağlantısı
-
-Bu mantık aynı transaction içinde çalıştırılabilir:
-
-```ts
-if (isFraudDetected) {
-  tx.update(userRef, {
-    totalPoints: current - 200,
-    lastFraud: new Date(),
+  // 4. Create the user's profile document in Firestore
+  await setDoc(doc(db, "users", user.uid), {
+    uid: user.uid,
+    username,
+    email,
+    emailVerified: user.emailVerified ?? false,
+    phone: null,
+    phoneVerified: false,
+    country,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    totalPoints: 0,
+    isDisabled: false,
+    roles: ["user"],
   });
-  return;
-}
-```
-
-Aynı şekilde duplicate:
-
-```ts
-if (isDuplicateReceipt) {
-  tx.update(userRef, {
-    totalPoints: current - 50,
-    duplicateCount: (userSnap.data()?.duplicateCount ?? 0) + 1
-  });
-  return;
 }
 ```
 
 ---
 
-## 5. Unit Test Seti (Gemini için birebir)
+## 3. Backend Logic (Cloud Functions for Firebase)
 
-### Test 1 — Minimum footprint doğru puanı verir
+These HTTP-triggered functions handle logic that requires admin privileges, like ensuring username uniqueness.
 
-```ts
-test("Kuwait min footprint = 25kg → 30 pts", () => {
-  expect(pointsFromKgRegionAware(25, "kuwait")).toBe(30);
+### 3.1. Username Uniqueness Validator
+
+A server-side endpoint is required to check if a username is taken before creating a profile, preventing race conditions.
+
+```typescript
+// Cloud Function (v2) to create a user profile atomically
+import { onRequest } from "firebase-functions/v2/https";
+import * as admin from "firebase-admin";
+
+const db = admin.firestore();
+
+export const createUserProfile = onRequest(async (req, res) => {
+  // ... (Implementation from section 3.1 of the prompt)
+  // 1. Validate input (uid, username, country).
+  // 2. Get user email from Firebase Auth using admin SDK.
+  // 3. Query 'users' collection to check if username is already taken.
+  // 4. If unique, create the document inside a Firestore transaction.
+  // ...
 });
 ```
 
-### Test 2 — Orta footprint 20 puan civarı
+### 3.2. Profile Update Endpoint
 
-```ts
-test("Kuwait mid footprint = 56kg → around 20", () => {
-  const pts = pointsFromKgRegionAware(56, "kuwait");
-  expect(pts).toBeGreaterThanOrEqual(18);
-});
-```
+A secure endpoint for updating user-modifiable fields.
 
-### Test 3 — Negatif clamp artık yok
-
-```ts
-test("Small value should NOT be clamped to 1", () => {
-  const pts = pointsFromKgRegionAware(30, "kuwait");
-  expect(pts).not.toBe(1);
-});
-```
-
-### Test 4 — Transaction gerçek awarded değeri kullanıyor
-
-```ts
-test("Transaction uses actual awarded points", async () => {
-  const awarded = 15;
-
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(userRef);
-    const current = snap.data().totalPoints;
-
-    tx.update(userRef, { totalPoints: current + awarded });
-  });
-
-  const fresh = await getDoc(userRef);
-  expect(fresh.data().totalPoints).toBe(previous + 15);
+```typescript
+// Cloud Function (v2) to update a user profile
+export const updateUserProfile = onRequest(async (req, res) => {
+  // ... (Implementation from section 3.2 of the prompt)
+  // 1. Validate input (uid, country, phone).
+  // 2. If phone number is updated, reset 'phoneVerified' to false.
+  // 3. Update the document with a new 'updatedAt' timestamp.
+  // ...
 });
 ```
 
 ---
 
-## 6. Ekonomi Ayarları (Güncel & Mantıklı)
+## 4. OTP Verification System
 
-| Parametre               | Yeni Değer | Açıklama             |
-| ----------------------- | ---------- | -------------------- |
-| Günlük baz (no receipt) | 15         | Daha smooth progress |
-| Receipt multiplier      | ×3         | Exploit önler        |
-| Free Coffee             | 500        | Ekonomiyi dengeler   |
-| Streak bonus            | +75        | Weekly retention     |
-| Fraud penalty           | –200       | Caydırıcı            |
-| Duplicate penalty       | –50        | Spam engeller        |
+This system generates, sends, and verifies 6-digit codes.
+
+### 4.1. Code Generation and Hashing
+
+-   A helper function generates a random 6-digit numeric string.
+-   A second helper hashes the code using `crypto.createHash("sha256")` before storing it.
+
+### 4.2. Request Code Endpoint
+
+An HTTP endpoint that:
+1.  Generates a 6-digit code.
+2.  Hashes it.
+3.  Saves the hash, target (email/phone), type, and a 5-minute expiration timestamp to the `verificationCodes` collection.
+4.  **TODO**: Integrates with an SMS/email provider (e.g., Twilio, SendGrid) to send the plain-text code to the user.
+
+### 4.3. Verify Code Endpoint
+
+An HTTP endpoint that:
+1.  Receives the `target`, `type`, `code`, and `uid`.
+2.  Hashes the received code.
+3.  Queries the `verificationCodes` collection for a document that matches the hash, target, type, is not expired, and has not been consumed.
+4.  If a valid code is found, it runs a transaction to:
+    a. Mark the code document as `consumed: true`.
+    b. Update the corresponding user's profile in the `users` collection (e.g., `phoneVerified: true`).
 
 ---
 
-## ÖZET
+## 5. Firestore Security Rules
 
-**Sistem şu anda 0–1 puan veriyor çünkü iki büyük hata var:**
+The rules enforce the ownership model and protect sensitive fields.
 
-1. **basePoints < 1 → 1 clamp’ı**
-2. **Math.min(1, floor()) fallback’ı**
+```js
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
 
-**Çözüm:**
-Clamp’ları kaldır, fallback’ı yok et, rounding’i düzelt, Firestore transaction’da gerçek awarded değerini kullan.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
 
-Bunların hepsinin final kodu yukarıda.
+    match /users/{userId} {
+      allow read, create: if isOwner(userId);
+
+      // Allow updates only if critical fields are not being changed by the user.
+      allow update: if isOwner(userId) &&
+        request.resource.data.isDisabled == resource.data.isDisabled &&
+        request.resource.data.roles == resource.data.roles &&
+        request.resource.data.totalPoints == resource.data.totalPoints;
+    }
+  }
+}
+```
+
+---
+
+## 6. Password Management
+
+All password-related operations are handled exclusively by the Firebase Auth SDK client-side methods. No password data is ever stored or processed in Firestore or Cloud Functions.
+-   **Sign-up:** `createUserWithEmailAndPassword`
+-   **Sign-in:** `signInWithEmailAndPassword`
+-   **Reset:** `sendPasswordResetEmail`
+
+This architecture provides a secure, scalable, and complete foundation for user management in the EcoScan app.
