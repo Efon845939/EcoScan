@@ -9,21 +9,45 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { LogIn, UserPlus, Loader2 } from 'lucide-react';
-import { useUser, auth, firestore as db } from '@/firebase';
+
+import { auth, firestore as db } from '@/firebase';
+import { useUser } from '@/firebase';
 import { useTranslation } from '@/hooks/use-translation';
+
+// ---- SAFETY WRAPPERS ----
+// Provider yoksa / context hata atıyorsa ekran komple bembeyaz olmasın diye.
+
+function useSafeTranslation() {
+  try {
+    return useTranslation();
+  } catch (e) {
+    return { t: (key: string) => key, language: 'en', setLanguage: () => {} };
+  }
+}
+
+function useSafeUser() {
+  try {
+    return useUser();
+  } catch (e) {
+    return { user: null, isUserLoading: false } as {
+      user: any;
+      isUserLoading: boolean;
+    };
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t } = useTranslation();
-  const { user, isUserLoading } = useUser();
+  const { t } = useSafeTranslation();
+  const { user, isUserLoading } = useSafeUser();
 
   const [mode, setMode] = useState<'login' | 'signup'>('login');
 
-  // Common fields
+  // Ortak alanlar
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Signup fields
+  // Signup alanları
   const [username, setUsername] = useState('');
   const [country, setCountry] = useState('TR');
   const [phone, setPhone] = useState('');
@@ -31,11 +55,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isUserLoading && user && !user.isAnonymous) {
-      router.push('/');
-    }
-  }, [user?.uid, user?.isAnonymous, isUserLoading, router]);
+  // ÖNEMLİ: Şimdilik OTOMATİK REDIRECT YOK.
+  // useEffect(() => {
+  //   if (!isUserLoading && user && !user.isAnonymous) {
+  //     router.push('/');
+  //   }
+  // }, [user, isUserLoading, router]);
 
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
@@ -43,17 +68,17 @@ export default function LoginPage() {
     setError(null);
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      const user = cred.user;
+      const firebaseUser = cred.user;
 
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, 'users', firebaseUser.uid);
       const snap = await getDoc(userRef);
 
       if (!snap.exists()) {
         await setDoc(userRef, {
-          uid: user.uid,
-          username: user.displayName || email.split('@')[0],
-          email: user.email,
-          emailVerified: user.emailVerified ?? false,
+          uid: firebaseUser.uid,
+          username: firebaseUser.displayName || email.split('@')[0],
+          email: firebaseUser.email,
+          emailVerified: firebaseUser.emailVerified ?? false,
           phone: null,
           phoneVerified: false,
           country: 'TR',
@@ -80,16 +105,16 @@ export default function LoginPage() {
     setError(null);
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      const user = cred.user;
+      const firebaseUser = cred.user;
 
-      await updateProfile(user, { displayName: username });
+      await updateProfile(firebaseUser, { displayName: username });
 
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, 'users', firebaseUser.uid);
       await setDoc(userRef, {
-        uid: user.uid,
+        uid: firebaseUser.uid,
         username,
-        email: user.email,
-        emailVerified: user.emailVerified ?? false,
+        email: firebaseUser.email,
+        emailVerified: firebaseUser.emailVerified ?? false,
         phone: phone || null,
         phoneVerified: false,
         country,
@@ -99,7 +124,7 @@ export default function LoginPage() {
         isDisabled: false,
         roles: ['user'],
       });
-      
+
       router.push('/');
     } catch (err: any) {
       console.error(err);
@@ -111,7 +136,8 @@ export default function LoginPage() {
 
   const isLogin = mode === 'login';
 
-  if (isUserLoading || (user && !user.isAnonymous)) {
+  // İstersen hala loading state gösterebilirsin ama bu sefer gerçekten sadece loading iken:
+  if (isUserLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -123,6 +149,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-sky-50 dark:from-neutral-950 dark:to-neutral-900 px-4">
       <div className="w-full max-w-md bg-white/80 dark:bg-neutral-900/80 rounded-2xl shadow-xl p-6 space-y-6">
+        {/* Mode switch */}
         <div className="flex rounded-full bg-neutral-100 dark:bg-neutral-800 p-1">
           <button
             type="button"
@@ -256,7 +283,7 @@ export default function LoginPage() {
             className="w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition"
           >
             {loading && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             )}
             <span>
               {isLogin ? t('auth.login.cta') : t('auth.signup.cta')}
