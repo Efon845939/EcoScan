@@ -112,7 +112,7 @@ export default function LoginPage() {
         {/* Şimdilik sadece email tab aktif */}
         {tab === 'phone' && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            Phone login is not implemented yet. Keep using the Email tab.
+            Phone login is not implemented yet. Please use the Email tab.
           </div>
         )}
 
