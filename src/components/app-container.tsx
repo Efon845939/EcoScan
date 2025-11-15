@@ -2,6 +2,7 @@
 
 import { useState, useRef, useTransition, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   Camera,
   Loader2,
@@ -42,7 +43,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from '@/hooks/use-translation';
+import { TranslationProvider, useTranslation } from '@/hooks/use-translation';
 import { MaterialIcon } from './material-icon';
 import { RewardsSection } from './rewards-section';
 import { GuideSection } from './guide-section';
@@ -54,11 +55,48 @@ import { getPointsForMaterial } from '@/lib/points';
 import SurveyButton from './survey-button';
 import { CarbonFootprintSurvey } from './carbon-footprint-survey';
 
+
 export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey';
 
-export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
-  const { language, setLanguage } = useTranslation();
-  const [step, setStep] = useState<Step>(initialStep);
+const AppContainerWithTranslations = ({ initialStep }: { initialStep?: Step }) => {
+    const [language, setLanguage] = useState('en');
+
+    useEffect(() => {
+        const savedLanguage = localStorage.getItem('app-language');
+        if (savedLanguage) {
+            setLanguage(savedLanguage);
+        }
+    }, []);
+    
+    useEffect(() => {
+        document.documentElement.lang = language;
+        document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    }, [language]);
+
+
+    const handleLanguageChange = (newLanguage: string) => {
+        setLanguage(newLanguage);
+        localStorage.setItem('app-language', newLanguage);
+    };
+    
+    return (
+        <TranslationProvider language={language}>
+            <AppContainer onLanguageChange={handleLanguageChange} currentLanguage={language} initialStep={initialStep} />
+        </TranslationProvider>
+    )
+}
+
+
+function AppContainer({ onLanguageChange, currentLanguage, initialStep }: { onLanguageChange: (lang: string) => void, currentLanguage: string, initialStep?: Step}) {
+  const router = useRouter();
+  const [step, setStep] = useState<Step>(initialStep || 'scan');
+  
+  useEffect(() => {
+    if (initialStep) {
+      setStep(initialStep);
+    }
+  }, [initialStep]);
+
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [barcodeNumber, setBarcodeNumber] = useState('');
   const [identifiedMaterial, setIdentifiedMaterial] =
@@ -105,7 +143,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   };
 
   const handleLanguageChange = (newLanguage: string) => {
-    setLanguage(newLanguage);
+    onLanguageChange(newLanguage);
     toast({
       title: t('toast_language_updated_title'),
       description: t('toast_language_updated_description'),
@@ -179,12 +217,25 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   
   const resetState = () => {
     setStep('scan');
+    router.push('/');
     setScannedImage(null);
     setBarcodeNumber('');
     setIdentifiedMaterial(null);
     setIsLoading(false);
     setHasCameraPermission(null);
   };
+
+  const handleNavigate = (newStep: Step) => {
+    if (newStep === 'survey') {
+      router.push('/carbon-footprint');
+    } else {
+      setStep(newStep);
+      // If we're going back to scan, ensure the URL is the root
+      if (newStep === 'scan') {
+        router.push('/');
+      }
+    }
+  }
   
   const processImage = (dataUri: string) => {
     if (step === 'verifyDisposal') {
@@ -301,7 +352,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
                  updateDocumentNonBlocking(userProfileRef, { totalPoints: newPoints });
               }
             }
-             setStep('scan'); // Or back to confirm step
+             handleNavigate('scan');
           }
         })
         .catch((err) => {
@@ -310,7 +361,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
             title: t('toast_verification_error_title'),
             description: t('toast_verification_error_description'),
           });
-           setStep('scan');
+           handleNavigate('scan');
         })
         .finally(() => {
           setIsLoading(false);
@@ -347,14 +398,17 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
               </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
-               <Button size="lg" onClick={() => setStep('camera')} className="h-20 text-base md:h-24">
+               <Button size="lg" onClick={() => handleNavigate('camera')} className="h-20 text-base md:h-24">
                 <Camera className="mr-2" />
                 {t('scan_card_scan_button')}
               </Button>
-              <SurveyButton cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} />
+              <SurveyButton 
+                onClick={() => handleNavigate('survey')} 
+                cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} 
+              />
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
-               <Button variant="link" onClick={() => setStep('rewards')}>
+               <Button variant="link" onClick={() => handleNavigate('rewards')}>
                 <Award className="mr-2" />
                 {t('scan_card_rewards_link')} ({userPoints} {t('header_points')})
               </Button>
@@ -381,7 +435,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
                   variant="ghost"
                   size="sm"
                   className="absolute left-0"
-                  onClick={() => setStep(backStep)}
+                  onClick={() => handleNavigate(backStep)}
                 >
                   <ChevronLeft className="mr-2 h-4 w-4" /> {t('camera_back_button')}
                 </Button>
@@ -484,20 +538,20 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
               <Button size="lg" onClick={resetState}>
                 {t('disposed_card_scan_another_button')}
               </Button>
-              <Button variant="link" onClick={() => setStep('rewards')}>
+              <Button variant="link" onClick={() => handleNavigate('rewards')}>
                 {t('disposed_card_rewards_link')}
               </Button>
             </CardFooter>
           </Card>
         );
       case 'rewards':
-        return <RewardsSection userPoints={userPoints} onBack={() => setStep('scan')} />;
+        return <RewardsSection userPoints={userPoints} onBack={() => handleNavigate('scan')} />;
       case 'guide':
-        return <GuideSection onBack={() => setStep('scan')} />;
+        return <GuideSection onBack={() => handleNavigate('scan')} />;
       case 'verify':
-        return <VerificationCenter onBack={() => setStep('scan')} />;
+        return <VerificationCenter onBack={() => handleNavigate('scan')} />;
       case 'survey':
-        return <CarbonFootprintSurvey onBack={() => setStep('scan')} region={region} language={language} />;
+        return <CarbonFootprintSurvey onBack={() => handleNavigate('scan')} region={region} language={currentLanguage} />;
       default:
         return null;
     }
@@ -521,7 +575,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header points={userPoints} onNavigate={setStep} onShowSettings={handleOpenSettings} />
+      <Header points={userPoints} onNavigate={handleNavigate} onShowSettings={handleOpenSettings} />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
         <div className={cn('w-full max-w-2xl transition-all duration-300', (isLoading || isUserLoading || isProfileLoading) && 'opacity-50 pointer-events-none')}>
           {renderContent()}
@@ -566,11 +620,11 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
-               <Button variant="outline" className="justify-start" onClick={() => { setStep('guide'); setShowSettingsModal(false); }}>
+               <Button variant="outline" className="justify-start" onClick={() => { handleNavigate('guide'); setShowSettingsModal(false); }}>
                   <BookCopy className="mr-2" />
                   {t('settings_guide_button')}
                </Button>
-               <Button variant="outline" className="justify-start" onClick={() => { setStep('verify'); setShowSettingsModal(false); }}>
+               <Button variant="outline" className="justify-start" onClick={() => { handleNavigate('verify'); setShowSettingsModal(false); }}>
                   <ShieldCheck className="mr-2" />
                   Verification Center
                </Button>
@@ -599,7 +653,7 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
                     <Languages />
                    {t('settings_language_label')}
                 </Label>
-                <Select value={language} onValueChange={handleLanguageChange}>
+                <Select value={currentLanguage} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a language" />
                   </SelectTrigger>
@@ -623,3 +677,5 @@ export function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
     </div>
   );
 }
+
+export { AppContainerWithTranslations as AppContainer };
