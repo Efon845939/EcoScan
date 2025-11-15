@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useTransition } from 'react';
 import {
@@ -99,7 +98,8 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
           region: regionKey,
           transport,
           diet,
-          drink,
+          // The drink array needs to be passed to the AI flow
+          other: JSON.stringify({ drink }),
           energy: noEnergy ? "none" : energyText,
         };
         
@@ -111,17 +111,23 @@ export function CarbonFootprintSurvey({ onBack, region, language }: CarbonFootpr
         return;
       }
       
+      if (!apiResponse || apiResponse.estimatedFootprintKg === undefined) {
+         toast({ variant: "destructive", title: "Analysis Failed", description: "Could not get a valid response from the AI." });
+         setStep('form');
+         return;
+      }
+
       const { estimatedFootprintKg } = apiResponse;
       const { basePoints, penaltyPoints } = calculatePoints(estimatedFootprintKg, regionKey as RegionKey);
       
-      // Award base points or apply penalty
+      // Award base points or apply penalty and START the cooldown timer
       if (userProfileRef && userProfile) {
         const currentPoints = userProfile.totalPoints ?? 0;
         const awarded = penaltyPoints < 0 ? penaltyPoints : basePoints;
         
         updateDocumentNonBlocking(userProfileRef, { 
           totalPoints: Math.max(0, currentPoints + awarded),
-          lastCarbonSurveyDate: serverTimestamp() 
+          lastCarbonSurveyDate: serverTimestamp() // This is what starts the cooldown
         });
       }
 
