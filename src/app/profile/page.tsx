@@ -11,9 +11,9 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If loading is finished and there's no user, or user is anonymous, redirect to home
+    // If loading is finished and there's no user, or user is anonymous, redirect to login
     if (!isUserLoading && (!user || user.isAnonymous)) {
-      router.replace('/');
+      router.replace('/auth/login');
     }
   }, [user, isUserLoading, router]);
 

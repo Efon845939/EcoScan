@@ -38,7 +38,12 @@ export function Header({ points, onNavigate, onShowSettings }: HeaderProps) {
                 <User />
                 <span className="sr-only">Profile</span>
              </Button>
-           ) : null}
+           ) : (
+            <Button variant="ghost" size="icon" onClick={() => router.push('/auth/login')}>
+                <LogIn />
+                <span className="sr-only">Sign In</span>
+            </Button>
+           )}
           <Button variant="ghost" size="icon" onClick={onShowSettings}>
               <Settings />
               <span className="sr-only">Settings</span>
