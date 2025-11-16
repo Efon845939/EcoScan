@@ -1,9 +1,18 @@
 // app/auth/login/page.tsx
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  updateProfile,
+  onAuthStateChanged
+} from "firebase/auth";
+import { doc, setDoc, getFirestore, serverTimestamp } from "firebase/firestore";
+import { useFirebase } from "@/firebase";
 
 type Mode = "login" | "signup";
 
@@ -24,6 +33,7 @@ function isValidEmail(email: string): boolean {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { auth, firestore } = useFirebase();
 
   const [mode, setMode] = useState<Mode>("login");
   const [loginForm, setLoginForm] = useState<LoginFormState>({
@@ -39,6 +49,18 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isLogin = mode === "login";
+
+  useEffect(() => {
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // If user is already logged in, redirect to home
+        router.replace("/");
+      }
+    });
+    return () => unsubscribe();
+  }, [auth, router]);
+
 
   function switchMode(nextMode: Mode) {
     if (nextMode === mode) return;
@@ -59,51 +81,73 @@ export default function LoginPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setStatus("");
+    setIsSubmitting(true);
 
     if (isLogin) {
       const { identifier, password } = loginForm;
       if (!identifier.trim() || !password.trim()) {
-        setStatus("HATA: E-posta/kullanıcı adı ve şifre zorunludur.");
+        setStatus("HATA: E-posta ve şifre zorunludur.");
+        setIsSubmitting(false);
         return;
       }
       if (password.length < 6) {
         setStatus("HATA: Şifre en az 6 karakter olmalı.");
+        setIsSubmitting(false);
         return;
       }
 
-      setIsSubmitting(true);
       try {
-        console.log("[EcoScan Rewards] LOGIN", loginForm);
-        setStatus("Giriş başarılı (mock). Profil sayfasına yönlendiriliyorsun...");
-        setTimeout(() => router.push("/profile"), 500);
+        // NOTE: For simplicity, we assume identifier is an email.
+        // A real app would check if it's a username and look up the email.
+        await signInWithEmailAndPassword(auth, identifier, password);
+        setStatus("Giriş başarılı. Ana sayfaya yönlendiriliyorsun...");
+        setTimeout(() => router.push("/"), 500);
       } catch (err: any) {
         setStatus(`HATA: ${err?.message || "Bilinmeyen bir hata oluştu."}`);
-      } finally {
         setIsSubmitting(false);
       }
-    } else {
+    } else { // Signup
       const { username, email, password } = signupForm;
       if (!username.trim() || !email.trim() || !password.trim()) {
         setStatus("HATA: Kullanıcı adı, e-posta ve şifre zorunludur.");
+        setIsSubmitting(false);
         return;
       }
       if (!isValidEmail(email)) {
         setStatus("HATA: Geçerli bir e-posta adresi gir.");
+        setIsSubmitting(false);
         return;
       }
       if (password.length < 6) {
         setStatus("HATA: Şifre en az 6 karakter olmalı.");
+        setIsSubmitting(false);
         return;
       }
 
-      setIsSubmitting(true);
       try {
-        console.log("[EcoScan Rewards] SIGNUP", signupForm);
-        setStatus("Kayıt başarılı (mock). Profil sayfasına yönlendiriliyorsun...");
-        setTimeout(() => router.push("/profile"), 500);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Set display name in Auth
+        await updateProfile(user, { displayName: username });
+
+        // Create user document in Firestore
+        await setDoc(doc(firestore, "users", user.uid), {
+          uid: user.uid,
+          username: username,
+          displayName: username,
+          email: email,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          totalPoints: 0,
+          roles: ['user'],
+          isDisabled: false,
+        });
+
+        setStatus("Kayıt başarılı. Ana sayfaya yönlendiriliyorsun...");
+        setTimeout(() => router.push("/"), 500);
       } catch (err: any) {
         setStatus(`HATA: ${err?.message || "Bilinmeyen bir hata oluştu."}`);
-      } finally {
         setIsSubmitting(false);
       }
     }
@@ -162,13 +206,13 @@ export default function LoginPage() {
               {/* Giriş modu: identifier + password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  E-posta veya kullanıcı adı
+                  E-posta
                 </label>
                 <input
                   type="text"
                   value={loginForm.identifier}
                   onChange={(e) => handleLoginChange("identifier", e.target.value)}
-                  placeholder="sen@example.com veya eco_kahraman"
+                  placeholder="sen@example.com"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 />
               </div>

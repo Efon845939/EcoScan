@@ -13,7 +13,7 @@ type HeaderProps = {
 
 export function Header({ points, onNavigate, onShowSettings }: HeaderProps) {
   const { t } = useTranslation();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   return (
@@ -28,25 +28,27 @@ export function Header({ points, onNavigate, onShowSettings }: HeaderProps) {
           <span className="ml-3 text-xl font-bold font-headline">{t('header_title')}</span>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
-           <div className="flex items-center space-x-2 rounded-full border bg-card px-4 py-2 shadow-sm">
-            <Award className="h-6 w-6 text-yellow-500" />
-            <span className="text-lg font-bold">{points}</span>
-            <span className="text-sm text-muted-foreground hidden sm:inline-block">{t('header_points')}</span>
-          </div>
-           {user && !user.isAnonymous ? (
+          {user && (
+            <div className="flex items-center space-x-2 rounded-full border bg-card px-4 py-2 shadow-sm">
+              <Award className="h-6 w-6 text-yellow-500" />
+              <span className="text-lg font-bold">{points}</span>
+              <span className="text-sm text-muted-foreground hidden sm:inline-block">{t('header_points')}</span>
+            </div>
+          )}
+           {isUserLoading ? null : user ? (
              <Button variant="ghost" size="icon" onClick={() => router.push('/profile')}>
                 <User />
-                <span className="sr-only">Profile</span>
+                <span className="sr-only">Profil</span>
              </Button>
            ) : (
             <Button variant="ghost" size="icon" onClick={() => router.push('/auth/login')}>
                 <LogIn />
-                <span className="sr-only">Sign In</span>
+                <span className="sr-only">Giriş yap</span>
             </Button>
            )}
           <Button variant="ghost" size="icon" onClick={onShowSettings}>
               <Settings />
-              <span className="sr-only">Settings</span>
+              <span className="sr-only">Ayarlar</span>
           </Button>
         </div>
       </div>
