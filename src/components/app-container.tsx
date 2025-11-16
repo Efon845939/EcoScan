@@ -13,6 +13,7 @@ import {
   Languages,
   Globe,
   ShieldCheck,
+  LogIn,
 } from 'lucide-react';
 import {
   identifyMaterial as identifyMaterialSimple,
@@ -124,7 +125,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep }: { onLa
     [firestore, user]
   );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
-  const [region, setRegion] = useState('Dubai, UAE');
+  const [region, setRegion] = useState('Turkey');
 
   useEffect(() => {
     const savedRegion = localStorage.getItem('app-region');
@@ -216,8 +217,9 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep }: { onLa
   const userPoints = userProfile?.totalPoints ?? 0;
   
   const resetState = () => {
-    setStep('scan');
+    // Instead of just setting step, we push to the router to ensure URL consistency
     router.push('/');
+    setStep('scan');
     setScannedImage(null);
     setBarcodeNumber('');
     setIdentifiedMaterial(null);
@@ -404,14 +406,21 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep }: { onLa
               </Button>
               <SurveyButton 
                 onClick={() => handleNavigate('survey')} 
-                cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} 
+                cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime()} 
               />
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
-               <Button variant="link" onClick={() => handleNavigate('rewards')}>
-                <Award className="mr-2" />
-                {t('scan_card_rewards_link')} ({userPoints} {t('header_points')})
-              </Button>
+              {user && !user.isAnonymous ? (
+                <Button variant="link" onClick={() => handleNavigate('rewards')}>
+                  <Award className="mr-2" />
+                  {t('scan_card_rewards_link')} ({userPoints} {t('header_points')})
+                </Button>
+              ) : (
+                <Button variant="link" onClick={() => router.push('/auth/login')}>
+                  <LogIn className="mr-2" />
+                  {t('scan_card_login_for_rewards')}
+                </Button>
+              )}
             </CardFooter>
           </Card>
         );
@@ -591,9 +600,9 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep }: { onLa
         <Dialog open={showLowConfidenceModal} onOpenChange={setShowLowConfidenceModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-headline">{t('confirm_card_title')}</DialogTitle>
+              <DialogTitle className="font-headline">{t('low_confidence_title')}</DialogTitle>
               <DialogDescription>
-                {t('confirm_card_description')}
+                {t('low_confidence_description')}
               </DialogDescription>
             </DialogHeader>
             <Input
@@ -605,7 +614,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep }: { onLa
             <DialogFooter>
               <Button onClick={handleBarcodeSubmit} disabled={isPending || !barcodeNumber}>
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Submit Barcode
+                {t('low_confidence_submit_button')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -626,7 +635,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep }: { onLa
                </Button>
                <Button variant="outline" className="justify-start" onClick={() => { handleNavigate('verify'); setShowSettingsModal(false); }}>
                   <ShieldCheck className="mr-2" />
-                  Verification Center
+                  {t('guide_verification_title')}
                </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
@@ -638,11 +647,11 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep }: { onLa
                     <SelectValue placeholder="Select a region" />
                   </SelectTrigger>
                   <SelectContent id="region">
-                    <SelectItem value="Dubai, UAE">Dubai, UAE</SelectItem>
-                    <SelectItem value="Kuwait">Kuwait</SelectItem>
                     <SelectItem value="Turkey">Turkey</SelectItem>
                     <SelectItem value="Germany">Germany</SelectItem>
                     <SelectItem value="USA">USA</SelectItem>
+                    <SelectItem value="Dubai, UAE">Dubai, UAE</SelectItem>
+                    <SelectItem value="Kuwait">Kuwait</SelectItem>
                     <SelectItem value="United Kingdom">United Kingdom</SelectItem>
                     <SelectItem value="Japan">Japan</SelectItem>
                   </SelectContent>
@@ -679,3 +688,5 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep }: { onLa
 }
 
 export { AppContainerWithTranslations as AppContainer };
+
+    

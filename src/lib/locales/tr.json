@@ -7,6 +7,7 @@
   "scan_card_footprint_button": "Karbon Ayak İzinizi Görün",
   "scan_card_footprint_cooldown": "Yarınki Karbon Ayak İzi için kalan süre:",
   "scan_card_rewards_link": "Ödüllerimi Görüntüle",
+  "scan_card_login_for_rewards": "Ödül kazanmak için giriş yapın",
   "camera_scan_item_title": "Öğenizi Tarayın",
   "camera_scan_item_description": "Öğenin ambalajını çerçeveye yerleştirin.",
   "camera_scan_receipt_title": "Fişinizi Tarayın",
@@ -257,3 +258,5 @@
     }
   }
 }
+
+    
