@@ -57,10 +57,8 @@ export default function LoginPage() {
     try {
       // ŞİMDİLİK SADECE MOCK:
       // Buraya ileride Firebase Auth (email/password) ya da kendi API'nizi bağlayabilirsiniz.
-      console.log("EcoScan Rewards login attempt:", form);
-
-      // Örnek başarı mesajı:
-      setInfoMessage("Giriş bilgileri alındı (şu an mock). İleride sunucuya bağlanacak.");
+      console.log("EcoScan Rewards login form:", form);
+      setInfoMessage("Giriş formu alındı (şu an mock). Backend daha sonra bağlanacak.");
     } catch (err: any) {
       setErrorMessage(err?.message || "Bilinmeyen bir hata oluştu.");
     } finally {
@@ -71,7 +69,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-emerald-100 px-4">
       <div className="w-full max-w-md bg-white/90 backdrop-blur rounded-2xl shadow-xl border border-emerald-100 p-6 sm:p-8">
-        {/* Başlık */}
         <div className="mb-6 text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 mb-3">
             <span className="text-emerald-600 font-bold text-lg">ER</span>
@@ -80,13 +77,11 @@ export default function LoginPage() {
             EcoScan Rewards
           </h1>
           <p className="mt-1 text-sm text-gray-600">
-            Hesabına giriş yap ve geri dönüşüm istatistiklerini takip et.
+            Kullanıcı adı, e-posta ve şifren ile giriş yap.
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Kullanıcı adı */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Kullanıcı adı
@@ -100,7 +95,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* E-posta */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               E-posta
@@ -114,7 +108,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Şifre */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Şifre
@@ -128,7 +121,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Hata / bilgi mesajları */}
           {errorMessage && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
               {errorMessage}
@@ -140,7 +132,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Submit butonu */}
           <button
             type="submit"
             disabled={isSubmitting}
@@ -150,11 +141,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Alt bilgi (opsiyonel) */}
         <p className="mt-4 text-[11px] text-gray-500 text-center">
-          Şu an sadece kullanıcı adı, e-posta ve şifre ile giriş taslağı
-          hazırlanmıştır. Google girişi yoktur ve sunucu tarafına bağlanma
-          ileride eklenecektir.
+          Google girişi yok. Sadece kullanıcı adı, e-posta ve şifre ile giriş
+          taslağı hazırlanmıştır.
         </p>
       </div>
     </div>
