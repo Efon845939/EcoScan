@@ -18,7 +18,7 @@ type Impact = {
 };
 
 const PROFILE_KEY = "ecoscan_profile";
-const IMPACT_KEY = "eco_local_impact"; // Daha önce impact için kullandığımız key ile uyumlu
+const IMPACT_KEY = "eco_local_impact";
 
 const defaultProfile: Profile = {
   username: "",
@@ -48,9 +48,7 @@ function saveProfileToLS(profile: Profile) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-  } catch {
-    // umursama
-  }
+  } catch {}
 }
 
 function loadImpactFromLS(): Impact {
@@ -66,7 +64,7 @@ function loadImpactFromLS(): Impact {
 function formatDate(ts: number | null) {
   if (!ts) return "Hiç güncellenmedi";
   const d = new Date(ts);
-  return d.toLocaleString("tr-TR"); // TR formatı
+  return d.toLocaleString("tr-TR");
 }
 
 export default function ProfilePage() {
@@ -75,7 +73,6 @@ export default function ProfilePage() {
   const [status, setStatus] = useState<string>("Değişiklik yapılmadı.");
   const [isSaving, setIsSaving] = useState(false);
 
-  // İlk yüklemede localStorage'tan oku
   useEffect(() => {
     setProfile(loadProfileFromLS());
     setImpact(loadImpactFromLS());
@@ -90,9 +87,8 @@ export default function ProfilePage() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      // Şimdilik sadece localStorage'a yazıyoruz
       saveProfileToLS(profile);
-      setStatus("Profil kaydedildi (şu an localStorage üzerinde).");
+      setStatus("Profil kaydedildi (şu an sadece bu cihazda).");
     } catch (err: any) {
       setStatus(`HATA: ${err?.message || "Profil kaydedilirken bir sorun oluştu."}`);
     } finally {
@@ -109,10 +105,11 @@ export default function ProfilePage() {
       .slice(0, 2) || "ER";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100 px-4 py-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Başlık */}
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100 px-4 py-6">
+      <div className="max-w-6xl mx-auto space-y-5">
+
+        {/* Top bar */}
+        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">
               EcoScan Rewards – Profil
@@ -121,16 +118,25 @@ export default function ProfilePage() {
               Hesap bilgilerini düzenle ve EcoScan istatistiklerini görüntüle.
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            <a
+              href="/"
+              className="inline-flex items-center rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
+            >
+              Ana Lobiye Dön
+            </a>
+          </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Sol panel: profil kartı */}
+        {/* Ana grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Sol panel: profil özet kartı */}
           <section className="lg:col-span-1 bg-white/90 backdrop-blur rounded-2xl border border-emerald-100 shadow-sm p-5 space-y-4">
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xl">
                 {initials}
               </div>
-              <div>
+              <div className="space-y-0.5">
                 <div className="font-semibold text-gray-900">
                   {profile.displayName || profile.username || "Henüz ad ayarlanmadı"}
                 </div>
@@ -143,15 +149,11 @@ export default function ProfilePage() {
             <div className="border-t border-gray-100 pt-4 space-y-2 text-sm text-gray-700">
               <div className="flex justify-between">
                 <span className="text-gray-500">Kullanıcı adı:</span>
-                <span className="font-medium">
-                  {profile.username || "-"}
-                </span>
+                <span className="font-medium">{profile.username || "-"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Bölge:</span>
-                <span className="font-medium">
-                  {profile.region || "-"}
-                </span>
+                <span className="font-medium">{profile.region || "-"}</span>
               </div>
             </div>
 
@@ -165,10 +167,10 @@ export default function ProfilePage() {
 
           {/* Sağ panel: stats + form */}
           <section className="lg:col-span-2 space-y-5">
-            {/* İstatistik kutuları */}
+            {/* Stats row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="rounded-xl bg-white/90 border border-emerald-100 p-4 shadow-sm">
-                <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">
+                <div className="text-[11px] font-semibold text-emerald-700 tracking-wide uppercase">
                   Toplam Puan
                 </div>
                 <div className="mt-1 text-2xl font-semibold text-gray-900">
@@ -180,7 +182,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="rounded-xl bg-white/90 border border-emerald-100 p-4 shadow-sm">
-                <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">
+                <div className="text-[11px] font-semibold text-emerald-700 tracking-wide uppercase">
                   Bu Ayki Puan
                 </div>
                 <div className="mt-1 text-2xl font-semibold text-gray-900">
@@ -192,7 +194,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="rounded-xl bg-white/90 border border-emerald-100 p-4 shadow-sm">
-                <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">
+                <div className="text-[11px] font-semibold text-emerald-700 tracking-wide uppercase">
                   Son Güncelleme
                 </div>
                 <div className="mt-1 text-sm font-medium text-gray-900">
@@ -204,7 +206,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Profil düzenleme formu */}
+            {/* Profil formu */}
             <div className="bg-white/90 border border-emerald-100 rounded-2xl shadow-sm p-5 space-y-4">
               <h2 className="text-sm font-semibold text-gray-900">
                 Profil bilgilerini düzenle
@@ -282,7 +284,7 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                <div className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                <div className="text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
                   {status}
                 </div>
 
