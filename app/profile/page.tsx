@@ -38,7 +38,8 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    // If loading is finished and there's no real user, redirect to login
+    if (!isUserLoading && (!user || user.isAnonymous)) {
       router.replace('/auth/login');
     }
   }, [user, isUserLoading, router]);
@@ -105,7 +106,8 @@ export default function ProfilePage() {
       .toUpperCase()
       .slice(0, 2) || "ER";
 
-  if (isUserLoading || isProfileLoading) {
+  // While loading auth state or if user is not a real logged-in user yet
+  if (isUserLoading || isProfileLoading || !user || user.isAnonymous) {
      return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -114,10 +116,6 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user) {
-    // This state is hit before the redirect useEffect kicks in.
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100 px-4 py-6">
@@ -272,3 +270,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
