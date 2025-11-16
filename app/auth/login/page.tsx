@@ -2,7 +2,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Link from "next/link";
 
 type LoginFormState = {
   username: string;
@@ -16,7 +15,9 @@ export default function LoginPage() {
     email: "",
     password: "",
   });
-  const [status, setStatus] = useState<string>("Form hazır, henüz gönderilmedi.");
+  const [status, setStatus] = useState<string>(
+    "Form hazır, henüz gönderilmedi."
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(field: keyof LoginFormState, value: string) {
@@ -61,9 +62,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white/90 backdrop-blur rounded-2xl shadow-xl border border-emerald-100 p-6 sm:p-8">
         <div className="mb-6 text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 mb-3">
-            <Link href="/" className="text-emerald-600 font-bold text-lg leading-none">
+            <span className="text-emerald-600 font-bold text-lg leading-none">
               ER
-            </Link>
+            </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
             EcoScan Rewards – Giriş
@@ -74,7 +75,6 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Kullanıcı adı */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Kullanıcı adı
@@ -88,7 +88,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* E-posta */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               E-posta
@@ -102,7 +101,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Şifre */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Şifre
@@ -116,7 +114,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Durum */}
           <div className="text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
             {status}
           </div>
