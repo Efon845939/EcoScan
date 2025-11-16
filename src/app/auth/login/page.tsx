@@ -1,7 +1,8 @@
+// app/auth/login/page.tsx
 "use client";
 
 import { FormEvent, useState } from "react";
-import Link from 'next/link';
+import Link from "next/link";
 
 type LoginFormState = {
   username: string;
@@ -60,7 +61,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white/90 backdrop-blur rounded-2xl shadow-xl border border-emerald-100 p-6 sm:p-8">
         <div className="mb-6 text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 mb-3">
-             <Link href="/" className="text-emerald-600 font-bold text-lg leading-none">ER</Link>
+            <Link href="/" className="text-emerald-600 font-bold text-lg leading-none">
+              ER
+            </Link>
           </div>
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
             EcoScan Rewards – Giriş
