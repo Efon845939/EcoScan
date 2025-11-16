@@ -14,53 +14,41 @@ export default function LoginPage() {
     email: "",
     password: "",
   });
+  const [status, setStatus] = useState<string>("Form hazır, henüz gönderilmedi.");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
-  function handleChange(
-    field: keyof LoginFormState,
-    value: string
-  ) {
+  function handleChange(field: keyof LoginFormState, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
-    setErrorMessage(null);
-    setInfoMessage(null);
+    setStatus("Değişiklik yapıldı, henüz gönderilmedi.");
   }
 
   function isValidEmail(email: string): boolean {
-    // Basit bir e-posta regex'i; ileri seviye doğrulama sunucuda yapılmalı
     return /\S+@\S+\.\S+/.test(email);
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setErrorMessage(null);
-    setInfoMessage(null);
-
     const { username, email, password } = form;
 
-    // Basit client-side doğrulama
     if (!username.trim() || !email.trim() || !password.trim()) {
-      setErrorMessage("Lütfen tüm alanları doldurun.");
+      setStatus("HATA: Tüm alanları doldurmalısın.");
       return;
     }
     if (!isValidEmail(email)) {
-      setErrorMessage("Lütfen geçerli bir e-posta adresi girin.");
+      setStatus("HATA: Geçerli bir e-posta adresi gir.");
       return;
     }
     if (password.length < 6) {
-      setErrorMessage("Şifre en az 6 karakter olmalıdır.");
+      setStatus("HATA: Şifre en az 6 karakter olmalı.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // ŞİMDİLİK SADECE MOCK:
-      // Buraya ileride Firebase Auth (email/password) ya da kendi API'nizi bağlayabilirsiniz.
-      console.log("EcoScan Rewards login form:", form);
-      setInfoMessage("Giriş formu alındı (şu an mock). Backend daha sonra bağlanacak.");
+      console.log("[EcoScan Rewards] Login form values:", form);
+      setStatus("Giriş bilgileri alındı (mock). Backend daha sonra eklenecek.");
     } catch (err: any) {
-      setErrorMessage(err?.message || "Bilinmeyen bir hata oluştu.");
+      setStatus(`HATA: ${err?.message || "Bilinmeyen bir hata."}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -74,14 +62,15 @@ export default function LoginPage() {
             <span className="text-emerald-600 font-bold text-lg">ER</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
-            EcoScan Rewards
+            EcoScan Rewards – Giriş
           </h1>
           <p className="mt-1 text-sm text-gray-600">
-            Kullanıcı adı, e-posta ve şifren ile giriş yap.
+            Kullanıcı adı, e-posta ve şifrenle giriş yap.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Kullanıcı adı */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Kullanıcı adı
@@ -95,6 +84,7 @@ export default function LoginPage() {
             />
           </div>
 
+          {/* E-posta */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               E-posta
@@ -108,6 +98,7 @@ export default function LoginPage() {
             />
           </div>
 
+          {/* Şifre */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Şifre
@@ -121,16 +112,10 @@ export default function LoginPage() {
             />
           </div>
 
-          {errorMessage && (
-            <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-              {errorMessage}
-            </div>
-          )}
-          {!errorMessage && infoMessage && (
-            <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-              {infoMessage}
-            </div>
-          )}
+          {/* Durum */}
+          <div className="text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+            {status}
+          </div>
 
           <button
             type="submit"
@@ -140,11 +125,6 @@ export default function LoginPage() {
             {isSubmitting ? "Giriş yapılıyor..." : "Giriş yap"}
           </button>
         </form>
-
-        <p className="mt-4 text-[11px] text-gray-500 text-center">
-          Google girişi yok. Sadece kullanıcı adı, e-posta ve şifre ile giriş
-          taslağı hazırlanmıştır.
-        </p>
       </div>
     </div>
   );
