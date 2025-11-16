@@ -2,6 +2,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type LoginFormState = {
   username: string;
@@ -10,6 +12,7 @@ type LoginFormState = {
 };
 
 export default function LoginPage() {
+  const router = useRouter();
   const [form, setForm] = useState<LoginFormState>({
     username: "",
     email: "",
@@ -49,12 +52,20 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       console.log("[EcoScan Rewards] Login form values:", form);
-      setStatus("Giriş bilgileri alındı (mock). Backend daha sonra eklenecek.");
+      setStatus("Giriş başarılı (mock). Profil sayfasına yönlendiriliyorsun...");
+
+      // İLERİDE: burada gerçek auth olacak.
+      // Şimdilik sadece profil ekranına atıyoruz:
+      // Küçük bir delay ile gösterimi görsün:
+      setTimeout(() => {
+        router.push("/profile");
+      }, 500);
     } catch (err: any) {
       setStatus(`HATA: ${err?.message || "Bilinmeyen bir hata."}`);
-    } finally {
-      setIsSubmitting(false);
+      // In a real scenario, you might not want to setIsSubmitting(false) here
+      // if the navigation is happening, but for mock, it's fine.
     }
+    // We don't set isSubmitting to false in the `finally` block if navigating away
   }
 
   return (
