@@ -1,11 +1,10 @@
 import DebugToolbar from "@/components/DebugToolbar";
+import { AppContainer } from "@/components/app-container";
 
 export default function HomePage() {
   return (
     <main className="min-h-screen">
-      {/* Burada normal EcoScan/EcoScan Rewards dashboard içeriklerin olabilir */}
-      <h1 className="p-6 text-xl font-semibold">EcoScan Rewards – Ana Sayfa</h1>
-
+      <AppContainer />
       {/* Debug toolbar her sayfada sağ altta gözüksün */}
       <DebugToolbar />
     </main>
