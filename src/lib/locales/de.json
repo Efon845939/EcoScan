@@ -1,3 +1,4 @@
+
 {
   "header_title": "EcoScan Belohnungen",
   "header_points": "Punkte",
@@ -73,9 +74,6 @@
   "survey_range_hint": "Bereich der Region: min {min}, avg {avg}, max {max} kg",
   "survey_penalty_title": "Strafe für hohen Fußabdruck",
   "survey_penalty_description": "Ihr Fußabdruck hat die regionale Grenze überschritten. Eine Strafe von <span style='color:hsl(var(--destructive))'>{points} Punkten</span> wurde angewendet.",
-  "survey_provisional_points_title": "Provisorische Punkte vergeben!",
-  "survey_provisional_points_description": "Sie haben heute <b style='color:hsl(var(--primary))'>{points} provisorische Punkte</b> für Ihre Punktzahl verdient.",
-  "survey_bonus_description_details": "Ihre Basispunktzahl beträgt <b style='color:hsl(var(--primary))'>{base} Punkte</b>. Bestätigen Sie mit einem Beleg, um einen <b style='color:hsl(var(--primary))'>x{x}-Bonus</b> zu erhalten &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> Gesamtpunkte!",
   "survey_base_points_title": "Basispunkte vergeben!",
   "survey_base_points_description": "Sie haben heute <b style='color:hsl(var(--primary))'>{points} Basispunkte</b> für Ihre Punktzahl verdient. Bestätigen Sie mit einem Beleg, um einen <b style='color:hsl(var(--primary))'>x{x}-Bonus</b> zu erhalten!",
   "analysis_good_title": "Großartige Entscheidungen heute",
@@ -217,5 +215,11 @@
   "toast_reward_redeemed_description": "Sie haben '{title}' erfolgreich eingelöst.",
   "toast_reward_confirm_title": "Einlösung bestätigen",
   "toast_reward_confirm_description": "Sind Sie sicher, dass Sie {cost} Punkte ausgeben möchten, um '{title}' einzulösen?",
-  "toast_reward_confirm_cancel": "Abbrechen"
+  "toast_reward_confirm_cancel": "Abbrechen",
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen"
+  }
 }
+
+    

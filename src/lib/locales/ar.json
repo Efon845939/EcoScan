@@ -1,3 +1,4 @@
+
 {
   "header_title": "مكافآت EcoScan",
   "header_points": "نقاط",
@@ -6,7 +7,7 @@
   "scan_card_scan_button": "امسح عبوة المنتج",
   "scan_card_footprint_button": "شاهد بصمتك الكربونية",
   "scan_card_footprint_cooldown": "بصمتك الكربونية ليوم غد في:",
-  "scan_card_rewards_link": "عرض مكافآتي",
+  "scan_card_rewards_link": "عرض مكافآti",
   "camera_scan_item_title": "امسح العنصر الخاص بك",
   "camera_scan_item_description": "ضع عبوة العنصر في الإطار.",
   "camera_scan_receipt_title": "امسح إيصالك",
@@ -73,9 +74,6 @@
   "survey_range_hint": "نطاق المنطقة: الحد الأدنى {min}, المتوسط {avg}, الحد الأقصى {max} كجم",
   "survey_penalty_title": "عقوبة البصمة العالية",
   "survey_penalty_description": "تجاوزت بصمتك الحد الإقليمي. تم تطبيق عقوبة <span style='color:hsl(var(--destructive))'>{points} نقطة</span>.",
-  "survey_provisional_points_title": "تم منح نقاط مؤقتة!",
-  "survey_provisional_points_description": "لقد ربحت <b style='color:hsl(var(--primary))'>{points} نقاط مؤقتة</b> لدرجاتك اليوم.",
-  "survey_bonus_description_details": "درجاتك الأساسية هي <b style='color:hsl(var(--primary))'>{base} نقطة</b>. تحقق من خلال إيصال للحصول على مكافأة <b style='color:hsl(var(--primary))'>x{x}</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> إجمالي النقاط!",
   "survey_base_points_title": "تم منح نقاط أساسية!",
   "survey_base_points_description": "لقد ربحت <b style='color:hsl(var(--primary))'>{points} نقاط أساسية</b> لدرجاتك اليوم. تحقق من خلال إيصال للحصول على مكافأة <b style='color:hsl(var(--primary))'>x{x}</b>!",
   "analysis_good_title": "خيارات رائعة اليوم",
@@ -217,5 +215,11 @@
   "toast_reward_redeemed_description": "لقد نجحت في استبدال '{title}'.",
   "toast_reward_confirm_title": "تأكيد الاستبدال",
   "toast_reward_confirm_description": "هل أنت متأكد أنك تريد إنفاق {cost} نقطة لاستبدال '{title}'؟",
-  "toast_reward_confirm_cancel": "إلغاء"
+  "toast_reward_confirm_cancel": "إلغاء",
+  "common": {
+    "save": "حفظ",
+    "cancel": "إلغاء"
+  }
 }
+
+    

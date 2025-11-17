@@ -1,3 +1,4 @@
+
 // app/page.tsx
 'use client';
 
@@ -12,11 +13,16 @@ export default function HomePage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
 
-  // This page is now public, so no automatic redirect.
-  // The MainHeader will show the correct button (Login or Profile).
-  // AppContainer might have its own internal checks for specific actions.
+  useEffect(() => {
+    // If loading is finished and there's no real user, redirect to login
+    if (!isUserLoading && (!user || user.isAnonymous)) {
+      router.replace('/auth/login');
+    }
+  }, [user, isUserLoading, router]);
 
-  if (isUserLoading) {
+  // While checking user auth, show a loader
+  // Or if we are about to redirect, this prevents a flash of the old page
+  if (isUserLoading || !user || user.isAnonymous) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -33,3 +39,5 @@ export default function HomePage() {
     </main>
   );
 }
+
+    

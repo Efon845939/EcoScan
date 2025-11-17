@@ -1,3 +1,4 @@
+
 {
   "header_title": "EcoScan Ödülleri",
   "header_points": "Puan",
@@ -74,9 +75,6 @@
   "survey_range_hint": "Bölge aralığı: min {min}, ort {avg}, maks {max} kg",
   "survey_penalty_title": "Yüksek Ayak İzi Cezası",
   "survey_penalty_description": "Ayak iziniz bölgesel sınırı aştı. <span style='color:hsl(var(--destructive))'>{points} puanlık bir ceza</span> uygulandı.",
-  "survey_provisional_points_title": "Geçici Puan Verildi!",
-  "survey_provisional_points_description": "Bugünkü skorun için <b style='color:hsl(var(--primary))'>{points} geçici puan</b> kazandın.",
-  "survey_bonus_description_details": "Temel puanın <b style='color:hsl(var(--primary))'>{base}</b>. Fişle doğrulayarak <b style='color:hsl(var(--primary))'>x{x} bonus</b> kazan &rarr; toplam <b style='color:hsl(var(--primary))'>{bonus}</b> puan!",
   "survey_base_points_title": "Temel Puan Kazandın!",
   "survey_base_points_description": "Bugünkü skorun için <b style='color:hsl(var(--primary))'>{points} temel puan</b> kazandın. Fişle doğrulayarak <b style='color:hsl(var(--primary))'>x{x} bonus</b> kazan!",
   "survey_recommendations_title": "İyileştirmek için 3 yol",
@@ -224,15 +222,13 @@
       "tab": "Giriş yap",
       "title": "EcoScan hesabına giriş yap",
       "subtitle": "Puanlarını ve karbon ayak izini buradan takip et.",
-      "cta": "Giriş yap",
-      "footer": "Şifreni mi unuttun? E-posta ile sıfırlayabilirsin."
+      "cta": "Giriş yap"
     },
     "signup": {
       "tab": "Kayıt ol",
       "title": "Yeni EcoScan hesabı oluştur",
       "subtitle": "Profilini oluştur, puan kazanmaya başla.",
-      "cta": "Kayıt ol",
-      "footer": "Zaten hesabın var mı? Giriş sekmesine geç."
+      "cta": "Kayıt ol"
     },
     "fields": {
       "username": "Kullanıcı adı",
@@ -256,6 +252,10 @@
     "error": {
       "unknown": "Bir hata oluştu. Lütfen tekrar dene."
     }
+  },
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal"
   }
 }
 

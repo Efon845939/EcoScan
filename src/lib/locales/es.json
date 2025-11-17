@@ -1,3 +1,4 @@
+
 {
   "header_title": "Recompensas EcoScan",
   "header_points": "Puntos",
@@ -73,9 +74,6 @@
   "survey_range_hint": "Rango de la región: mín. {min}, prom. {avg}, máx. {max} kg",
   "survey_penalty_title": "Penalización por huella alta",
   "survey_penalty_description": "Su huella excedió el límite regional. Se ha aplicado una penalización de <span style='color:hsl(var(--destructive))'>{points} puntos</span>.",
-  "survey_provisional_points_title": "¡Puntos provisionales otorgados!",
-  "survey_provisional_points_description": "Ganó <b style='color:hsl(var(--primary))'>{points} puntos provisionales</b> por su puntaje de hoy.",
-  "survey_bonus_description_details": "Su puntaje base es de <b style='color:hsl(var(--primary))'>{base} puntos</b>. Verifique con un recibo para obtener una <b style='color:hsl(var(--primary))'>bonificación de x{x}</b> &rarr; ¡<b style='color:hsl(var(--primary))'>{bonus}</b> puntos en total!",
   "survey_base_points_title": "¡Puntos base otorgados!",
   "survey_base_points_description": "Ganó <b style='color:hsl(var(--primary))'>{points} puntos base</b> por su puntaje de hoy. ¡Verifique con un recibo para obtener una <b style='color:hsl(var(--primary))'>bonificación de x{x}</b>!",
   "analysis_good_title": "Grandes elecciones hoy",
@@ -217,5 +215,11 @@
   "toast_reward_redeemed_description": "Ha canjeado con éxito '{title}'.",
   "toast_reward_confirm_title": "Confirmar canje",
   "toast_reward_confirm_description": "¿Está seguro de que desea gastar {cost} puntos para canjear '{title}'?",
-  "toast_reward_confirm_cancel": "Cancelar"
+  "toast_reward_confirm_cancel": "Cancelar",
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar"
+  }
 }
+
+    

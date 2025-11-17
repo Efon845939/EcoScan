@@ -1,0 +1,49 @@
+
+{
+  "header_title": "Награды EcoScan",
+  "header_points": "Очки",
+  "scan_card_title": "Готовы к зеленому пути?",
+  "scan_card_description": "Выберите действие, чтобы заработать очки и отслеживать свое влияние.",
+  "scan_card_scan_button": "Сканировать упаковку продукта",
+  "scan_card_footprint_button": "Посмотреть свой углеродный след",
+  "scan_card_footprint_cooldown": "Завтрашний углеродный след через:",
+  "scan_card_rewards_link": "Посмотреть мои награды",
+  "camera_back_button": "Назад",
+  "camera_capture_button": "Снять",
+  "settings_title": "Настройки",
+  "settings_description": "Управляйте настройками и предпочтениями вашего приложения.",
+  "settings_guide_button": "Руководство по приложению и правила",
+  "settings_region_label": "Регион",
+  "settings_language_label": "Язык",
+  "settings_close_button": "Закрыть",
+  "auth": {
+    "login": {
+      "tab": "Войти",
+      "title": "Войдите в свой аккаунт EcoScan",
+      "subtitle": "Отслеживайте свои очки и углеродный след.",
+      "cta": "Войти"
+    },
+    "signup": {
+      "tab": "Зарегистрироваться",
+      "title": "Создать новый аккаунт EcoScan",
+      "subtitle": "Настройте свой профиль и начните зарабатывать награды.",
+      "cta": "Зарегистрироваться"
+    },
+    "fields": {
+      "username": "Имя пользователя",
+      "email": "Электронная почта",
+      "password": "Пароль"
+    },
+    "placeholders": {
+      "username": "Ваше имя пользователя",
+      "email": "vy@example.com",
+      "password": "Введите ваш пароль"
+    }
+  },
+  "common": {
+    "save": "Сохранить",
+    "cancel": "Отмена"
+  }
+}
+
+    

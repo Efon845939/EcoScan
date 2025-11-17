@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, ChangeEvent, useTransition, useEffect } from 'react';
@@ -42,51 +43,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { TranslationProvider, useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/hooks/use-translation';
 import { MaterialIcon } from './material-icon';
 import { RewardsSection } from './rewards-section';
 import { GuideSection } from './guide-section';
 import { VerificationCenter } from './verification-center';
 import { cn } from '@/lib/utils';
-import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
 import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { getPointsForMaterial } from '@/lib/points';
 import SurveyButton from './survey-button';
+import { CarbonFootprintSurvey } from './carbon-footprint-survey';
 
 
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify';
-
-const AppContainerWithTranslations = ({ initialStep }: { initialStep?: Step }) => {
-    const [language, setLanguage] = useState('en');
-
-    useEffect(() => {
-        const savedLanguage = localStorage.getItem('app-language');
-        if (savedLanguage) {
-            setLanguage(savedLanguage);
-        }
-    }, []);
-    
-    useEffect(() => {
-        document.documentElement.lang = language;
-        document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    }, [language]);
+export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey';
 
 
-    const handleLanguageChange = (newLanguage: string) => {
-        setLanguage(newLanguage);
-        localStorage.setItem('app-language', newLanguage);
-    };
-    
-    return (
-        <TranslationProvider language={language}>
-            <AppContainer onLanguageChange={handleLanguageChange} currentLanguage={language} initialStep={initialStep} />
-        </TranslationProvider>
-    )
-}
-
-
-function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' }: { onLanguageChange: (lang: string) => void, currentLanguage: string, initialStep?: Step}) {
-  const [step, setStep] = useState<Step>(initialStep);
+function AppContainer() {
+  const [step, setStep] = useState<Step>('scan');
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [barcodeNumber, setBarcodeNumber] = useState('');
   const [identifiedMaterial, setIdentifiedMaterial] =
@@ -107,7 +81,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -133,7 +107,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   };
 
   const handleLanguageChange = (newLanguage: string) => {
-    onLanguageChange(newLanguage);
+    setLanguage(newLanguage);
     toast({
       title: t('toast_language_updated_title'),
       description: t('toast_language_updated_description'),
@@ -176,21 +150,24 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   }, [step, toast, t]);
   
   useEffect(() => {
-    if (isUserLoading || isProfileLoading || !user || user.isAnonymous) {
+    if (isUserLoading || isProfileLoading || !user) {
       return;
     }
   
-    if (user && !userProfile) {
+    // Only create a profile if it's a real user, not anonymous
+    if (user && !user.isAnonymous && !userProfile) {
       const newProfile = {
+        uid: user.uid,
         email: user.email || '',
+        username: user.email?.split('@')[0] || `user_${user.uid.substring(0,5)}`,
         displayName: user.displayName || user.email?.split('@')[0] || 'Eco Warrior',
-        username: user.displayName || user.email?.split('@')[0] || 'eco_warrior',
         totalPoints: 0,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
   
       if (userProfileRef) {
-        setDocumentNonBlocking(userProfileRef, newProfile, { merge: true });
+        setDocumentNonBlocking(userProfileRef, newProfile, { merge: false });
       }
     }
   }, [user, userProfile, isUserLoading, isProfileLoading, userProfileRef]);
@@ -373,7 +350,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                 <Camera className="mr-2" />
                 {t('scan_card_scan_button')}
               </Button>
-              <SurveyButton cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} />
+              <SurveyButton cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} onClick={() => setStep('survey')} />
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
                <Button variant="link" onClick={() => setStep('rewards')}>
@@ -518,6 +495,8 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
         return <GuideSection onBack={() => setStep('scan')} />;
       case 'verify':
         return <VerificationCenter onBack={() => setStep('scan')} />;
+       case 'survey':
+        return <CarbonFootprintSurvey region={region} language={language} onBack={() => setStep('scan')} />;
       default:
         return null;
     }
@@ -525,17 +504,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
 
   let currentLoadingMessage = loadingMessage;
     if (isLoading) {
-        if (loadingMessage === 'Identifying material...') {
-            currentLoadingMessage = t('loading_material');
-        } else if (loadingMessage === 'Re-identifying material with barcode...') {
-            currentLoadingMessage = t('loading_barcode');
-        } else if (loadingMessage === 'Verifying your disposal...') {
-            currentLoadingMessage = t('loading_disposal');
-        } else if (loadingMessage === 'Verifying your action...') {
-            currentLoadingMessage = t('loading_action');
-        } else if (loadingMessage === 'Processing receipt...') {
-            currentLoadingMessage = t('loading_receipt');
-        }
+        currentLoadingMessage = t(loadingMessage);
     }
 
 
@@ -557,9 +526,9 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
         <Dialog open={showLowConfidenceModal} onOpenChange={setShowLowConfidenceModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-headline">{t('confirm_card_title')}</DialogTitle>
+              <DialogTitle className="font-headline">{t('low_confidence_title')}</DialogTitle>
               <DialogDescription>
-                {t('confirm_card_description')}
+                {t('low_confidence_description')}
               </DialogDescription>
             </DialogHeader>
             <Input
@@ -571,7 +540,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
             <DialogFooter>
               <Button onClick={handleBarcodeSubmit} disabled={isPending || !barcodeNumber}>
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Submit Barcode
+                {t('low_confidence_submit_button')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -592,7 +561,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                </Button>
                <Button variant="outline" className="justify-start" onClick={() => { setStep('verify'); setShowSettingsModal(false); }}>
                   <ShieldCheck className="mr-2" />
-                  Verification Center
+                  {t('guide_verification_title')}
                </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
@@ -619,17 +588,20 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                     <Languages />
                    {t('settings_language_label')}
                 </Label>
-                <Select value={currentLanguage} onValueChange={handleLanguageChange}>
+                <Select value={language} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a language" />
                   </SelectTrigger>
                   <SelectContent id="language">
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="tr">Türkçe</SelectItem>
-                    <SelectItem value="ar">العربية</SelectItem>
-                    <SelectItem value="ja">日本語</SelectItem>
-                    <SelectItem value="de">Deutsch</SelectItem>
                     <SelectItem value="es">Español</SelectItem>
+                    <SelectItem value="de">Deutsch</SelectItem>
+                    <SelectItem value="ar">العربية</SelectItem>
+                    <SelectItem value="zh">中文</SelectItem>
+                    <SelectItem value="ja">日本語</SelectItem>
+                    <SelectItem value="ru">Русский</SelectItem>
+                    <SelectItem value="bs">Bosanski</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -644,6 +616,6 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   );
 }
 
-export { AppContainerWithTranslations as AppContainer };
+export { AppContainer };
 
     

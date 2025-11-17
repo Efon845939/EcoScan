@@ -1,3 +1,4 @@
+
 {
   "header_title": "EcoScanリワード",
   "header_points": "ポイント",
@@ -73,9 +74,6 @@
   "survey_range_hint": "地域の範囲：最小{min}、平均{avg}、最大{max} kg",
   "survey_penalty_title": "高いフットプリントのペナルティ",
   "survey_penalty_description": "フットプリントが地域の上限を超えました。<span style='color:hsl(var(--destructive))'>{points}ポイントのペナルティ</span>が適用されました。",
-  "survey_provisional_points_title": "仮ポイントが付与されました！",
-  "survey_provisional_points_description": "今日のスコアで<b style='color:hsl(var(--primary))'>{points}仮ポイント</b>を獲得しました。",
-  "survey_bonus_description_details": "あなたの基本スコアは<b style='color:hsl(var(--primary))'>{base}ポイント</b>です。レシートで確認して<b style='color:hsl(var(--primary))'>x{x}ボーナス</b>を獲得し、合計<b style='color:hsl(var(--primary))'>{bonus}</b>ポイントに！",
   "survey_base_points_title": "基本ポイントが付与されました！",
   "survey_base_points_description": "今日のスコアで<b style='color:hsl(var(--primary))'>{points}基本ポイント</b>を獲得しました。レシートで確認して<b style='color:hsl(var(--primary))'>x{x}ボーナス</b>を獲得してください！",
   "analysis_good_title": "今日の素晴らしい選択",
@@ -214,5 +212,11 @@
   "toast_reward_redeemed_description": "「{title}」を正常に利用しました。",
   "toast_reward_confirm_title": "利用の確認",
   "toast_reward_confirm_description": "本当に{cost}ポイントを使って「{title}」を利用しますか？",
-  "toast_reward_confirm_cancel": "キャンセル"
+  "toast_reward_confirm_cancel": "キャンセル",
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル"
+  }
 }
+
+    

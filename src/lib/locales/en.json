@@ -1,3 +1,4 @@
+
 {
   "header_title": "EcoScan",
   "header_points": "Points",
@@ -71,9 +72,6 @@
   "survey_range_hint": "Region range: min {min}, avg {avg}, max {max} kg",
   "survey_penalty_title": "High Footprint Penalty",
   "survey_penalty_description": "Your footprint exceeded the regional bound. A <span style='color:hsl(var(--destructive))'>{points} point penalty</span> has been applied.",
-  "survey_provisional_points_title": "Provisional Points Awarded!",
-  "survey_provisional_points_description": "You earned <b style='color:hsl(var(--primary))'>{points} provisional points</b> for your score today.",
-  "survey_bonus_description_details": "Your base score is <b style='color:hsl(var(--primary))'>{base} points</b>. Verify with a receipt for a <b style='color:hsl(var(--primary))'>x{x} bonus</b> &rarr; <b style='color:hsl(var(--primary))'>{bonus}</b> total points!",
   "survey_base_points_title": "Base Points Awarded!",
   "survey_base_points_description": "You earned <b style='color:hsl(var(--primary))'>{points} base points</b> for your score today. Verify with a receipt to get a <b style='color:hsl(var(--primary))'>x{x} bonus</b>!",
   "survey_recommendations_title": "3 ways to improve",
@@ -221,15 +219,13 @@
       "tab": "Sign in",
       "title": "Sign in to your EcoScan account",
       "subtitle": "Track your points and carbon footprint.",
-      "cta": "Sign in",
-      "footer": "Forgot your password? You can reset it via email."
+      "cta": "Sign in"
     },
     "signup": {
       "tab": "Sign up",
       "title": "Create a new EcoScan account",
       "subtitle": "Set up your profile and start earning rewards.",
-      "cta": "Sign up",
-      "footer": "Already have an account? Switch to the login tab."
+      "cta": "Sign up"
     },
     "fields": {
       "username": "Username",
@@ -253,5 +249,11 @@
     "error": {
       "unknown": "Something went wrong. Please try again."
     }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel"
   }
 }
+
+    

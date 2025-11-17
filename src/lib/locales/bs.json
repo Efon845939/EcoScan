@@ -1,0 +1,49 @@
+
+{
+  "header_title": "EcoScan Nagrade",
+  "header_points": "Poeni",
+  "scan_card_title": "Spremni za zeleni put?",
+  "scan_card_description": "Odaberite akciju da zaradite poene i pratite svoj uticaj.",
+  "scan_card_scan_button": "Skeniraj ambalažu proizvoda",
+  "scan_card_footprint_button": "Vidi svoj karbonski otisak",
+  "scan_card_footprint_cooldown": "Sutrašnji karbonski otisak za:",
+  "scan_card_rewards_link": "Prikaži moje nagrade",
+  "camera_back_button": "Nazad",
+  "camera_capture_button": "Snimi",
+  "settings_title": "Postavke",
+  "settings_description": "Upravljajte postavkama i preferencijama vaše aplikacije.",
+  "settings_guide_button": "Vodič za aplikaciju i pravila",
+  "settings_region_label": "Regija",
+  "settings_language_label": "Jezik",
+  "settings_close_button": "Zatvori",
+  "auth": {
+    "login": {
+      "tab": "Prijava",
+      "title": "Prijavite se na svoj EcoScan nalog",
+      "subtitle": "Pratite svoje poene i karbonski otisak.",
+      "cta": "Prijavi se"
+    },
+    "signup": {
+      "tab": "Registracija",
+      "title": "Kreirajte novi EcoScan nalog",
+      "subtitle": "Postavite svoj profil i počnite zarađivati nagrade.",
+      "cta": "Registruj se"
+    },
+    "fields": {
+      "username": "Korisničko ime",
+      "email": "Email",
+      "password": "Lozinka"
+    },
+    "placeholders": {
+      "username": "Vaše korisničko ime",
+      "email": "vi@example.com",
+      "password": "Unesite vašu lozinku"
+    }
+  },
+  "common": {
+    "save": "Sačuvaj",
+    "cancel": "Otkaži"
+  }
+}
+
+    

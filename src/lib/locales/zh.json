@@ -1,0 +1,49 @@
+
+{
+  "header_title": "EcoScan 奖励",
+  "header_points": "积分",
+  "scan_card_title": "准备好走向绿色了吗？",
+  "scan_card_description": "选择一个行动来赚取积分并跟踪您的影响。",
+  "scan_card_scan_button": "扫描产品包装",
+  "scan_card_footprint_button": "查看您的碳足迹",
+  "scan_card_footprint_cooldown": "明天的碳足迹倒计时：",
+  "scan_card_rewards_link": "查看我的奖励",
+  "camera_back_button": "返回",
+  "camera_capture_button": "捕获",
+  "settings_title": "设置",
+  "settings_description": "管理您的应用程序设置和首选项。",
+  "settings_guide_button": "应用指南和规则",
+  "settings_region_label": "地区",
+  "settings_language_label": "语言",
+  "settings_close_button": "关闭",
+  "auth": {
+    "login": {
+      "tab": "登录",
+      "title": "登录您的 EcoScan 帐户",
+      "subtitle": "跟踪您的积分和碳足迹。",
+      "cta": "登录"
+    },
+    "signup": {
+      "tab": "注册",
+      "title": "创建一个新的 EcoScan 帐户",
+      "subtitle": "设置您的个人资料并开始赚取奖励。",
+      "cta": "注册"
+    },
+    "fields": {
+      "username": "用户名",
+      "email": "电子邮件",
+      "password": "密码"
+    },
+    "placeholders": {
+      "username": "您的用户名",
+      "email": "you@example.com",
+      "password": "输入您的密码"
+    }
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消"
+  }
+}
+
+    
