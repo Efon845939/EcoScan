@@ -30,7 +30,7 @@ export function Header({ points, onNavigate, onShowSettings }: HeaderProps) {
           <span className="ml-3 text-xl font-bold font-headline">{t('header_title')}</span>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
-           <div className="flex items-center space-x-2 rounded-full border bg-card px-4 py-2 shadow-sm">
+           <div className="hidden items-center space-x-2 rounded-full border bg-card px-4 py-2 shadow-sm sm:flex">
             <Award className="h-6 w-6 text-yellow-500" />
             <span className="text-lg font-bold">{points}</span>
             <span className="text-sm text-muted-foreground hidden sm:inline-block">{t('header_points')}</span>
@@ -55,5 +55,3 @@ export function Header({ points, onNavigate, onShowSettings }: HeaderProps) {
     </header>
   );
 }
-
-    

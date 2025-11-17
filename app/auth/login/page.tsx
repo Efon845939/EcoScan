@@ -9,6 +9,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  sendPasswordResetEmail,
+  type AuthError,
 } from "firebase/auth";
 import { doc, setDoc, getFirestore, serverTimestamp } from "firebase/firestore";
 import { useFirebase } from "@/firebase";
@@ -65,6 +67,22 @@ export default function LoginPage() {
     setStatus("Değişiklik yapıldı, henüz gönderilmedi.");
   }
 
+  async function handleForgotPassword() {
+    const email = loginForm.identifier.trim();
+
+    if (!email || !isValidEmail(email)) {
+      setStatus("HATA: Şifreni sıfırlamak için geçerli bir e-posta gir.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setStatus("Şifre sıfırlama bağlantısı e-posta adresine gönderildi.");
+    } catch (err: any) {
+      setStatus("HATA: Şifre sıfırlama e-postası gönderilemedi. Daha sonra tekrar dene.");
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setStatus("");
@@ -84,13 +102,23 @@ export default function LoginPage() {
       }
 
       try {
-        // NOTE: For simplicity, we assume identifier is an email.
-        // A real app would check if it's a username and look up the email.
         await signInWithEmailAndPassword(auth, identifier, password);
         setStatus("Giriş başarılı. Ana sayfaya yönlendiriliyorsun...");
         setTimeout(() => router.push("/"), 500);
       } catch (err: any) {
-        setStatus(`HATA: ${err?.message || "Bilinmeyen bir hata oluştu."}`);
+        const e = err as AuthError;
+        let msg = "Bilinmeyen bir hata oluştu. Lütfen tekrar dene.";
+
+        if (
+          e?.code === "auth/invalid-credential" ||
+          e?.code === "auth/wrong-password" ||
+          e?.code === "auth/user-not-found"
+        ) {
+          msg = "E-posta veya şifre hatalı.";
+        } else if (e?.code === "auth/too-many-requests") {
+          msg = "Çok fazla başarısız deneme yaptın. Bir süre sonra tekrar dene.";
+        }
+        setStatus(`HATA: ${msg}`);
       } finally {
         setIsSubmitting(false);
       }
@@ -115,11 +143,7 @@ export default function LoginPage() {
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-
-        // Set display name in Auth
         await updateProfile(user, { displayName: username });
-
-        // Create user document in Firestore
         await setDoc(doc(firestore, "users", user.uid), {
           uid: user.uid,
           username: username,
@@ -128,14 +152,17 @@ export default function LoginPage() {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           totalPoints: 0,
-          roles: ['user'],
-          isDisabled: false,
         });
 
         setStatus("Kayıt başarılı. Ana sayfaya yönlendiriliyorsun...");
         setTimeout(() => router.push("/"), 500);
       } catch (err: any) {
-        setStatus(`HATA: ${err?.message || "Bilinmeyen bir hata oluştu."}`);
+        const e = err as AuthError;
+        let msg = "Bilinmeyen bir hata oluştu.";
+        if (e?.code === 'auth/email-already-in-use') {
+            msg = "Bu e-posta adresi zaten kullanımda."
+        }
+        setStatus(`HATA: ${msg}`);
       } finally {
         setIsSubmitting(false);
       }
@@ -145,7 +172,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-emerald-100 px-4">
       <div className="w-full max-w-md bg-white/90 backdrop-blur rounded-2xl shadow-xl border border-emerald-100 p-6 sm:p-8">
-        {/* Logo + başlık */}
         <div className="mb-6 text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 mb-3">
             <Link href="/" className="text-emerald-600 font-bold text-lg leading-none">
@@ -162,7 +188,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Giriş / Kaydol sekmeleri */}
         <div className="mb-4 flex rounded-xl bg-emerald-50 p-1 text-xs font-medium">
           <button
             type="button"
@@ -188,11 +213,9 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {isLogin ? (
             <>
-              {/* Giriş modu: identifier + password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   E-posta
@@ -207,9 +230,18 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Şifre
-                </label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Şifre
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="text-[11px] font-medium text-emerald-600 hover:underline"
+                  >
+                    Şifremi unuttum
+                  </button>
+                </div>
                 <input
                   type="password"
                   value={loginForm.password}
@@ -221,7 +253,6 @@ export default function LoginPage() {
             </>
           ) : (
             <>
-              {/* Kaydol modu: username + email + password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Kullanıcı adı
@@ -263,12 +294,10 @@ export default function LoginPage() {
             </>
           )}
 
-          {/* Durum mesajı */}
-          <div className="text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          <div className="text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 min-h-[36px] flex items-center">
             {status}
           </div>
 
-          {/* Submit butonu */}
           <button
             type="submit"
             disabled={isSubmitting}
