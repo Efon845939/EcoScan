@@ -21,6 +21,14 @@ export default function ProfilePage() {
   const { auth, firestore } = useFirebase();
   const router = useRouter();
 
+  // 🔒 AUTH GUARD
+  useEffect(() => {
+    // If loading is finished and there's no real user, redirect to login
+    if (!isUserLoading && (!user || user.isAnonymous)) {
+      router.replace('/auth/login');
+    }
+  }, [user, isUserLoading, router]);
+
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
     [firestore, user]
@@ -36,13 +44,6 @@ export default function ProfilePage() {
   });
   const [status, setStatus] = useState<string>("Değişiklik yapılmadı.");
   const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    // If loading is finished and there's no real user, redirect to login
-    if (!isUserLoading && (!user || user.isAnonymous)) {
-      router.replace('/auth/login');
-    }
-  }, [user, isUserLoading, router]);
   
   useEffect(() => {
     if (userProfile) {
@@ -270,5 +271,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

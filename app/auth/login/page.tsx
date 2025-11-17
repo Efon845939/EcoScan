@@ -1,15 +1,14 @@
 // app/auth/login/page.tsx
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
-  onAuthStateChanged
 } from "firebase/auth";
 import { doc, setDoc, getFirestore, serverTimestamp } from "firebase/firestore";
 import { useFirebase } from "@/firebase";
@@ -49,18 +48,6 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isLogin = mode === "login";
-
-  useEffect(() => {
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // If user is already logged in, redirect to home
-        router.replace("/");
-      }
-    });
-    return () => unsubscribe();
-  }, [auth, router]);
-
 
   function switchMode(nextMode: Mode) {
     if (nextMode === mode) return;
@@ -104,6 +91,7 @@ export default function LoginPage() {
         setTimeout(() => router.push("/"), 500);
       } catch (err: any) {
         setStatus(`HATA: ${err?.message || "Bilinmeyen bir hata oluştu."}`);
+      } finally {
         setIsSubmitting(false);
       }
     } else { // Signup
@@ -148,6 +136,7 @@ export default function LoginPage() {
         setTimeout(() => router.push("/"), 500);
       } catch (err: any) {
         setStatus(`HATA: ${err?.message || "Bilinmeyen bir hata oluştu."}`);
+      } finally {
         setIsSubmitting(false);
       }
     }
