@@ -1,4 +1,3 @@
-
 // app/page.tsx
 'use client';
 
@@ -34,10 +33,7 @@ export default function HomePage() {
   // If user is logged in, show the main app.
   return (
     <main className="min-h-screen bg-background">
-      <MainHeader />
       <AppContainer />
     </main>
   );
 }
-
-    

@@ -43,7 +43,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from '@/hooks/use-translation';
+import { TranslationProvider, useTranslation } from '@/hooks/use-translation';
 import { MaterialIcon } from './material-icon';
 import { RewardsSection } from './rewards-section';
 import { GuideSection } from './guide-section';
@@ -53,14 +53,42 @@ import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlockin
 import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { getPointsForMaterial } from '@/lib/points';
 import SurveyButton from './survey-button';
-import { CarbonFootprintSurvey } from './carbon-footprint-survey';
+import { useRouter } from 'next/navigation';
 
 
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey';
+export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify';
+
+const AppContainerWithTranslations = ({ initialStep }: { initialStep?: Step }) => {
+    const [language, setLanguage] = useState('en');
+
+    useEffect(() => {
+        const savedLanguage = localStorage.getItem('app-language');
+        if (savedLanguage) {
+            setLanguage(savedLanguage);
+        }
+    }, []);
+    
+    useEffect(() => {
+        document.documentElement.lang = language;
+        document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    }, [language]);
 
 
-function AppContainer() {
-  const [step, setStep] = useState<Step>('scan');
+    const handleLanguageChange = (newLanguage: string) => {
+        setLanguage(newLanguage);
+        localStorage.setItem('app-language', newLanguage);
+    };
+    
+    return (
+        <TranslationProvider>
+            <AppContainer onLanguageChange={handleLanguageChange} currentLanguage={language} initialStep={initialStep} />
+        </TranslationProvider>
+    )
+}
+
+
+function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' }: { onLanguageChange: (lang: string) => void, currentLanguage: string, initialStep?: Step}) {
+  const [step, setStep] = useState<Step>(initialStep);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [barcodeNumber, setBarcodeNumber] = useState('');
   const [identifiedMaterial, setIdentifiedMaterial] =
@@ -81,7 +109,8 @@ function AppContainer() {
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
-  const { t, language, setLanguage } = useTranslation();
+  const { t } = useTranslation();
+  const router = useRouter();
 
   const userProfileRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -107,7 +136,7 @@ function AppContainer() {
   };
 
   const handleLanguageChange = (newLanguage: string) => {
-    setLanguage(newLanguage);
+    onLanguageChange(newLanguage);
     toast({
       title: t('toast_language_updated_title'),
       description: t('toast_language_updated_description'),
@@ -350,7 +379,7 @@ function AppContainer() {
                 <Camera className="mr-2" />
                 {t('scan_card_scan_button')}
               </Button>
-              <SurveyButton cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} onClick={() => setStep('survey')} />
+              <SurveyButton cooldownEndsAt={lastSurveyTimestamp?.toDate().getTime() ? lastSurveyTimestamp.toDate().getTime() + 24 * 60 * 60 * 1000 : undefined} onClick={() => router.push('/carbon-footprint')} />
             </CardContent>
             <CardFooter className="flex-col gap-2 pt-6">
                <Button variant="link" onClick={() => setStep('rewards')}>
@@ -495,8 +524,6 @@ function AppContainer() {
         return <GuideSection onBack={() => setStep('scan')} />;
       case 'verify':
         return <VerificationCenter onBack={() => setStep('scan')} />;
-       case 'survey':
-        return <CarbonFootprintSurvey region={region} language={language} onBack={() => setStep('scan')} />;
       default:
         return null;
     }
@@ -504,7 +531,17 @@ function AppContainer() {
 
   let currentLoadingMessage = loadingMessage;
     if (isLoading) {
-        currentLoadingMessage = t(loadingMessage);
+        if (loadingMessage === 'Identifying material...') {
+            currentLoadingMessage = t('loading_material');
+        } else if (loadingMessage === 'Re-identifying material with barcode...') {
+            currentLoadingMessage = t('loading_barcode');
+        } else if (loadingMessage === 'Verifying your disposal...') {
+            currentLoadingMessage = t('loading_disposal');
+        } else if (loadingMessage === 'Verifying your action...') {
+            currentLoadingMessage = t('loading_action');
+        } else if (loadingMessage === 'Processing receipt...') {
+            currentLoadingMessage = t('loading_receipt');
+        }
     }
 
 
@@ -526,9 +563,9 @@ function AppContainer() {
         <Dialog open={showLowConfidenceModal} onOpenChange={setShowLowConfidenceModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-headline">{t('low_confidence_title')}</DialogTitle>
+              <DialogTitle className="font-headline">{t('confirm_card_title')}</DialogTitle>
               <DialogDescription>
-                {t('low_confidence_description')}
+                {t('confirm_card_description')}
               </DialogDescription>
             </DialogHeader>
             <Input
@@ -540,7 +577,7 @@ function AppContainer() {
             <DialogFooter>
               <Button onClick={handleBarcodeSubmit} disabled={isPending || !barcodeNumber}>
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {t('low_confidence_submit_button')}
+                Submit Barcode
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -561,7 +598,7 @@ function AppContainer() {
                </Button>
                <Button variant="outline" className="justify-start" onClick={() => { setStep('verify'); setShowSettingsModal(false); }}>
                   <ShieldCheck className="mr-2" />
-                  {t('guide_verification_title')}
+                  Verification Center
                </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
@@ -588,20 +625,17 @@ function AppContainer() {
                     <Languages />
                    {t('settings_language_label')}
                 </Label>
-                <Select value={language} onValueChange={handleLanguageChange}>
+                <Select value={currentLanguage} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a language" />
                   </SelectTrigger>
                   <SelectContent id="language">
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="tr">Türkçe</SelectItem>
-                    <SelectItem value="es">Español</SelectItem>
-                    <SelectItem value="de">Deutsch</SelectItem>
                     <SelectItem value="ar">العربية</SelectItem>
-                    <SelectItem value="zh">中文</SelectItem>
                     <SelectItem value="ja">日本語</SelectItem>
-                    <SelectItem value="ru">Русский</SelectItem>
-                    <SelectItem value="bs">Bosanski</SelectItem>
+                    <SelectItem value="de">Deutsch</SelectItem>
+                    <SelectItem value="es">Español</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -616,6 +650,4 @@ function AppContainer() {
   );
 }
 
-export { AppContainer };
-
-    
+export { AppContainerWithTranslations as AppContainer };
