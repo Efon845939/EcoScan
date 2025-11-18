@@ -43,51 +43,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { TranslationProvider, useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/hooks/use-translation';
 import { MaterialIcon } from './material-icon';
 import { RewardsSection } from './rewards-section';
 import { GuideSection } from './guide-section';
 import { VerificationCenter } from './verification-center';
 import { cn } from '@/lib/utils';
-import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
+import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { getPointsForMaterial } from '@/lib/points';
 import SurveyButton from './survey-button';
 import { useRouter } from 'next/navigation';
+import { CarbonFootprintSurvey } from './carbon-footprint-survey';
 
 
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify';
-
-const AppContainerWithTranslations = ({ initialStep }: { initialStep?: Step }) => {
-    const [language, setLanguage] = useState('en');
-
-    useEffect(() => {
-        const savedLanguage = localStorage.getItem('app-language');
-        if (savedLanguage) {
-            setLanguage(savedLanguage);
-        }
-    }, []);
-    
-    useEffect(() => {
-        document.documentElement.lang = language;
-        document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    }, [language]);
+export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey';
 
 
-    const handleLanguageChange = (newLanguage: string) => {
-        setLanguage(newLanguage);
-        localStorage.setItem('app-language', newLanguage);
-    };
-    
-    return (
-        <TranslationProvider>
-            <AppContainer onLanguageChange={handleLanguageChange} currentLanguage={language} initialStep={initialStep} />
-        </TranslationProvider>
-    )
-}
-
-
-function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' }: { onLanguageChange: (lang: string) => void, currentLanguage: string, initialStep?: Step}) {
+function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   const [step, setStep] = useState<Step>(initialStep);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [barcodeNumber, setBarcodeNumber] = useState('');
@@ -109,7 +82,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
   const router = useRouter();
 
   const userProfileRef = useMemoFirebase(
@@ -136,7 +109,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   };
 
   const handleLanguageChange = (newLanguage: string) => {
-    onLanguageChange(newLanguage);
+    setLanguage(newLanguage);
     toast({
       title: t('toast_language_updated_title'),
       description: t('toast_language_updated_description'),
@@ -178,13 +151,13 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
     }
   }, [step, toast, t]);
   
+  
   useEffect(() => {
-    if (isUserLoading || isProfileLoading || !user) {
+    if (isUserLoading || isProfileLoading || !user || user.isAnonymous) {
       return;
     }
   
-    // Only create a profile if it's a real user, not anonymous
-    if (user && !user.isAnonymous && !userProfile) {
+    if (user && !userProfile) {
       const newProfile = {
         uid: user.uid,
         email: user.email || '',
@@ -365,6 +338,8 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
         )
     }
     switch (step) {
+      case 'survey':
+        return <CarbonFootprintSurvey onBack={() => router.push('/')} region={region} language={language} />;
       case 'scan':
         return (
           <Card className="text-center">
@@ -563,9 +538,9 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
         <Dialog open={showLowConfidenceModal} onOpenChange={setShowLowConfidenceModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-headline">{t('confirm_card_title')}</DialogTitle>
+              <DialogTitle className="font-headline">{t('low_confidence_title')}</DialogTitle>
               <DialogDescription>
-                {t('confirm_card_description')}
+                {t('low_confidence_description')}
               </DialogDescription>
             </DialogHeader>
             <Input
@@ -577,7 +552,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
             <DialogFooter>
               <Button onClick={handleBarcodeSubmit} disabled={isPending || !barcodeNumber}>
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Submit Barcode
+                {t('low_confidence_submit_button')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -625,7 +600,7 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                     <Languages />
                    {t('settings_language_label')}
                 </Label>
-                <Select value={currentLanguage} onValueChange={handleLanguageChange}>
+                <Select value={language} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a language" />
                   </SelectTrigger>
@@ -636,6 +611,9 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
                     <SelectItem value="ja">日本語</SelectItem>
                     <SelectItem value="de">Deutsch</SelectItem>
                     <SelectItem value="es">Español</SelectItem>
+                    <SelectItem value="zh">中文</SelectItem>
+                    <SelectItem value="ru">Русский</SelectItem>
+                    <SelectItem value="bs">Bosanski</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -650,4 +628,4 @@ function AppContainer({ onLanguageChange, currentLanguage, initialStep = 'scan' 
   );
 }
 
-export { AppContainerWithTranslations as AppContainer };
+export { AppContainer };
