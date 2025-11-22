@@ -8,3 +8,4 @@ import '@/ai/flows/carbon-footprint-analysis.ts';
 import '@/ai/flows/receipt-ocr-flow.ts';
 import '@/ai/flows/verify-disposal-action.ts';
 import '@/ai/flows/verify-sustainability-action.ts';
+import '@/ai/flows/detailed-carbon-analysis.ts';
