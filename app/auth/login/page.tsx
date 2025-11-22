@@ -6,14 +6,13 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
   sendPasswordResetEmail,
   type AuthError,
 } from "firebase/auth";
-import { doc, setDoc, getFirestore, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useFirebase } from "@/firebase";
 
 type Mode = "login" | "signup";
@@ -317,3 +316,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
