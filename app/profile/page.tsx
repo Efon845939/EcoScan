@@ -1,14 +1,32 @@
-
 // app/profile/page.tsx
-'use client';
+"use client";
 
 import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, useDoc, updateDocumentNonBlocking, useFirebase, useMemoFirebase } from "@/firebase";
-import { doc, serverTimestamp } from "firebase/firestore";
-import { Loader2 } from 'lucide-react';
-import { updateProfile as updateAuthProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  getAuth,
+  onAuthStateChanged,
+  updateProfile,
+  type User,
+} from "firebase/auth";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  type DocumentData,
+  serverTimestamp,
+} from "firebase/firestore";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
+import { Loader2 } from "lucide-react";
+import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
+
 
 type Profile = {
   username: string;
@@ -83,7 +101,7 @@ export default function ProfilePage() {
           await uploadBytes(avatarRef, file);
           const url = await getDownloadURL(avatarRef);
 
-          await updateAuthProfile(user, { photoURL: url });
+          await updateProfile(user, { photoURL: url });
           if(userProfileRef) {
               await updateDocumentNonBlocking(userProfileRef, { photoURL: url, updatedAt: serverTimestamp() });
           }
@@ -116,7 +134,7 @@ export default function ProfilePage() {
         updatedAt: serverTimestamp(),
       });
       if (auth.currentUser.displayName !== form.displayName) {
-        await updateAuthProfile(auth.currentUser, { displayName: form.displayName });
+        await updateProfile(auth.currentUser, { displayName: form.displayName });
       }
 
       // 2. Handle password change if requested
@@ -210,7 +228,11 @@ export default function ProfilePage() {
                     <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
                 </label>
               </div>
-
+                {avatarUploading && (
+                    <p className="text-[11px] text-gray-500">
+                    Fotoğraf yükleniyor...
+                    </p>
+                )}
               <div>
                 <div className="font-semibold text-gray-900">
                   {form.displayName || form.username || "Henüz ad ayarlanmadı"}
@@ -335,3 +357,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
