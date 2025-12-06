@@ -1,3 +1,4 @@
+
 // app/profile/page.tsx
 "use client";
 
@@ -8,14 +9,17 @@ import {
   onAuthStateChanged,
   updateProfile,
   type User,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  updatePassword,
 } from "firebase/auth";
 import {
   getFirestore,
   doc,
   getDoc,
   setDoc,
-  type DocumentData,
   serverTimestamp,
+  type DocumentData,
 } from "firebase/firestore";
 import {
   getStorage,
@@ -23,10 +27,7 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-import { useFirebase, useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { Loader2 } from "lucide-react";
-import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
-
 
 type Profile = {
   username: string;
@@ -36,15 +37,9 @@ type Profile = {
 };
 
 export default function ProfilePage() {
-  const { user, isUserLoading } = useUser();
-  const { auth, firestore } = useFirebase();
   const router = useRouter();
-
-  const userProfileRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
-    [firestore, user]
-  );
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [isUserLoading, setIsUserLoading] = useState(true);
 
   const [form, setForm] = useState<Profile>({
     username: "",
@@ -52,11 +47,11 @@ export default function ProfilePage() {
     displayName: "",
     about: "",
   });
-  
+
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordAgain, setNewPasswordAgain] = useState("");
-  
+
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
@@ -64,24 +59,46 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (!isUserLoading && (!user || user.isAnonymous)) {
-      router.replace('/auth/login');
-    }
-  }, [user, isUserLoading, router]);
-  
-  useEffect(() => {
-    if (userProfile) {
-      setForm({
-        username: userProfile.username || '',
-        email: userProfile.email || '',
-        displayName: userProfile.displayName || '',
-        about: userProfile.about || '',
-      });
-    }
-    if (user) {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user || user.isAnonymous) {
+        router.replace('/auth/login');
+        return;
+      }
+      setFirebaseUser(user);
+
+      try {
+        const db = getFirestore();
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data() as DocumentData;
+          setForm({
+            username: data.username || '',
+            email: user.email || '',
+            displayName: data.displayName || user.displayName || '',
+            about: data.about || '',
+          });
+        } else {
+           setForm({
+            username: user.email?.split('@')[0] || '',
+            email: user.email || '',
+            displayName: user.displayName || '',
+            about: '',
+          });
+        }
         setAvatarUrl(user.photoURL);
-    }
-  }, [userProfile, user]);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        setStatus("HATA: Profil bilgileri alınamadı.");
+      } finally {
+        setIsUserLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   function handleChange(field: keyof Profile, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -89,51 +106,63 @@ export default function ProfilePage() {
   }
   
   async function handleAvatarChange(e: ChangeEvent<HTMLInputElement>) {
-      const file = e.target.files?.[0];
-      if (!file || !user) {
-          return;
+    const file = e.target.files?.[0];
+    if (!file || !firebaseUser) {
+      return;
+    }
+    
+    setAvatarUploading(true);
+    setStatus("Profil fotoğrafı yükleniyor...");
+
+    try {
+      const storage = getStorage();
+      const firestore = getFirestore();
+      const auth = getAuth();
+
+      const avatarRef = ref(storage, `avatars/${firebaseUser.uid}`);
+      await uploadBytes(avatarRef, file);
+      const url = await getDownloadURL(avatarRef);
+
+      // Update auth profile
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { photoURL: url });
       }
+
+      // Update firestore document
+      const userDocRef = doc(firestore, "users", firebaseUser.uid);
+      await setDoc(userDocRef, { photoURL: url, updatedAt: serverTimestamp() }, { merge: true });
       
-      setAvatarUploading(true);
-      try {
-          const storage = getStorage();
-          const avatarRef = ref(storage, `avatars/${user.uid}`);
-          await uploadBytes(avatarRef, file);
-          const url = await getDownloadURL(avatarRef);
-
-          await updateProfile(user, { photoURL: url });
-          if(userProfileRef) {
-              await updateDocumentNonBlocking(userProfileRef, { photoURL: url, updatedAt: serverTimestamp() });
-          }
-
-          setAvatarUrl(url);
-          setStatus("Profil fotoğrafı güncellendi.");
-      } catch(err) {
-          setStatus("HATA: Profil fotoğrafı yüklenemedi.");
-      } finally {
-          setAvatarUploading(false);
-      }
+      setAvatarUrl(url);
+      setStatus("Profil fotoğrafı güncellendi.");
+    } catch(err) {
+      console.error("Avatar upload error:", err);
+      setStatus("HATA: Profil fotoğrafı yüklenemedi.");
+    } finally {
+      setAvatarUploading(false);
+    }
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!userProfileRef || !auth.currentUser) return;
+    if (!firebaseUser) return;
 
     setIsSaving(true);
     setStatus("Kaydediliyor...");
     
     try {
+      const auth = getAuth();
+      const firestore = getFirestore();
+
       // 1. Update basic profile info (username, displayName, about)
-      const updatedData: Partial<Profile> = {
+      const userDocRef = doc(firestore, 'users', firebaseUser.uid);
+      await setDoc(userDocRef, {
         username: form.username,
         displayName: form.displayName,
         about: form.about,
-      };
-      await updateDocumentNonBlocking(userProfileRef, {
-        ...updatedData,
         updatedAt: serverTimestamp(),
-      });
-      if (auth.currentUser.displayName !== form.displayName) {
+      }, { merge: true });
+
+      if (auth.currentUser && auth.currentUser.displayName !== form.displayName) {
         await updateProfile(auth.currentUser, { displayName: form.displayName });
       }
 
@@ -149,8 +178,8 @@ export default function ProfilePage() {
           throw new Error("Yeni şifre en az 6 karakter olmalıdır.");
         }
 
-        if (!auth.currentUser.email) {
-            throw new Error("Mevcut kullanıcının e-postası bulunamadı.")
+        if (!auth.currentUser || !auth.currentUser.email) {
+            throw new Error("Mevcut kullanıcının e-postası bulunamadı.");
         }
         const credential = EmailAuthProvider.credential(auth.currentUser.email, oldPassword);
         await reauthenticateWithCredential(auth.currentUser, credential);
@@ -167,7 +196,9 @@ export default function ProfilePage() {
     } catch (err: any) {
       let msg = err.message || "Profil güncellenirken bir sorun oluştu.";
       if (err.code === 'auth/wrong-password') {
-          msg = "Mevcut şifreniz yanlış."
+          msg = "Mevcut şifreniz yanlış.";
+      } else if (err.code === 'auth/requires-recent-login') {
+          msg = "Bu hassas bir işlem. Lütfen tekrar giriş yapıp deneyin.";
       }
       setStatus(`HATA: ${msg}`);
     } finally {
@@ -183,7 +214,7 @@ export default function ProfilePage() {
       .toUpperCase()
       .slice(0, 2) || "ER";
 
-  if (isUserLoading || isProfileLoading || !user || user.isAnonymous) {
+  if (isUserLoading || !firebaseUser) {
      return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -357,5 +388,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
