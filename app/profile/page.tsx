@@ -5,16 +5,12 @@
 import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
-  getAuth,
-  onAuthStateChanged,
   updateProfile,
-  type User,
   reauthenticateWithCredential,
   EmailAuthProvider,
   updatePassword,
 } from "firebase/auth";
 import {
-  getFirestore,
   doc,
   getDoc,
   setDoc,
@@ -27,6 +23,7 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
+import { useUser, useFirebase } from "@/firebase";
 import { Loader2 } from "lucide-react";
 
 type Profile = {
@@ -38,8 +35,8 @@ type Profile = {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
-  const [isUserLoading, setIsUserLoading] = useState(true);
+  const { user: firebaseUser, isUserLoading } = useUser();
+  const { auth, firestore } = useFirebase();
 
   const [form, setForm] = useState<Profile>({
     username: "",
@@ -57,48 +54,44 @@ export default function ProfilePage() {
 
   const [status, setStatus] = useState<string>("Değişiklik yapılmadı.");
   const [isSaving, setIsSaving] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user || user.isAnonymous) {
-        router.replace('/auth/login');
-        return;
-      }
-      setFirebaseUser(user);
+    if (!isUserLoading && (!firebaseUser || firebaseUser.isAnonymous)) {
+      router.replace('/auth/login');
+    } else if (firebaseUser) {
+      const fetchProfileData = async () => {
+        try {
+          const userDocRef = doc(firestore, "users", firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
 
-      try {
-        const db = getFirestore();
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data() as DocumentData;
-          setForm({
-            username: data.username || '',
-            email: user.email || '',
-            displayName: data.displayName || user.displayName || '',
-            about: data.about || '',
-          });
-        } else {
-           setForm({
-            username: user.email?.split('@')[0] || '',
-            email: user.email || '',
-            displayName: user.displayName || '',
-            about: '',
-          });
+          if (userDocSnap.exists()) {
+            const data = userDocSnap.data() as DocumentData;
+            setForm({
+              username: data.username || '',
+              email: firebaseUser.email || '',
+              displayName: data.displayName || firebaseUser.displayName || '',
+              about: data.about || '',
+            });
+          } else {
+            setForm({
+              username: firebaseUser.email?.split('@')[0] || '',
+              email: firebaseUser.email || '',
+              displayName: firebaseUser.displayName || '',
+              about: '',
+            });
+          }
+          setAvatarUrl(firebaseUser.photoURL);
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          setStatus("HATA: Profil bilgileri alınamadı.");
+        } finally {
+          setDataLoading(false);
         }
-        setAvatarUrl(user.photoURL);
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        setStatus("HATA: Profil bilgileri alınamadı.");
-      } finally {
-        setIsUserLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [router]);
+      };
+      fetchProfileData();
+    }
+  }, [firebaseUser, isUserLoading, router, firestore]);
 
   function handleChange(field: keyof Profile, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -116,9 +109,6 @@ export default function ProfilePage() {
 
     try {
       const storage = getStorage();
-      const firestore = getFirestore();
-      const auth = getAuth();
-
       const avatarRef = ref(storage, `avatars/${firebaseUser.uid}`);
       await uploadBytes(avatarRef, file);
       const url = await getDownloadURL(avatarRef);
@@ -150,9 +140,6 @@ export default function ProfilePage() {
     setStatus("Kaydediliyor...");
     
     try {
-      const auth = getAuth();
-      const firestore = getFirestore();
-
       // 1. Update basic profile info (username, displayName, about)
       const userDocRef = doc(firestore, 'users', firebaseUser.uid);
       await setDoc(userDocRef, {
@@ -214,13 +201,18 @@ export default function ProfilePage() {
       .toUpperCase()
       .slice(0, 2) || "ER";
 
-  if (isUserLoading || !firebaseUser) {
+  if (isUserLoading || dataLoading) {
      return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="mt-4">Profil Yükleniyor...</p>
       </div>
     );
+  }
+
+  if (!firebaseUser) {
+    // This part will be briefly visible during redirect
+    return null;
   }
 
   return (
@@ -297,7 +289,7 @@ export default function ProfilePage() {
             )}
           </section>
 
-          <section className="bg-white/90 border border-emerald-100 rounded-2xl shadow-sm p-5 space-y-4">
+          <section className="bg-white/90 border border-emerald-100 rounded-2xl shadow-sm p-5">
             <form onSubmit={handleSubmit} className="space-y-4">
               <h2 className="text-sm font-semibold text-gray-900">
                 Hesap bilgilerini düzenle
@@ -388,3 +380,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
