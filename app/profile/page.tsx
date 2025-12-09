@@ -1,3 +1,4 @@
+
 // app/profile/page.tsx
 "use client";
 
@@ -5,21 +6,14 @@ import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { updateProfile } from "firebase/auth";
 import {
-  useFirebase,
-  useUser,
-  useDoc,
-  useMemoFirebase,
-  updateDocumentNonBlocking,
-  setDocumentNonBlocking,
-} from "@/firebase";
-import {
   getStorage,
   ref,
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-import { doc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
+import { useFirebase, useUser } from "@/firebase";
 
 type Profile = {
   username: string;
@@ -42,12 +36,6 @@ export default function ProfilePage() {
   const { auth, firestore } = useFirebase();
   const { user: firebaseUser, isUserLoading } = useUser();
 
-  const userProfileRef = useMemoFirebase(
-    () => (firestore && firebaseUser ? doc(firestore, "users", firebaseUser.uid) : null),
-    [firestore, firebaseUser]
-  );
-  const { data: userProfileDoc, isLoading: isProfileDocLoading } = useDoc(userProfileRef);
-
   const [profile, setProfile] = useState<Profile>(defaultProfile);
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -60,23 +48,29 @@ export default function ProfilePage() {
   }, [isUserLoading, firebaseUser, router]);
 
   useEffect(() => {
-    if (firebaseUser && userProfileDoc) {
-      setProfile({
-        username: userProfileDoc.username ?? "",
-        displayName: userProfileDoc.displayName ?? firebaseUser.displayName ?? "",
-        email: firebaseUser.email || "",
-        about: userProfileDoc.about ?? "",
-        photoURL: userProfileDoc.photoURL ?? firebaseUser.photoURL ?? null,
-      });
-    } else if (firebaseUser) {
-       setProfile(prev => ({
-        ...prev,
-        email: firebaseUser.email || "",
-        displayName: firebaseUser.displayName || "",
-        photoURL: firebaseUser.photoURL || null,
-       }));
+    if (firebaseUser) {
+      // Fetch Firestore profile data
+      const fetchProfile = async () => {
+        const userDocRef = doc(firestore, "users", firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        let userProfileData = {};
+        if (userDocSnap.exists()) {
+          userProfileData = userDocSnap.data();
+        }
+
+        setProfile({
+          username: (userProfileData as any).username ?? "",
+          displayName: (userProfileData as any).displayName ?? firebaseUser.displayName ?? "",
+          email: firebaseUser.email || "",
+          about: (userProfileData as any).about ?? "",
+          photoURL: (userProfileData as any).photoURL ?? firebaseUser.photoURL ?? null,
+        });
+      };
+      
+      fetchProfile();
     }
-  }, [firebaseUser, userProfileDoc]);
+  }, [firebaseUser, firestore]);
 
   function handleChange(field: keyof Profile, value: string) {
     setProfile((prev) => ({ ...prev, [field]: value }));
@@ -85,7 +79,7 @@ export default function ProfilePage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!firebaseUser || !userProfileRef) {
+    if (!firebaseUser) {
       setStatus("HATA: Giriş yapmamışsın, profil kaydedilemedi.");
       return;
     }
@@ -94,18 +88,18 @@ export default function ProfilePage() {
     setStatus("Kaydediliyor...");
 
     try {
+      const userProfileRef = doc(firestore, "users", firebaseUser.uid);
       const dataToSave = {
         username: profile.username.trim(),
         displayName: profile.displayName.trim(),
         about: profile.about.trim(),
-        email: profile.email, // email is readonly, but we save it for consistency
+        email: profile.email,
         photoURL: profile.photoURL ?? null,
         updatedAt: new Date(),
       };
 
-      await setDocumentNonBlocking(userProfileRef, dataToSave, { merge: true });
+      await setDoc(userProfileRef, dataToSave, { merge: true });
 
-      // Auth profilini de güncelle (displayName + photoURL)
       await updateProfile(firebaseUser, {
         displayName: profile.displayName.trim() || undefined,
         photoURL: profile.photoURL || undefined,
@@ -137,12 +131,10 @@ export default function ProfilePage() {
       await uploadBytes(avatarRef, file);
       const url = await getDownloadURL(avatarRef);
 
-      // State’i ve Firestore/Auth'u güncelle
       setProfile((prev) => ({ ...prev, photoURL: url }));
 
-      if (userProfileRef) {
-          await setDocumentNonBlocking(userProfileRef, { photoURL: url, updatedAt: new Date() }, { merge: true });
-      }
+      const userProfileRef = doc(firestore, "users", firebaseUser.uid);
+      await setDoc(userProfileRef, { photoURL: url, updatedAt: new Date() }, { merge: true });
 
       await updateProfile(firebaseUser, { photoURL: url });
 
@@ -155,7 +147,7 @@ export default function ProfilePage() {
     }
   }
 
-  if (isUserLoading || isProfileDocLoading) {
+  if (isUserLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-emerald-50">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
@@ -184,12 +176,12 @@ export default function ProfilePage() {
               Hesap bilgilerini düzenle. Puan, bölge ve diğer ayarlar ayrı sayfalardan yönetilir.
             </p>
           </div>
-          <a
-            href="/"
+          <button
+            onClick={() => router.push('/')}
             className="inline-flex items-center rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
           >
             Ana Lobiye Dön
-          </a>
+          </button>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-[260px,1fr] gap-6">
@@ -258,8 +250,7 @@ export default function ProfilePage() {
               Hesap bilgilerini düzenle
             </h2>
             <p className="text-xs text-gray-500">
-              Buradaki bilgiler Firebase hesabınla birlikte saklanır. E-posta adresin giriş
-              ekranından ve şifre sıfırlama bağlantısından yönetilir.
+              Buradaki bilgiler Firebase hesabınla birlikte saklanır.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -300,9 +291,6 @@ export default function ProfilePage() {
                   readOnly
                   className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
                 />
-                <p className="mt-1 text-[10px] text-gray-500">
-                  E-posta adresini değiştirmek için Firebase Authentication ayarlarını kullanmalısınız.
-                </p>
               </div>
 
               <div>
@@ -337,3 +325,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
