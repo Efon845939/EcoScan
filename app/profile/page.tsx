@@ -1,20 +1,19 @@
-
 // app/profile/page.tsx
 "use client";
 
 import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
+  getAuth,
+  onAuthStateChanged,
   updateProfile,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-  updatePassword,
+  type User,
 } from "firebase/auth";
 import {
+  getFirestore,
   doc,
   getDoc,
   setDoc,
-  serverTimestamp,
   type DocumentData,
 } from "firebase/firestore";
 import {
@@ -23,87 +22,128 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-import { useUser, useFirebase } from "@/firebase";
-import { Loader2 } from "lucide-react";
 
 type Profile = {
   username: string;
   email: string;
   displayName: string;
   about: string;
+  photoURL: string | null;
+};
+
+const defaultProfile: Profile = {
+  username: "",
+  email: "",
+  displayName: "",
+  about: "",
+  photoURL: null,
 };
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user: firebaseUser, isUserLoading } = useUser();
-  const { auth, firestore } = useFirebase();
-
-  const [form, setForm] = useState<Profile>({
-    username: "",
-    email: "",
-    displayName: "",
-    about: "",
-  });
-
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [newPasswordAgain, setNewPasswordAgain] = useState("");
-
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile>(defaultProfile);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
-
   const [status, setStatus] = useState<string>("Değişiklik yapılmadı.");
-  const [isSaving, setIsSaving] = useState(false);
-  const [dataLoading, setDataLoading] = useState(true);
 
+  // 🔒 AUTH GUARD
   useEffect(() => {
-    if (!isUserLoading && (!firebaseUser || firebaseUser.isAnonymous)) {
-      router.replace('/auth/login');
-    } else if (firebaseUser) {
-      const fetchProfileData = async () => {
-        try {
-          const userDocRef = doc(firestore, "users", firebaseUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
+    const auth = getAuth();
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      // giriş yoksa veya anonimse → login sayfasına at
+      if (!u || u.isAnonymous) {
+        setFirebaseUser(null);
+        router.replace("/auth/login");
+        return;
+      }
 
-          if (userDocSnap.exists()) {
-            const data = userDocSnap.data() as DocumentData;
-            setForm({
-              username: data.username || '',
-              email: firebaseUser.email || '',
-              displayName: data.displayName || firebaseUser.displayName || '',
-              about: data.about || '',
-            });
-          } else {
-            setForm({
-              username: firebaseUser.email?.split('@')[0] || '',
-              email: firebaseUser.email || '',
-              displayName: firebaseUser.displayName || '',
-              about: '',
-            });
-          }
-          setAvatarUrl(firebaseUser.photoURL);
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-          setStatus("HATA: Profil bilgileri alınamadı.");
-        } finally {
-          setDataLoading(false);
-        }
-      };
-      fetchProfileData();
-    }
-  }, [firebaseUser, isUserLoading, router, firestore]);
+      setFirebaseUser(u);
+
+      try {
+        const db = getFirestore();
+        const docRef = doc(db, "users", u.uid);
+        const snap = await getDoc(docRef);
+        const data = (snap.exists() ? (snap.data() as DocumentData) : {}) as Partial<Profile>;
+
+        setProfile({
+          username: data.username ?? "",
+          displayName: data.displayName ?? (u.displayName || ""),
+          email: u.email || "",
+          about: data.about ?? "",
+          photoURL: (data.photoURL as string | null) ?? u.photoURL ?? null,
+        });
+      } catch (e) {
+        // en kötü ihtimalle sadece auth bilgisini kullan
+        setProfile({
+          ...defaultProfile,
+          email: u.email || "",
+          displayName: u.displayName || "",
+        });
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsub();
+  }, [router]);
 
   function handleChange(field: keyof Profile, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setProfile((prev) => ({ ...prev, [field]: value }));
     setStatus("Değişiklik var, henüz kaydedilmedi.");
   }
-  
-  async function handleAvatarChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !firebaseUser) {
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!firebaseUser) {
+      setStatus("HATA: Giriş yapmamışsın, profil kaydedilemedi.");
       return;
     }
-    
+
+    setSaving(true);
+    setStatus("Kaydediliyor...");
+
+    try {
+      const db = getFirestore();
+      const docRef = doc(db, "users", firebaseUser.uid);
+
+      await setDoc(
+        docRef,
+        {
+          username: profile.username.trim(),
+          displayName: profile.displayName.trim(),
+          about: profile.about.trim(),
+          email: profile.email,
+          photoURL: profile.photoURL ?? null,
+          updatedAt: Date.now(),
+        },
+        { merge: true }
+      );
+
+      // Auth profilini de güncelle (displayName + photoURL)
+      await updateProfile(firebaseUser, {
+        displayName: profile.displayName.trim() || undefined,
+        photoURL: profile.photoURL || undefined,
+      });
+
+      setStatus("Profil kaydedildi.");
+    } catch (err: any) {
+      console.error("PROFILE_SAVE_ERROR", err);
+      setStatus(`HATA: Profil kaydedilirken bir sorun oluştu.`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleAvatarChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!firebaseUser) {
+      setStatus("HATA: Profil fotoğrafı için önce giriş yapmalısın.");
+      return;
+    }
+
     setAvatarUploading(true);
     setStatus("Profil fotoğrafı yükleniyor...");
 
@@ -113,111 +153,48 @@ export default function ProfilePage() {
       await uploadBytes(avatarRef, file);
       const url = await getDownloadURL(avatarRef);
 
-      // Update auth profile
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { photoURL: url });
-      }
+      // State’i güncelle
+      setProfile((prev) => ({ ...prev, photoURL: url }));
 
-      // Update firestore document
-      const userDocRef = doc(firestore, "users", firebaseUser.uid);
-      await setDoc(userDocRef, { photoURL: url, updatedAt: serverTimestamp() }, { merge: true });
-      
-      setAvatarUrl(url);
+      const db = getFirestore();
+      const docRef = doc(db, "users", firebaseUser.uid);
+      await setDoc(
+        docRef,
+        { photoURL: url, updatedAt: Date.now() },
+        { merge: true }
+      );
+
+      await updateProfile(firebaseUser, { photoURL: url });
+
       setStatus("Profil fotoğrafı güncellendi.");
-    } catch(err) {
-      console.error("Avatar upload error:", err);
+    } catch (err: any) {
+      console.error("AVATAR_UPLOAD_ERROR", err);
       setStatus("HATA: Profil fotoğrafı yüklenemedi.");
     } finally {
       setAvatarUploading(false);
     }
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!firebaseUser) return;
-
-    setIsSaving(true);
-    setStatus("Kaydediliyor...");
-    
-    try {
-      // 1. Update basic profile info (username, displayName, about)
-      const userDocRef = doc(firestore, 'users', firebaseUser.uid);
-      await setDoc(userDocRef, {
-        username: form.username,
-        displayName: form.displayName,
-        about: form.about,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
-
-      if (auth.currentUser && auth.currentUser.displayName !== form.displayName) {
-        await updateProfile(auth.currentUser, { displayName: form.displayName });
-      }
-
-      // 2. Handle password change if requested
-      if (oldPassword || newPassword || newPasswordAgain) {
-        if (!oldPassword || !newPassword || !newPasswordAgain) {
-          throw new Error("Şifre değiştirmek için tüm şifre alanlarını doldurun.");
-        }
-        if (newPassword !== newPasswordAgain) {
-          throw new Error("Yeni şifreler birbiriyle eşleşmiyor.");
-        }
-        if (newPassword.length < 6) {
-          throw new Error("Yeni şifre en az 6 karakter olmalıdır.");
-        }
-
-        if (!auth.currentUser || !auth.currentUser.email) {
-            throw new Error("Mevcut kullanıcının e-postası bulunamadı.");
-        }
-        const credential = EmailAuthProvider.credential(auth.currentUser.email, oldPassword);
-        await reauthenticateWithCredential(auth.currentUser, credential);
-        await updatePassword(auth.currentUser, newPassword);
-
-        setOldPassword("");
-        setNewPassword("");
-        setNewPasswordAgain("");
-        setStatus("Profil ve şifre başarıyla güncellendi.");
-      } else {
-        setStatus("Profil başarıyla güncellendi.");
-      }
-
-    } catch (err: any) {
-      let msg = err.message || "Profil güncellenirken bir sorun oluştu.";
-      if (err.code === 'auth/wrong-password') {
-          msg = "Mevcut şifreniz yanlış.";
-      } else if (err.code === 'auth/requires-recent-login') {
-          msg = "Bu hassas bir işlem. Lütfen tekrar giriş yapıp deneyin.";
-      }
-      setStatus(`HATA: ${msg}`);
-    } finally {
-      setIsSaving(false);
-    }
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-emerald-50">
+        <p className="text-sm text-gray-600">Profil yükleniyor...</p>
+      </div>
+    );
   }
 
   const initials =
-    (form.displayName || form.username || "ER")
+    (profile.displayName || profile.username || "ER")
       .split(" ")
       .map((p) => p[0])
       .join("")
       .toUpperCase()
       .slice(0, 2) || "ER";
 
-  if (isUserLoading || dataLoading) {
-     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4">Profil Yükleniyor...</p>
-      </div>
-    );
-  }
-
-  if (!firebaseUser) {
-    // This part will be briefly visible during redirect
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100 px-4 py-6">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Başlık */}
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">
@@ -236,32 +213,43 @@ export default function ProfilePage() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-[260px,1fr] gap-6">
+          {/* SOL: avatar + özet */}
           <section className="bg-white/90 backdrop-blur rounded-2xl border border-emerald-100 shadow-sm p-5 space-y-4">
             <div className="flex flex-col items-center text-center space-y-3">
               <div className="relative">
                 <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xl overflow-hidden">
-                    {avatarUrl ? (
-                        <img src={avatarUrl} alt="Profil fotoğrafı" className="w-full h-full object-cover" />
-                    ) : (
-                        initials
-                    )}
+                  {profile.photoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.photoURL}
+                      alt="Profil fotoğrafı"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    initials
+                  )}
                 </div>
-                <label className="absolute -bottom-1 -right-1 flex items-center justify-center w-6 h-6 rounded-full bg-white border border-emerald-200 text-emerald-700 cursor-pointer shadow-sm hover:bg-emerald-50">
-                    ✎
-                    <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+                <label className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-white border border-emerald-200 text-[10px] text-emerald-700 cursor-pointer shadow">
+                  ✎
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
                 </label>
               </div>
-                {avatarUploading && (
-                    <p className="text-[11px] text-gray-500">
-                    Fotoğraf yükleniyor...
-                    </p>
-                )}
+              {avatarUploading && (
+                <p className="text-[11px] text-gray-500">
+                  Fotoğraf yükleniyor...
+                </p>
+              )}
               <div>
                 <div className="font-semibold text-gray-900">
-                  {form.displayName || form.username || "Henüz ad ayarlanmadı"}
+                  {profile.displayName || profile.username || "Henüz ad ayarlanmadı"}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {form.email || "E-posta henüz kaydedilmedi"}
+                  {profile.email || "E-posta henüz kaydedilmedi"}
                 </div>
               </div>
             </div>
@@ -269,31 +257,33 @@ export default function ProfilePage() {
             <div className="border-t border-gray-100 pt-4 space-y-2 text-sm text-gray-700">
               <div className="flex justify-between">
                 <span className="text-gray-500">Kullanıcı adı:</span>
-                <span className="font-medium">
-                  {form.username || "-"}
-                </span>
+                <span className="font-medium">{profile.username || "-"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Görünen ad:</span>
-                <span className="font-medium">
-                  {form.displayName || "-"}
-                </span>
+                <span className="font-medium">{profile.displayName || "-"}</span>
               </div>
             </div>
 
-            {form.about && (
+            {profile.about && (
               <div className="border-t border-gray-100 pt-3 text-xs text-gray-600">
                 <div className="font-semibold mb-1 text-gray-700">Hakkında</div>
-                <p className="whitespace-pre-wrap break-words">{form.about}</p>
+                <p className="whitespace-pre-wrap break-words">{profile.about}</p>
               </div>
             )}
           </section>
 
-          <section className="bg-white/90 border border-emerald-100 rounded-2xl shadow-sm p-5">
+          {/* SAĞ: form */}
+          <section className="bg-white/90 border border-emerald-100 rounded-2xl shadow-sm p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-900">
+              Hesap bilgilerini düzenle
+            </h2>
+            <p className="text-xs text-gray-500">
+              Buradaki bilgiler Firebase hesabınla birlikte saklanır. E-posta adresin giriş
+              ekranından ve şifre sıfırlama bağlantısından yönetilir.
+            </p>
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              <h2 className="text-sm font-semibold text-gray-900">
-                Hesap bilgilerini düzenle
-              </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -301,7 +291,7 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    value={form.username}
+                    value={profile.username}
                     onChange={(e) => handleChange("username", e.target.value)}
                     placeholder="örn. eco_kahraman"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
@@ -313,19 +303,36 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    value={form.displayName}
+                    value={profile.displayName}
                     onChange={(e) => handleChange("displayName", e.target.value)}
                     placeholder="Profilde gözükecek isim"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  E-posta (değiştirilemez)
+                </label>
+                <input
+                  type="email"
+                  value={profile.email}
+                  readOnly
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
+                />
+                <p className="mt-1 text-[10px] text-gray-500">
+                  E-posta adresini değiştirmek için giriş ekranındaki şifre sıfırlama / hesap
+                  yönetimi adımlarını kullan.
+                </p>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Hakkında (isteğe bağlı)
                 </label>
                 <textarea
-                  value={form.about}
+                  value={profile.about}
                   onChange={(e) => handleChange("about", e.target.value)}
                   rows={3}
                   placeholder="Kendin hakkında kısa bir not bırakabilirsin..."
@@ -333,45 +340,16 @@ export default function ProfilePage() {
                 />
               </div>
 
-              <div className="pt-4 mt-4 border-t">
-                 <h2 className="text-sm font-semibold text-gray-900">
-                    Güvenlik
-                 </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        E-posta (değiştirilemez)
-                      </label>
-                      <input
-                        type="email"
-                        value={form.email}
-                        readOnly
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-100 cursor-not-allowed"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                         Şifreyi Değiştir
-                        </label>
-                        <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="Mevcut şifre" className="w-full rounded-lg border-gray-300 text-sm"/>
-                        <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Yeni şifre" className="w-full rounded-lg border-gray-300 text-sm"/>
-                        <input type="password" value={newPasswordAgain} onChange={e => setNewPasswordAgain(e.target.value)} placeholder="Yeni şifre (tekrar)" className="w-full rounded-lg border-gray-300 text-sm"/>
-                         <p className="text-[11px] text-gray-500">Değiştirmek istemiyorsanız boş bırakın.</p>
-                    </div>
-                </div>
-              </div>
-
-
-              <div className="text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 min-h-[36px]">
+              <div className="text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
                 {status}
               </div>
 
               <button
                 type="submit"
-                disabled={isSaving}
+                disabled={saving}
                 className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-sm font-medium px-4 py-2.5 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
               >
-                {isSaving ? "Kaydediliyor..." : "Profili kaydet"}
+                {saving ? "Kaydediliyor..." : "Profili kaydet"}
               </button>
             </form>
           </section>
@@ -380,5 +358,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

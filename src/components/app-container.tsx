@@ -1,6 +1,7 @@
 
 "use client";
 
+import { ProfilePageContent } from "@/components/profile-page";
 import { useState, useRef, ChangeEvent, useTransition, useEffect } from 'react';
 import Image from 'next/image';
 import {
@@ -57,8 +58,17 @@ import { useRouter } from 'next/navigation';
 import { CarbonFootprintSurvey } from './carbon-footprint-survey';
 
 
-export type Step = 'scan' | 'camera' | 'confirm' | 'verifyDisposal' | 'disposed' | 'rewards' | 'guide' | 'verify' | 'survey';
-
+export type Step =
+  | 'scan'
+  | 'camera'
+  | 'confirm'
+  | 'verifyDisposal'
+  | 'disposed'
+  | 'rewards'
+  | 'guide'
+  | 'verify'
+  | 'survey'
+  | 'profile';
 
 function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   const [step, setStep] = useState<Step>(initialStep);
