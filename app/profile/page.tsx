@@ -11,7 +11,7 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
 import { useFirebase, useUser } from "@/firebase";
 
@@ -325,4 +325,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
