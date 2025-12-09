@@ -3,25 +3,23 @@
 
 import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { updateProfile } from "firebase/auth";
 import {
-  getAuth,
-  onAuthStateChanged,
-  updateProfile,
-  type User,
-} from "firebase/auth";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  type DocumentData,
-} from "firebase/firestore";
+  useFirebase,
+  useUser,
+  useDoc,
+  useMemoFirebase,
+  updateDocumentNonBlocking,
+  setDocumentNonBlocking,
+} from "@/firebase";
 import {
   getStorage,
   ref,
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
+import { doc } from "firebase/firestore";
+import { Loader2 } from "lucide-react";
 
 type Profile = {
   username: string;
@@ -41,53 +39,44 @@ const defaultProfile: Profile = {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const { auth, firestore } = useFirebase();
+  const { user: firebaseUser, isUserLoading } = useUser();
+
+  const userProfileRef = useMemoFirebase(
+    () => (firestore && firebaseUser ? doc(firestore, "users", firebaseUser.uid) : null),
+    [firestore, firebaseUser]
+  );
+  const { data: userProfileDoc, isLoading: isProfileDocLoading } = useDoc(userProfileRef);
+
   const [profile, setProfile] = useState<Profile>(defaultProfile);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [status, setStatus] = useState<string>("Değişiklik yapılmadı.");
 
-  // 🔒 AUTH GUARD
   useEffect(() => {
-    const auth = getAuth();
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      // giriş yoksa veya anonimse → login sayfasına at
-      if (!u || u.isAnonymous) {
-        setFirebaseUser(null);
-        router.replace("/auth/login");
-        return;
-      }
+    if (!isUserLoading && !firebaseUser) {
+      router.replace("/auth/login");
+    }
+  }, [isUserLoading, firebaseUser, router]);
 
-      setFirebaseUser(u);
-
-      try {
-        const db = getFirestore();
-        const docRef = doc(db, "users", u.uid);
-        const snap = await getDoc(docRef);
-        const data = (snap.exists() ? (snap.data() as DocumentData) : {}) as Partial<Profile>;
-
-        setProfile({
-          username: data.username ?? "",
-          displayName: data.displayName ?? (u.displayName || ""),
-          email: u.email || "",
-          about: data.about ?? "",
-          photoURL: (data.photoURL as string | null) ?? u.photoURL ?? null,
-        });
-      } catch (e) {
-        // en kötü ihtimalle sadece auth bilgisini kullan
-        setProfile({
-          ...defaultProfile,
-          email: u.email || "",
-          displayName: u.displayName || "",
-        });
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    return () => unsub();
-  }, [router]);
+  useEffect(() => {
+    if (firebaseUser && userProfileDoc) {
+      setProfile({
+        username: userProfileDoc.username ?? "",
+        displayName: userProfileDoc.displayName ?? firebaseUser.displayName ?? "",
+        email: firebaseUser.email || "",
+        about: userProfileDoc.about ?? "",
+        photoURL: userProfileDoc.photoURL ?? firebaseUser.photoURL ?? null,
+      });
+    } else if (firebaseUser) {
+       setProfile(prev => ({
+        ...prev,
+        email: firebaseUser.email || "",
+        displayName: firebaseUser.displayName || "",
+        photoURL: firebaseUser.photoURL || null,
+       }));
+    }
+  }, [firebaseUser, userProfileDoc]);
 
   function handleChange(field: keyof Profile, value: string) {
     setProfile((prev) => ({ ...prev, [field]: value }));
@@ -96,7 +85,7 @@ export default function ProfilePage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!firebaseUser) {
+    if (!firebaseUser || !userProfileRef) {
       setStatus("HATA: Giriş yapmamışsın, profil kaydedilemedi.");
       return;
     }
@@ -105,21 +94,16 @@ export default function ProfilePage() {
     setStatus("Kaydediliyor...");
 
     try {
-      const db = getFirestore();
-      const docRef = doc(db, "users", firebaseUser.uid);
+      const dataToSave = {
+        username: profile.username.trim(),
+        displayName: profile.displayName.trim(),
+        about: profile.about.trim(),
+        email: profile.email, // email is readonly, but we save it for consistency
+        photoURL: profile.photoURL ?? null,
+        updatedAt: new Date(),
+      };
 
-      await setDoc(
-        docRef,
-        {
-          username: profile.username.trim(),
-          displayName: profile.displayName.trim(),
-          about: profile.about.trim(),
-          email: profile.email,
-          photoURL: profile.photoURL ?? null,
-          updatedAt: Date.now(),
-        },
-        { merge: true }
-      );
+      await setDocumentNonBlocking(userProfileRef, dataToSave, { merge: true });
 
       // Auth profilini de güncelle (displayName + photoURL)
       await updateProfile(firebaseUser, {
@@ -153,16 +137,12 @@ export default function ProfilePage() {
       await uploadBytes(avatarRef, file);
       const url = await getDownloadURL(avatarRef);
 
-      // State’i güncelle
+      // State’i ve Firestore/Auth'u güncelle
       setProfile((prev) => ({ ...prev, photoURL: url }));
 
-      const db = getFirestore();
-      const docRef = doc(db, "users", firebaseUser.uid);
-      await setDoc(
-        docRef,
-        { photoURL: url, updatedAt: Date.now() },
-        { merge: true }
-      );
+      if (userProfileRef) {
+          await setDocumentNonBlocking(userProfileRef, { photoURL: url, updatedAt: new Date() }, { merge: true });
+      }
 
       await updateProfile(firebaseUser, { photoURL: url });
 
@@ -175,10 +155,11 @@ export default function ProfilePage() {
     }
   }
 
-  if (loading) {
+  if (isUserLoading || isProfileDocLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-emerald-50">
-        <p className="text-sm text-gray-600">Profil yükleniyor...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <p className="ml-3 text-sm text-gray-600">Profil yükleniyor...</p>
       </div>
     );
   }
@@ -194,7 +175,6 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100 px-4 py-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Başlık */}
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">
@@ -213,13 +193,11 @@ export default function ProfilePage() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-[260px,1fr] gap-6">
-          {/* SOL: avatar + özet */}
           <section className="bg-white/90 backdrop-blur rounded-2xl border border-emerald-100 shadow-sm p-5 space-y-4">
             <div className="flex flex-col items-center text-center space-y-3">
               <div className="relative">
                 <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xl overflow-hidden">
                   {profile.photoURL ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={profile.photoURL}
                       alt="Profil fotoğrafı"
@@ -236,13 +214,15 @@ export default function ProfilePage() {
                     accept="image/*"
                     onChange={handleAvatarChange}
                     className="hidden"
+                    disabled={avatarUploading}
                   />
                 </label>
               </div>
               {avatarUploading && (
-                <p className="text-[11px] text-gray-500">
-                  Fotoğraf yükleniyor...
-                </p>
+                 <div className="flex items-center text-[11px] text-gray-500">
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin"/>
+                    <span>Yükleniyor...</span>
+                 </div>
               )}
               <div>
                 <div className="font-semibold text-gray-900">
@@ -273,7 +253,6 @@ export default function ProfilePage() {
             )}
           </section>
 
-          {/* SAĞ: form */}
           <section className="bg-white/90 border border-emerald-100 rounded-2xl shadow-sm p-5 space-y-4">
             <h2 className="text-sm font-semibold text-gray-900">
               Hesap bilgilerini düzenle
@@ -322,8 +301,7 @@ export default function ProfilePage() {
                   className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
                 />
                 <p className="mt-1 text-[10px] text-gray-500">
-                  E-posta adresini değiştirmek için giriş ekranındaki şifre sıfırlama / hesap
-                  yönetimi adımlarını kullan.
+                  E-posta adresini değiştirmek için Firebase Authentication ayarlarını kullanmalısınız.
                 </p>
               </div>
 
@@ -346,9 +324,10 @@ export default function ProfilePage() {
 
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || avatarUploading}
                 className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-sm font-medium px-4 py-2.5 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
               >
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                 {saving ? "Kaydediliyor..." : "Profili kaydet"}
               </button>
             </form>
