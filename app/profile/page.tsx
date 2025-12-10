@@ -105,10 +105,13 @@ export default function ProfilePage() {
 
       await setDoc(userProfileRef, dataToSave, { merge: true });
 
-      await updateProfile(firebaseUser, {
-        displayName: profile.displayName.trim() || undefined,
-        photoURL: profile.photoURL || undefined,
-      });
+      if(auth.currentUser) {
+        await updateProfile(auth.currentUser, {
+          displayName: profile.displayName.trim() || undefined,
+          photoURL: profile.photoURL || undefined,
+        });
+      }
+
 
       setStatus("Profil kaydedildi.");
     } catch (err: any) {
@@ -122,7 +125,7 @@ export default function ProfilePage() {
   async function handleAvatarChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!firebaseUser) {
+    if (!firebaseUser || !auth.currentUser) {
       setStatus("HATA: Profil fotoğrafı için önce giriş yapmalısın.");
       return;
     }
@@ -145,7 +148,7 @@ export default function ProfilePage() {
         { merge: true }
       );
 
-      await updateProfile(firebaseUser, { photoURL: url });
+      await updateProfile(auth.currentUser, { photoURL: url });
 
       setStatus("Profil fotoğrafı güncellendi.");
     } catch (err: any) {
@@ -160,73 +163,67 @@ export default function ProfilePage() {
     setHealthRunning(true);
     setHealthStatus("Health check çalışıyor...");
     setHealthDetails(null);
-
+    const steps: string[] = [];
+  
     try {
-      const steps: string[] = [];
-
       if (!auth || !firestore) {
         steps.push("HATA: useFirebase içinden auth veya firestore gelmedi.");
         setHealthStatus("HATA: Firebase context eksik.");
-        setHealthDetails(steps.join("\n"));
-        return;
-      }
-
-      if (!firebaseUser) {
+      } else if (!firebaseUser) {
         steps.push("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
         setHealthStatus("HATA: Giriş yapmamışsın.");
-        setHealthDetails(steps.join("\n"));
-        return;
-      }
-
-      steps.push(`Kullanıcı UID: ${firebaseUser.uid}`);
-      steps.push("Firestore'dan kullanıcı dokümanı okunuyor...");
-
-      const userDocRef = doc(firestore, "users", firebaseUser.uid);
-      const snap = await getDoc(userDocRef);
-
-      steps.push(
-        `users/${firebaseUser.uid} dokümanı: ${
-          snap.exists() ? "VAR" : "YOK"
-        }.`
-      );
-
-      steps.push("dev_test koleksiyonuna yazma denemesi...");
-      await setDoc(
-        doc(firestore, "dev_test", firebaseUser.uid),
-        {
-          checkedAt: new Date(),
-          source: "profile-health-check",
-        },
-        { merge: true }
-      );
-      steps.push("dev_test yazma BAŞARILI.");
-
-      try {
-        steps.push("Storage upload testi başlatılıyor...");
-        const storage = getStorage();
-        const testRef = ref(storage, `dev_test/${firebaseUser.uid}.txt`);
-        const blob = new Blob(
-          [`health-check ${new Date().toISOString()}`],
-          { type: "text/plain" }
-        );
-        await uploadBytes(testRef, blob);
-        steps.push("Storage upload BAŞARILI (dev_test/...txt).");
-      } catch (storageErr) {
-        console.error("HEALTH_CHECK_STORAGE_ERROR", storageErr);
+      } else {
+        steps.push(`Kullanıcı UID: ${firebaseUser.uid}`);
+        steps.push("Firestore'dan kullanıcı dokümanı okunuyor...");
+  
+        const userDocRef = doc(firestore, "users", firebaseUser.uid);
+        const snap = await getDoc(userDocRef);
+  
         steps.push(
-          "UYARI: Storage upload BAŞARISIZ, detay için konsola bak."
+          `users/${firebaseUser.uid} dokümanı: ${
+            snap.exists() ? "VAR" : "YOK"
+          }.`
         );
+  
+        steps.push("dev_test koleksiyonuna yazma denemesi...");
+        await setDoc(
+          doc(firestore, "dev_test", firebaseUser.uid),
+          {
+            checkedAt: new Date(),
+            source: "profile-health-check",
+          },
+          { merge: true }
+        );
+        steps.push("dev_test yazma BAŞARILI.");
+  
+        try {
+          steps.push("Storage upload testi başlatılıyor...");
+          const storage = getStorage();
+          const testRef = ref(storage, `dev_test/${firebaseUser.uid}.txt`);
+          const blob = new Blob(
+            [`health-check ${new Date().toISOString()}`],
+            { type: "text/plain" }
+          );
+          await uploadBytes(testRef, blob);
+          steps.push("Storage upload BAŞARILI (dev_test/...txt).");
+        } catch (storageErr) {
+          console.error("HEALTH_CHECK_STORAGE_ERROR", storageErr);
+          steps.push(
+            "UYARI: Storage upload BAŞARISIZ, detay için konsola bak."
+          );
+        }
+  
+        setHealthStatus("Health check tamamlandı.");
       }
-
-      setHealthStatus("Health check tamamlandı.");
-      setHealthDetails(steps.join("\n"));
     } catch (err: any) {
       console.error("HEALTH_CHECK_ERROR", err);
+      steps.push(`BEKLENMEDİK HATA: ${err.message}`);
       setHealthStatus(
         "HATA: Health check sırasında beklenmeyen bir hata oluştu."
       );
       setHealthDetails(String(err));
     } finally {
+      setHealthDetails(steps.join("\n"));
       setHealthRunning(false);
     }
   }
