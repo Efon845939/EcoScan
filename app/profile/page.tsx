@@ -1,4 +1,3 @@
-
 // app/profile/page.tsx
 "use client";
 
@@ -41,6 +40,11 @@ export default function ProfilePage() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [status, setStatus] = useState<string>("Değişiklik yapılmadı.");
 
+  // Health check state
+  const [healthStatus, setHealthStatus] = useState<string | null>(null);
+  const [healthDetails, setHealthDetails] = useState<string | null>(null);
+  const [healthRunning, setHealthRunning] = useState(false);
+
   useEffect(() => {
     if (!isUserLoading && !firebaseUser) {
       router.replace("/auth/login");
@@ -49,25 +53,26 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (firebaseUser) {
-      // Fetch Firestore profile data
       const fetchProfile = async () => {
         const userDocRef = doc(firestore, "users", firebaseUser.uid);
         const userDocSnap = await getDoc(userDocRef);
-        
-        let userProfileData = {};
+
+        let userProfileData: any = {};
         if (userDocSnap.exists()) {
           userProfileData = userDocSnap.data();
         }
 
         setProfile({
-          username: (userProfileData as any).username ?? "",
-          displayName: (userProfileData as any).displayName ?? firebaseUser.displayName ?? "",
+          username: userProfileData.username ?? "",
+          displayName:
+            userProfileData.displayName ?? firebaseUser.displayName ?? "",
           email: firebaseUser.email || "",
-          about: (userProfileData as any).about ?? "",
-          photoURL: (userProfileData as any).photoURL ?? firebaseUser.photoURL ?? null,
+          about: userProfileData.about ?? "",
+          photoURL:
+            userProfileData.photoURL ?? firebaseUser.photoURL ?? null,
         });
       };
-      
+
       fetchProfile();
     }
   }, [firebaseUser, firestore]);
@@ -134,7 +139,11 @@ export default function ProfilePage() {
       setProfile((prev) => ({ ...prev, photoURL: url }));
 
       const userProfileRef = doc(firestore, "users", firebaseUser.uid);
-      await setDoc(userProfileRef, { photoURL: url, updatedAt: new Date() }, { merge: true });
+      await setDoc(
+        userProfileRef,
+        { photoURL: url, updatedAt: new Date() },
+        { merge: true }
+      );
 
       await updateProfile(firebaseUser, { photoURL: url });
 
@@ -144,6 +153,81 @@ export default function ProfilePage() {
       setStatus("HATA: Profil fotoğrafı yüklenemedi.");
     } finally {
       setAvatarUploading(false);
+    }
+  }
+
+  async function runHealthCheck() {
+    setHealthRunning(true);
+    setHealthStatus("Health check çalışıyor...");
+    setHealthDetails(null);
+
+    try {
+      const steps: string[] = [];
+
+      if (!auth || !firestore) {
+        steps.push("HATA: useFirebase içinden auth veya firestore gelmedi.");
+        setHealthStatus("HATA: Firebase context eksik.");
+        setHealthDetails(steps.join("\n"));
+        return;
+      }
+
+      if (!firebaseUser) {
+        steps.push("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
+        setHealthStatus("HATA: Giriş yapmamışsın.");
+        setHealthDetails(steps.join("\n"));
+        return;
+      }
+
+      steps.push(`Kullanıcı UID: ${firebaseUser.uid}`);
+      steps.push("Firestore'dan kullanıcı dokümanı okunuyor...");
+
+      const userDocRef = doc(firestore, "users", firebaseUser.uid);
+      const snap = await getDoc(userDocRef);
+
+      steps.push(
+        `users/${firebaseUser.uid} dokümanı: ${
+          snap.exists() ? "VAR" : "YOK"
+        }.`
+      );
+
+      steps.push("dev_test koleksiyonuna yazma denemesi...");
+      await setDoc(
+        doc(firestore, "dev_test", firebaseUser.uid),
+        {
+          checkedAt: new Date(),
+          source: "profile-health-check",
+        },
+        { merge: true }
+      );
+      steps.push("dev_test yazma BAŞARILI.");
+
+      try {
+        steps.push("Storage upload testi başlatılıyor...");
+        const storage = getStorage();
+        const testRef = ref(storage, `dev_test/${firebaseUser.uid}.txt`);
+        const blob = new Blob(
+          [`health-check ${new Date().toISOString()}`],
+          { type: "text/plain" }
+        );
+        await uploadBytes(testRef, blob);
+        steps.push("Storage upload BAŞARILI (dev_test/...txt).");
+      } catch (storageErr) {
+        console.error("HEALTH_CHECK_STORAGE_ERROR", storageErr);
+        steps.push(
+          "UYARI: Storage upload BAŞARISIZ, detay için konsola bak."
+        );
+      }
+
+      setHealthStatus("Health check tamamlandı.");
+      setHealthDetails(steps.join("\n"));
+    } catch (err: any) {
+      console.error("HEALTH_CHECK_ERROR", err);
+      setHealthStatus(
+        "HATA: Health check sırasında beklenmeyen bir hata oluştu."
+      );
+      setHealthDetails(String(err));
+    } finally {
+      setHealthRunning(false);
     }
   }
 
@@ -173,11 +257,12 @@ export default function ProfilePage() {
               EcoScan Rewards – Profil
             </h1>
             <p className="text-sm text-gray-600">
-              Hesap bilgilerini düzenle. Puan, bölge ve diğer ayarlar ayrı sayfalardan yönetilir.
+              Hesap bilgilerini düzenle. Puan, bölge ve diğer ayarlar ayrı
+              sayfalardan yönetilir.
             </p>
           </div>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push("/")}
             className="inline-flex items-center rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
           >
             Ana Lobiye Dön
@@ -211,14 +296,16 @@ export default function ProfilePage() {
                 </label>
               </div>
               {avatarUploading && (
-                 <div className="flex items-center text-[11px] text-gray-500">
-                    <Loader2 className="mr-1 h-3 w-3 animate-spin"/>
-                    <span>Yükleniyor...</span>
-                 </div>
+                <div className="flex items-center text-[11px] text-gray-500">
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                  <span>Yükleniyor...</span>
+                </div>
               )}
               <div>
                 <div className="font-semibold text-gray-900">
-                  {profile.displayName || profile.username || "Henüz ad ayarlanmadı"}
+                  {profile.displayName ||
+                    profile.username ||
+                    "Henüz ad ayarlanmadı"}
                 </div>
                 <div className="text-xs text-gray-500">
                   {profile.email || "E-posta henüz kaydedilmedi"}
@@ -229,18 +316,26 @@ export default function ProfilePage() {
             <div className="border-t border-gray-100 pt-4 space-y-2 text-sm text-gray-700">
               <div className="flex justify-between">
                 <span className="text-gray-500">Kullanıcı adı:</span>
-                <span className="font-medium">{profile.username || "-"}</span>
+                <span className="font-medium">
+                  {profile.username || "-"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Görünen ad:</span>
-                <span className="font-medium">{profile.displayName || "-"}</span>
+                <span className="font-medium">
+                  {profile.displayName || "-"}
+                </span>
               </div>
             </div>
 
             {profile.about && (
               <div className="border-t border-gray-100 pt-3 text-xs text-gray-600">
-                <div className="font-semibold mb-1 text-gray-700">Hakkında</div>
-                <p className="whitespace-pre-wrap break-words">{profile.about}</p>
+                <div className="font-semibold mb-1 text-gray-700">
+                  Hakkında
+                </div>
+                <p className="whitespace-pre-wrap break-words">
+                  {profile.about}
+                </p>
               </div>
             )}
           </section>
@@ -262,7 +357,9 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={profile.username}
-                    onChange={(e) => handleChange("username", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("username", e.target.value)
+                    }
                     placeholder="örn. eco_kahraman"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   />
@@ -274,7 +371,9 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={profile.displayName}
-                    onChange={(e) => handleChange("displayName", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("displayName", e.target.value)
+                    }
                     placeholder="Profilde gözükecek isim"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   />
@@ -315,12 +414,52 @@ export default function ProfilePage() {
                 disabled={saving || avatarUploading}
                 className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-sm font-medium px-4 py-2.5 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
               >
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
                 {saving ? "Kaydediliyor..." : "Profili kaydet"}
               </button>
             </form>
           </section>
         </div>
+
+        {/* Geliştirici / Health Check bölümü */}
+        <section className="bg-white/90 border border-emerald-100 rounded-2xl shadow-sm p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-gray-900">
+            Geliştirici testleri / Health Check
+          </h2>
+          <p className="text-xs text-gray-500">
+            Butonlar çalışmıyorsa veya Firebase bağlantısını test etmek
+            istiyorsan buradan temel kontrolleri yapabilirsin.
+          </p>
+
+          <button
+            type="button"
+            onClick={runHealthCheck}
+            disabled={healthRunning}
+            className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-xs font-medium px-3 py-2 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
+          >
+            {healthRunning ? (
+              <>
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                Health check çalışıyor...
+              </>
+            ) : (
+              "Health check çalıştır"
+            )}
+          </button>
+
+          <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+            <div className="text-xs font-medium text-gray-800">
+              {healthStatus || "Henüz test çalıştırılmadı."}
+            </div>
+            {healthDetails && (
+              <pre className="mt-2 whitespace-pre-wrap break-words text-[11px] text-gray-600 max-h-40 overflow-auto">
+                {healthDetails}
+              </pre>
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );
