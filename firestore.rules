@@ -2,25 +2,42 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow users to read and write their own documents
+    // yardımcı fonksiyonlar
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Kullanıcı profili
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
 
-    // Allow users to read and write their own reward documents
+    // Kullanıcının kendi ödülleri
     match /users/{userId}/rewards/{rewardId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
 
-    // Allow users to read and write their own carbon footprint documents
+    // Kullanıcının kendi karbon ayak izi kayıtları
     match /users/{userId}/carbon-footprint/{footprintId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
 
-    // Allow authenticated users to write to the dev_test collection for health checks,
-    // but only to a document matching their own user ID.
+    // Health check / debug koleksiyonu
+    // profile sayfasındaki health check burada:
+    // doc(firestore, "dev_test", firebaseUser.uid)
     match /dev_test/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // sadece kendi dokümanını okuyup yazabilsin
+      allow read, write: if isOwner(userId);
+    }
+
+    // Default: her şeyi kapat
+    // Daha spesifik match'ler ÜSTTE olduğu sürece bu hiçbir şeyi bozmaz.
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }
