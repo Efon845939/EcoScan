@@ -45,6 +45,9 @@ export default function ProfilePage() {
   const [healthDetails, setHealthDetails] = useState<string | null>(null);
   const [healthRunning, setHealthRunning] = useState(false);
 
+  // Ek debug state
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
+
   useEffect(() => {
     if (!isUserLoading && !firebaseUser) {
       router.replace("/auth/login");
@@ -163,28 +166,53 @@ export default function ProfilePage() {
     setHealthRunning(true);
     setHealthStatus("Health check çalışıyor...");
     setHealthDetails(null);
-    const steps: string[] = [];
-  
+
     try {
+      const steps: string[] = [];
+
+      steps.push("=== GENEL DURUM ===");
+
       if (!auth || !firestore) {
         steps.push("HATA: useFirebase içinden auth veya firestore gelmedi.");
         setHealthStatus("HATA: Firebase context eksik.");
-      } else if (!firebaseUser) {
+        setHealthDetails(steps.join("\n"));
+        return;
+      }
+
+      const projectId =
+        // @ts-ignore
+        (auth.app && auth.app.options && auth.app.options.projectId) ||
+        "BULUNAMADI";
+      const appName = auth.app ? auth.app.name : "BULUNAMADI";
+
+      steps.push(`App adı: ${appName}`);
+      steps.push(`Proje ID (config'ten): ${projectId}`);
+
+      if (!firebaseUser) {
         steps.push("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
         setHealthStatus("HATA: Giriş yapmamışsın.");
-      } else {
-        steps.push(`Kullanıcı UID: ${firebaseUser.uid}`);
-        steps.push("Firestore'dan kullanıcı dokümanı okunuyor...");
-  
-        const userDocRef = doc(firestore, "users", firebaseUser.uid);
-        const snap = await getDoc(userDocRef);
-  
-        steps.push(
-          `users/${firebaseUser.uid} dokümanı: ${
-            snap.exists() ? "VAR" : "YOK"
-          }.`
-        );
-  
+        setHealthDetails(steps.join("\n"));
+        return;
+      }
+
+      steps.push("=== KULLANICI ===");
+      steps.push(`UID: ${firebaseUser.uid}`);
+      steps.push(`Email: ${firebaseUser.email ?? "yok"}`);
+
+      steps.push("=== FIRESTORE TESTLERİ ===");
+      steps.push("Firestore'dan kullanıcı dokümanı okunuyor...");
+
+      const userDocRef = doc(firestore, "users", firebaseUser.uid);
+      const snap = await getDoc(userDocRef);
+
+      steps.push(
+        `users/${firebaseUser.uid} dokümanı: ${
+          snap.exists() ? "VAR" : "YOK"
+        }.`
+      );
+
+      // dev_test yazma denemesini ayrıca try-catch ile sarıyoruz
+      try {
         steps.push("dev_test koleksiyonuna yazma denemesi...");
         await setDoc(
           doc(firestore, "dev_test", firebaseUser.uid),
@@ -195,37 +223,96 @@ export default function ProfilePage() {
           { merge: true }
         );
         steps.push("dev_test yazma BAŞARILI.");
-  
-        try {
-          steps.push("Storage upload testi başlatılıyor...");
-          const storage = getStorage();
-          const testRef = ref(storage, `dev_test/${firebaseUser.uid}.txt`);
-          const blob = new Blob(
-            [`health-check ${new Date().toISOString()}`],
-            { type: "text/plain" }
-          );
-          await uploadBytes(testRef, blob);
-          steps.push("Storage upload BAŞARILI (dev_test/...txt).");
-        } catch (storageErr) {
-          console.error("HEALTH_CHECK_STORAGE_ERROR", storageErr);
+      } catch (err: any) {
+        console.error("HEALTH_CHECK_DEV_TEST_ERROR", err);
+        steps.push("HATA: dev_test yazılamadı.");
+
+        if (err.code) {
+          steps.push(`Hata kodu: ${err.code}`);
+        }
+        if (err.message) {
+          steps.push(`Mesaj: ${err.message}`);
+        }
+
+        if (err.code === "permission-denied") {
           steps.push(
-            "UYARI: Storage upload BAŞARISIZ, detay için konsola bak."
+            "YORUM: Firestore rules dev_test için izin vermiyor."
+          );
+          steps.push(
+            "- Eğer az önce rules değiştirdiysen, gerçekten bu projeye mi bağlısın kontrol et."
+          );
+          steps.push(
+            "- Projedeki config (apiKey, projectId vs) ile console'da açtığın proje aynı mı bak."
+          );
+          steps.push(
+            "- Rules içinde match /dev_test/{userId} bloğu var mı ve publish edildi mi kontrol et."
           );
         }
-  
-        setHealthStatus("Health check tamamlandı.");
       }
+
+      steps.push("=== STORAGE TESTİ ===");
+      try {
+        const storage = getStorage();
+        const testRef = ref(
+          storage,
+          `dev_test/${firebaseUser.uid}-healthcheck.txt`
+        );
+        const blob = new Blob(
+          [`health-check ${new Date().toISOString()}`],
+          { type: "text/plain" }
+        );
+        await uploadBytes(testRef, blob);
+        steps.push("Storage upload BAŞARILI (dev_test/...healthcheck.txt).");
+      } catch (storageErr: any) {
+        console.error("HEALTH_CHECK_STORAGE_ERROR", storageErr);
+        steps.push("UYARI: Storage upload BAŞARISIZ.");
+        if (storageErr.code) {
+          steps.push(`Storage hata kodu: ${storageErr.code}`);
+        }
+        if (storageErr.message) {
+          steps.push(`Storage mesaj: ${storageErr.message}`);
+        }
+      }
+
+      setHealthStatus("Health check tamamlandı (detayları aşağıda).");
+      setHealthDetails(steps.join("\n"));
     } catch (err: any) {
       console.error("HEALTH_CHECK_ERROR", err);
-      steps.push(`BEKLENMEDİK HATA: ${err.message}`);
       setHealthStatus(
         "HATA: Health check sırasında beklenmeyen bir hata oluştu."
       );
       setHealthDetails(String(err));
     } finally {
-      setHealthDetails(steps.join("\n"));
       setHealthRunning(false);
     }
+  }
+
+  function showDebugInfo() {
+    const lines: string[] = [];
+
+    lines.push("=== DEBUG BİLGİLERİ ===");
+
+    if (!auth || !firestore) {
+      lines.push("auth veya firestore yok (useFirebase bozuk).");
+    } else {
+      const projectId =
+        // @ts-ignore
+        (auth.app && auth.app.options && auth.app.options.projectId) ||
+        "BULUNAMADI";
+      const appName = auth.app ? auth.app.name : "BULUNAMADI";
+
+      lines.push(`App adı: ${appName}`);
+      lines.push(`Project ID: ${projectId}`);
+    }
+
+    if (firebaseUser) {
+      lines.push(`UID: ${firebaseUser.uid}`);
+      lines.push(`Email: ${firebaseUser.email ?? "YOK"}`);
+    } else {
+      lines.push("Kullanıcı: YOK (login değil).");
+    }
+
+    setDebugInfo(lines.join("\n"));
   }
 
   if (isUserLoading) {
@@ -430,21 +517,31 @@ export default function ProfilePage() {
             istiyorsan buradan temel kontrolleri yapabilirsin.
           </p>
 
-          <button
-            type="button"
-            onClick={runHealthCheck}
-            disabled={healthRunning}
-            className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-xs font-medium px-3 py-2 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
-          >
-            {healthRunning ? (
-              <>
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                Health check çalışıyor...
-              </>
-            ) : (
-              "Health check çalıştır"
-            )}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={runHealthCheck}
+              disabled={healthRunning}
+              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-xs font-medium px-3 py-2 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
+            >
+              {healthRunning ? (
+                <>
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                  Health check çalışıyor...
+                </>
+              ) : (
+                "Health check çalıştır"
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={showDebugInfo}
+              className="inline-flex items-center justify-center rounded-lg bg-white text-emerald-700 border border-emerald-200 text-xs font-medium px-3 py-2 hover:bg-emerald-50 transition"
+            >
+              Debug bilgilerini göster
+            </button>
+          </div>
 
           <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
             <div className="text-xs font-medium text-gray-800">
@@ -456,6 +553,17 @@ export default function ProfilePage() {
               </pre>
             )}
           </div>
+
+          {debugInfo && (
+            <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+              <div className="text-xs font-medium text-blue-900 mb-1">
+                Debug
+              </div>
+              <pre className="whitespace-pre-wrap break-words text-[11px] text-blue-800 max-h-40 overflow-auto">
+                {debugInfo}
+              </pre>
+            </div>
+          )}
         </section>
       </div>
     </div>
