@@ -166,54 +166,73 @@ export default function ProfilePage() {
     setHealthRunning(true);
     setHealthStatus("Health check çalışıyor...");
     setHealthDetails(null);
-
+  
     try {
       const steps: string[] = [];
-
+  
       steps.push("=== GENEL DURUM ===");
-
+  
       if (!auth || !firestore) {
         steps.push("HATA: useFirebase içinden auth veya firestore gelmedi.");
         setHealthStatus("HATA: Firebase context eksik.");
         setHealthDetails(steps.join("\n"));
+        setHealthRunning(false);
         return;
       }
-
+  
       const projectId =
         // @ts-ignore
         (auth.app && auth.app.options && auth.app.options.projectId) ||
         "BULUNAMADI";
       const appName = auth.app ? auth.app.name : "BULUNAMADI";
-
+  
       steps.push(`App adı: ${appName}`);
       steps.push(`Proje ID (config'ten): ${projectId}`);
-
+  
       if (!firebaseUser) {
         steps.push("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
         setHealthStatus("HATA: Giriş yapmamışsın.");
         setHealthDetails(steps.join("\n"));
+        setHealthRunning(false);
         return;
       }
-
+  
       steps.push("=== KULLANICI ===");
       steps.push(`UID: ${firebaseUser.uid}`);
       steps.push(`Email: ${firebaseUser.email ?? "yok"}`);
-
-      steps.push("=== FIRESTORE TESTLERİ ===");
-      steps.push("Firestore'dan kullanıcı dokümanı okunuyor...");
-
-      const userDocRef = doc(firestore, "users", firebaseUser.uid);
-      const snap = await getDoc(userDocRef);
-
-      steps.push(
-        `users/${firebaseUser.uid} dokümanı: ${
-          snap.exists() ? "VAR" : "YOK"
-        }.`
-      );
-
-      // dev_test yazma denemesini ayrıca try-catch ile sarıyoruz
+  
+      // 1) USERS READ TEST
+      steps.push("=== ADIM 1: users dokümanı read testi ===");
       try {
-        steps.push("dev_test koleksiyonuna yazma denemesi...");
+        const userDocRef = doc(firestore, "users", firebaseUser.uid);
+        const snap = await getDoc(userDocRef);
+  
+        steps.push(
+          `users/${firebaseUser.uid} dokümanı: ${
+            snap.exists() ? "VAR" : "YOK"
+          }. (read İZİN VERİLDİ)`
+        );
+      } catch (err: any) {
+        steps.push("HATA: users/{uid} dokümanı okunurken izin hatası.");
+        if (err.code) steps.push(`Hata kodu: ${err.code}`);
+        if (err.message) steps.push(`Mesaj: ${err.message}`);
+        if (err.code === "permission-denied") {
+          steps.push(
+            "YORUM: Firestore rules, users/{uid} için READ izni vermiyor."
+          );
+          steps.push(
+            "- match /users/{userId} kuralında request.auth.uid == userId şartını kontrol et."
+          );
+        }
+        setHealthStatus("Health check: users READ aşamasında hata.");
+        setHealthDetails(steps.join("\n"));
+        setHealthRunning(false);
+        return;
+      }
+  
+      // 2) DEV_TEST WRITE TEST
+      steps.push("=== ADIM 2: dev_test dokümanı write testi ===");
+      try {
         await setDoc(
           doc(firestore, "dev_test", firebaseUser.uid),
           {
@@ -222,35 +241,36 @@ export default function ProfilePage() {
           },
           { merge: true }
         );
-        steps.push("dev_test yazma BAŞARILI.");
+        steps.push("dev_test yazma BAŞARILI. (write İZİN VERİLDİ)");
       } catch (err: any) {
-        console.error("HEALTH_CHECK_DEV_TEST_ERROR", err);
-        steps.push("HATA: dev_test yazılamadı.");
-
-        if (err.code) {
-          steps.push(`Hata kodu: ${err.code}`);
-        }
-        if (err.message) {
-          steps.push(`Mesaj: ${err.message}`);
-        }
-
+        steps.push("HATA: dev_test yazılamadı (WRITE reddedildi).");
+        if (err.code) steps.push(`Hata kodu: ${err.code}`);
+        if (err.message) steps.push(`Mesaj: ${err.message}`);
         if (err.code === "permission-denied") {
           steps.push(
-            "YORUM: Firestore rules dev_test için izin vermiyor."
+            "YORUM: Firestore rules, dev_test/{uid} için WRITE izni vermiyor."
           );
           steps.push(
-            "- Eğer az önce rules değiştirdiysen, gerçekten bu projeye mi bağlısın kontrol et."
+            "- Rules içinde *aktif* olan dosyada şu bloğun olduğundan emin ol:"
+          );
+          steps.push("  match /dev_test/{userId} {");
+          steps.push("    allow read, write: if request.auth != null && request.auth.uid == userId;");
+          steps.push("  }");
+          steps.push(
+            "- Ve en altta `match /{path=**} { allow read, write: if false; }` varsa, dev_test bloğunun *üstünde* olduğundan emin ol."
           );
           steps.push(
-            "- Projedeki config (apiKey, projectId vs) ile console'da açtığın proje aynı mı bak."
-          );
-          steps.push(
-            "- Rules içinde match /dev_test/{userId} bloğu var mı ve publish edildi mi kontrol et."
+            "- Ayrıca gerçekten bu projeye bağlı mısın? projectId eşleşiyor mu kontrol et."
           );
         }
+        setHealthStatus("Health check: dev_test WRITE aşamasında hata.");
+        setHealthDetails(steps.join("\n"));
+        setHealthRunning(false);
+        return;
       }
-
-      steps.push("=== STORAGE TESTİ ===");
+  
+      // 3) STORAGE TESTİ (opsiyonel)
+      steps.push("=== ADIM 3: Storage upload testi ===");
       try {
         const storage = getStorage();
         const testRef = ref(
@@ -262,9 +282,8 @@ export default function ProfilePage() {
           { type: "text/plain" }
         );
         await uploadBytes(testRef, blob);
-        steps.push("Storage upload BAŞARILI (dev_test/...healthcheck.txt).");
+        steps.push("Storage upload BAŞARILI.");
       } catch (storageErr: any) {
-        console.error("HEALTH_CHECK_STORAGE_ERROR", storageErr);
         steps.push("UYARI: Storage upload BAŞARISIZ.");
         if (storageErr.code) {
           steps.push(`Storage hata kodu: ${storageErr.code}`);
@@ -273,13 +292,13 @@ export default function ProfilePage() {
           steps.push(`Storage mesaj: ${storageErr.message}`);
         }
       }
-
-      setHealthStatus("Health check tamamlandı (detayları aşağıda).");
+  
+      setHealthStatus("Health check tamamen bitti.");
       setHealthDetails(steps.join("\n"));
     } catch (err: any) {
       console.error("HEALTH_CHECK_ERROR", err);
       setHealthStatus(
-        "HATA: Health check sırasında beklenmeyen bir hata oluştu."
+        "HATA: Health check sırasında beklenmeyen bir hata oluştu (en dış seviye)."
       );
       setHealthDetails(String(err));
     } finally {
