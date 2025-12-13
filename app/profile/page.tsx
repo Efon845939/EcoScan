@@ -44,6 +44,7 @@ export default function ProfilePage() {
   const [healthStatus, setHealthStatus] = useState<string | null>(null);
   const [healthDetails, setHealthDetails] = useState<string | null>(null);
   const [healthRunning, setHealthRunning] = useState(false);
+  const [storageTestEnabled, setStorageTestEnabled] = useState(false);
 
   // Ek debug state
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
@@ -174,47 +175,50 @@ export default function ProfilePage() {
 
   async function runHealthCheck() {
     setHealthRunning(true);
-    // Initial status is already set by the onClick handler
+    setHealthStatus("Health check çalışıyor...");
+    setHealthDetails(null);
+
     const steps: string[] = [];
-  
+    const appendHealth = (line: string) => steps.push(line);
+
     try {
-      steps.push("=== GENEL DURUM ===");
-  
+      appendHealth("=== GENEL DURUM ===");
+
       if (!auth || !firestore) {
-        steps.push("HATA: useFirebase içinden auth veya firestore gelmedi.");
+        appendHealth("HATA: useFirebase içinden auth veya firestore gelmedi.");
         setHealthStatus("HATA: Firebase context eksik.");
-        return; // Early exit, finally will still run
+        return;
       }
-  
+
       const projectId =
         // @ts-ignore
         (auth.app && auth.app.options && auth.app.options.projectId) ||
         "BULUNAMADI";
       const appName = auth.app ? auth.app.name : "BULUNAMADI";
-  
-      steps.push(`App adı: ${appName}`);
-      steps.push(`Proje ID (config'ten): ${projectId}`);
-  
+
+      appendHealth(`App adı: ${appName}`);
+      appendHealth(`Proje ID (config'ten): ${projectId}`);
+
       if (!firebaseUser) {
-        steps.push("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
+        appendHealth("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
         setHealthStatus("HATA: Giriş yapmamışsın.");
-        return; // Early exit
+        return;
       }
-  
-      steps.push("=== KULLANICI ===");
-      steps.push(`UID: ${firebaseUser.uid}`);
-      steps.push(`Email: ${firebaseUser.email ?? "yok"}`);
-  
+
+      appendHealth("=== KULLANICI ===");
+      appendHealth(`UID: ${firebaseUser.uid}`);
+      appendHealth(`Email: ${firebaseUser.email ?? "yok"}`);
+
       // ADIM 1: users read
-      steps.push("=== ADIM 1: users dokümanı READ testi ===");
+      appendHealth("=== ADIM 1: users dokümanı READ testi ===");
       const userDocRef = doc(firestore, "users", firebaseUser.uid);
       const snap = await getDoc(userDocRef);
-      steps.push(
+      appendHealth(
         `users/${firebaseUser.uid} dokümanı: ${snap.exists() ? "VAR" : "YOK"}`
       );
-  
+
       // ADIM 2: users write (merge)
-      steps.push("=== ADIM 2: users dokümanı WRITE testi ===");
+      appendHealth("=== ADIM 2: users dokümanı WRITE testi ===");
       await setDoc(
         userDocRef,
         {
@@ -223,40 +227,40 @@ export default function ProfilePage() {
         },
         { merge: true }
       );
-      steps.push("users/{uid} içine lastHealthCheckAt yazıldı.");
-  
+      appendHealth("users/{uid} içine lastHealthCheckAt yazıldı.");
+
       // ADIM 3: Storage upload (opsiyonel)
-      steps.push("=== ADIM 3: Storage upload testi ===");
-      try {
-        const storage = getStorage();
-        const testRef = ref(
-          storage,
-          `dev_test/${firebaseUser.uid}-healthcheck.txt`
-        );
-        const blob = new Blob(
-          [`health-check ${new Date().toISOString()}`],
-          { type: "text/plain" }
-        );
-        await uploadBytes(testRef, blob);
-        steps.push("Storage upload BAŞARILI.");
-      } catch (storageErr: any) {
-        steps.push("Storage upload BAŞARISIZ (opsiyonel).");
-        if (storageErr?.code) steps.push(`Storage hata kodu: ${storageErr.code}`);
-        if (storageErr?.message) steps.push(`Storage mesaj: ${storageErr.message}`);
+      if (storageTestEnabled) {
+        appendHealth("=== ADIM 3: Storage upload testi ===");
+        try {
+          const storage = getStorage();
+          const testRef = ref(storage, `dev_test/${firebaseUser.uid}-healthcheck.txt`);
+          const blob = new Blob([`health-check ${new Date().toISOString()}`], { type: "text/plain" });
+          await uploadBytes(testRef, blob);
+          appendHealth("Storage upload BAŞARILI.");
+        } catch (storageErr: any) {
+          appendHealth("Storage upload BAŞARISIZ.");
+          if (storageErr?.code) appendHealth(`Storage hata kodu: ${storageErr.code}`);
+          if (storageErr?.message) appendHealth(`Storage mesaj: ${storageErr.message}`);
+        }
+      } else {
+        appendHealth("=== ADIM 3: Storage upload testi ===");
+        appendHealth("Atlandı (toggle kapalı).");
       }
-  
+
       setHealthStatus("Health check tamamlandı.");
     } catch (err: any) {
       console.error("HEALTH_CHECK_ERROR", err);
-      steps.push("=== HATA ===");
-      if (err?.code) steps.push(`Hata kodu: ${err.code}`);
-      if (err?.message) steps.push(`Mesaj: ${err.message}`);
+      appendHealth("=== HATA ===");
+      if (err?.code) appendHealth(`Hata kodu: ${err.code}`);
+      if (err?.message) appendHealth(`Mesaj: ${err.message}`);
       setHealthStatus("HATA: Health check başarısız.");
     } finally {
       setHealthDetails(steps.join("\n"));
       setHealthRunning(false);
     }
   }
+
 
   function showDebugInfo() {
     const lines: string[] = [];
@@ -527,6 +531,17 @@ export default function ProfilePage() {
             >
               Debug bilgilerini göster
             </button>
+          </div>
+          
+          <div className="pl-1">
+            <label className="flex items-center gap-2 text-xs text-gray-700">
+              <input
+                type="checkbox"
+                checked={storageTestEnabled}
+                onChange={(e) => setStorageTestEnabled(e.target.checked)}
+              />
+              Storage testini de çalıştır (yavaş olabilir)
+            </label>
           </div>
           
           <div className="text-[11px] text-gray-500">
