@@ -1,4 +1,3 @@
-
 // app/profile/page.tsx
 "use client";
 
@@ -48,6 +47,8 @@ export default function ProfilePage() {
 
   // Ek debug state
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const [clickPing, setClickPing] = useState(0);
+  const [lastClickAt, setLastClickAt] = useState<string>("");
 
   useEffect(() => {
     if (!isUserLoading && !firebaseUser) {
@@ -163,41 +164,47 @@ export default function ProfilePage() {
     }
   }
 
+  function uiPing() {
+    const ts = new Date().toISOString();
+    setClickPing((n) => n + 1);
+    setLastClickAt(ts);
+    setHealthStatus("UI Ping: Buton tıklandı ✅");
+    setHealthDetails(`Ping #${clickPing + 1}\nZaman: ${ts}`);
+  }
+
   async function runHealthCheck() {
     setHealthRunning(true);
-    setHealthStatus("Health check çalışıyor...");
-    setHealthDetails(null);
-
+    // Initial status is already set by the onClick handler
     const steps: string[] = [];
-
+  
     try {
       steps.push("=== GENEL DURUM ===");
-
+  
       if (!auth || !firestore) {
         steps.push("HATA: useFirebase içinden auth veya firestore gelmedi.");
         setHealthStatus("HATA: Firebase context eksik.");
-        return;
+        return; // Early exit, finally will still run
       }
-
+  
       const projectId =
         // @ts-ignore
         (auth.app && auth.app.options && auth.app.options.projectId) ||
         "BULUNAMADI";
       const appName = auth.app ? auth.app.name : "BULUNAMADI";
-
+  
       steps.push(`App adı: ${appName}`);
       steps.push(`Proje ID (config'ten): ${projectId}`);
-
+  
       if (!firebaseUser) {
         steps.push("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
         setHealthStatus("HATA: Giriş yapmamışsın.");
-        return;
+        return; // Early exit
       }
-
+  
       steps.push("=== KULLANICI ===");
       steps.push(`UID: ${firebaseUser.uid}`);
       steps.push(`Email: ${firebaseUser.email ?? "yok"}`);
-
+  
       // ADIM 1: users read
       steps.push("=== ADIM 1: users dokümanı READ testi ===");
       const userDocRef = doc(firestore, "users", firebaseUser.uid);
@@ -205,7 +212,7 @@ export default function ProfilePage() {
       steps.push(
         `users/${firebaseUser.uid} dokümanı: ${snap.exists() ? "VAR" : "YOK"}`
       );
-
+  
       // ADIM 2: users write (merge)
       steps.push("=== ADIM 2: users dokümanı WRITE testi ===");
       await setDoc(
@@ -217,7 +224,7 @@ export default function ProfilePage() {
         { merge: true }
       );
       steps.push("users/{uid} içine lastHealthCheckAt yazıldı.");
-
+  
       // ADIM 3: Storage upload (opsiyonel)
       steps.push("=== ADIM 3: Storage upload testi ===");
       try {
@@ -237,7 +244,7 @@ export default function ProfilePage() {
         if (storageErr?.code) steps.push(`Storage hata kodu: ${storageErr.code}`);
         if (storageErr?.message) steps.push(`Storage mesaj: ${storageErr.message}`);
       }
-
+  
       setHealthStatus("Health check tamamlandı.");
     } catch (err: any) {
       console.error("HEALTH_CHECK_ERROR", err);
@@ -484,7 +491,22 @@ export default function ProfilePage() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={runHealthCheck}
+              onClick={uiPing}
+              className="inline-flex items-center justify-center rounded-lg bg-black text-white text-xs font-medium px-3 py-2 hover:opacity-90 transition"
+            >
+              UI Ping Test
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                // tıklama kesin görünsün diye anında UI güncelle
+                const ts = new Date().toISOString();
+                setLastClickAt(ts);
+                setHealthStatus("Tıklandı, health check başlıyor...");
+                setHealthDetails(`Başlangıç: ${ts}`);
+                runHealthCheck();
+              }}
               disabled={healthRunning}
               className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-xs font-medium px-3 py-2 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
             >
@@ -505,6 +527,10 @@ export default function ProfilePage() {
             >
               Debug bilgilerini göster
             </button>
+          </div>
+          
+          <div className="text-[11px] text-gray-500">
+            Ping sayısı: {clickPing} | Son tıklama: {lastClickAt || "-"} | Running: {String(healthRunning)}
           </div>
 
           <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
@@ -533,5 +559,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
