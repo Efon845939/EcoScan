@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useTransition, useEffect } from 'react';
@@ -709,17 +710,6 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step }) {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
-              <Button
-                variant="outline"
-                className="justify-start"
-                onClick={() => {
-                  setStep('guide');
-                  setShowSettingsModal(false);
-                }}
-              >
-                <BookCopy className="mr-2" />
-                {t('settings_guide_button')}
-              </Button>
               <Button
                 variant="outline"
                 className="justify-start"
