@@ -1,4 +1,4 @@
-import { Recycle, Settings, Award, User, LogIn } from 'lucide-react';
+import { Recycle, Settings, Award, User, LogIn, BookCopy } from 'lucide-react';
 import { Button } from './ui/button';
 import type { Step } from './app-container';
 import { useTranslation } from '@/hooks/use-translation';
@@ -46,6 +46,11 @@ export function Header({ points, onNavigate, onShowSettings }: HeaderProps) {
                 <span className="sr-only">Sign In</span>
             </Button>
            )}
+           {/* Guidelines / Guide (moved out of Settings) */}
+            <Button variant="ghost" size="icon" onClick={() => onNavigate('guide')}>
+         <BookCopy />
+            <span className="sr-only">Guidelines</span>
+            </Button>
           <Button variant="ghost" size="icon" onClick={onShowSettings}>
               <Settings />
               <span className="sr-only">Settings</span>
