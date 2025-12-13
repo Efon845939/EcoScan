@@ -57,6 +57,10 @@ export default function ProfilePage() {
   function appendSave(line: string) {
     setSaveDebug((prev) => (prev ? prev + "\n" + line : line));
   }
+  
+  function appendHealth(line: string) {
+    setHealthDetails((prev) => (prev ? prev + "\n" + line : line));
+  }
 
   useEffect(() => {
     if (!isUserLoading && !firebaseUser) {
@@ -129,6 +133,27 @@ export default function ProfilePage() {
 
       await setDoc(userProfileRef, dataToSave, { merge: true });
       appendSave("✅ ADIM 1: Firestore write OK.");
+      
+      appendSave("➡️ ADIM 1.5: Firestore read-back (hemen geri oku)...");
+      const afterSnap = await getDoc(userProfileRef);
+      appendSave(`✅ ADIM 1.5: read-back OK (exists=${afterSnap.exists() ? "yes" : "no"})`);
+
+      if (afterSnap.exists()) {
+        const d: any = afterSnap.data();
+        appendSave(`↩️ read-back displayName: ${String(d.displayName ?? "")}`);
+        appendSave(`↩️ read-back username: ${String(d.username ?? "")}`);
+        appendSave(`↩️ read-back about: ${String(d.about ?? "")}`);
+      }
+      
+      // Update local state immediately
+       setProfile((p) => ({
+        ...p,
+        username: dataToSave.username,
+        displayName: dataToSave.displayName,
+        about: dataToSave.about,
+        photoURL: dataToSave.photoURL,
+      }));
+
 
       // 2) Auth updateProfile (opsiyonel ama deniyoruz)
       appendSave("➡️ ADIM 2: Auth updateProfile başlıyor...");
@@ -138,6 +163,7 @@ export default function ProfilePage() {
           photoURL: profile.photoURL || undefined,
         });
         appendSave("✅ ADIM 2: Auth updateProfile OK.");
+        appendSave(`↩️ auth.currentUser.displayName: ${auth.currentUser?.displayName ?? ""}`);
       } else {
         appendSave("⚠️ ADIM 2: auth.currentUser yok, updateProfile atlandı.");
       }
@@ -204,84 +230,72 @@ export default function ProfilePage() {
   async function runHealthCheck() {
     setHealthRunning(true);
     setHealthStatus("Health check çalışıyor...");
-    setHealthDetails(null);
+    setHealthDetails("");
 
-    const steps: string[] = [];
+    appendHealth("=== GENEL DURUM ===");
+
+    if (!auth || !firestore) {
+      appendHealth("HATA: useFirebase içinden auth veya firestore gelmedi.");
+      setHealthStatus("HATA: Firebase context eksik.");
+      setHealthRunning(false);
+      return;
+    }
+    
+    const projectId = (auth.app && auth.app.options && auth.app.options.projectId) || "BULUNAMADI";
+    const appName = auth.app ? auth.app.name : "BULUNAMADI";
+
+    appendHealth(`App adı: ${appName}`);
+    appendHealth(`Proje ID (config'ten): ${projectId}`);
+
+    if (!firebaseUser) {
+      appendHealth("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
+      setHealthStatus("HATA: Giriş yapmamışsın.");
+      setHealthRunning(false);
+      return;
+    }
+
+    appendHealth("=== KULLANICI ===");
+    appendHealth(`UID: ${firebaseUser.uid}`);
+    appendHealth(`Email: ${firebaseUser.email ?? "yok"}`);
 
     try {
-      steps.push("=== GENEL DURUM ===");
+      // ADIM 1: users read
+      appendHealth("=== ADIM 1: users dokümanı READ testi ===");
+      const userDocRef = doc(firestore, "users", firebaseUser.uid);
+      const snap = await getDoc(userDocRef);
+      appendHealth(`users/${firebaseUser.uid} dokümanı: ${snap.exists() ? "VAR" : "YOK"}`);
 
-      if (!auth || !firestore) {
-        steps.push("HATA: useFirebase içinden auth veya firestore gelmedi.");
-        setHealthStatus("HATA: Firebase context eksik.");
-      } else {
-        const projectId =
-          // @ts-ignore
-          (auth.app && auth.app.options && auth.app.options.projectId) ||
-          "BULUNAMADI";
-        const appName = auth.app ? auth.app.name : "BULUNAMADI";
-
-        steps.push(`App adı: ${appName}`);
-        steps.push(`Proje ID (config'ten): ${projectId}`);
-
-        if (!firebaseUser) {
-          steps.push("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
-          setHealthStatus("HATA: Giriş yapmamışsın.");
-        } else {
-          steps.push("=== KULLANICI ===");
-          steps.push(`UID: ${firebaseUser.uid}`);
-          steps.push(`Email: ${firebaseUser.email ?? "yok"}`);
-
-          // ADIM 1: users read
-          steps.push("=== ADIM 1: users dokümanı READ testi ===");
-          const userDocRef = doc(firestore, "users", firebaseUser.uid);
-          const snap = await getDoc(userDocRef);
-          steps.push(
-            `users/${firebaseUser.uid} dokümanı: ${snap.exists() ? "VAR" : "YOK"}`
-          );
-
-          // ADIM 2: users write (merge)
-          steps.push("=== ADIM 2: users dokümanı WRITE testi ===");
-          await setDoc(
-            userDocRef,
-            {
-              lastHealthCheckAt: new Date(),
-              lastHealthCheckSource: "profile-page",
-            },
-            { merge: true }
-          );
-          steps.push("users/{uid} içine lastHealthCheckAt yazıldı.");
-
-          // ADIM 3: Storage upload (opsiyonel)
-          if (storageTestEnabled) {
-            steps.push("=== ADIM 3: Storage upload testi ===");
-            try {
-              const storage = getStorage();
-              const testRef = ref(storage, `dev_test/${firebaseUser.uid}-healthcheck.txt`);
-              const blob = new Blob([`health-check ${new Date().toISOString()}`], { type: "text/plain" });
-              await uploadBytes(testRef, blob);
-              steps.push("Storage upload BAŞARILI.");
-            } catch (storageErr: any) {
-              steps.push("Storage upload BAŞARISIZ.");
-              if (storageErr?.code) steps.push(`Storage hata kodu: ${storageErr.code}`);
-              if (storageErr?.message) steps.push(`Storage mesaj: ${storageErr.message}`);
-            }
-          } else {
-            steps.push("=== ADIM 3: Storage upload testi ===");
-            steps.push("Atlandı (toggle kapalı).");
-          }
-
-          setHealthStatus("Health check tamamlandı.");
+      // ADIM 2: users write (merge)
+      appendHealth("=== ADIM 2: users dokümanı WRITE testi ===");
+      await setDoc(userDocRef, { lastHealthCheckAt: new Date(), lastHealthCheckSource: "profile-page" }, { merge: true });
+      appendHealth("users/{uid} içine lastHealthCheckAt yazıldı.");
+      
+      // ADIM 3: Storage upload (opsiyonel)
+      if (storageTestEnabled) {
+        appendHealth("=== ADIM 3: Storage upload testi ===");
+        try {
+          const storage = getStorage();
+          const testRef = ref(storage, `dev_test/${firebaseUser.uid}-healthcheck.txt`);
+          const blob = new Blob([`health-check ${new Date().toISOString()}`], { type: "text/plain" });
+          await uploadBytes(testRef, blob);
+          appendHealth("Storage upload BAŞARILI.");
+        } catch (storageErr: any) {
+          appendHealth("Storage upload BAŞARISIZ.");
+          if (storageErr?.code) appendHealth(`Storage hata kodu: ${storageErr.code}`);
+          if (storageErr?.message) appendHealth(`Storage mesaj: ${storageErr.message}`);
         }
+      } else {
+        appendHealth("=== ADIM 3: Storage upload testi ===");
+        appendHealth("Atlandı (toggle kapalı).");
       }
+      setHealthStatus("Health check tamamlandı.");
     } catch (err: any) {
       console.error("HEALTH_CHECK_ERROR", err);
-      steps.push("=== HATA ===");
-      if (err?.code) steps.push(`Hata kodu: ${err.code}`);
-      if (err?.message) steps.push(`Mesaj: ${err.message}`);
+      appendHealth("=== HATA ===");
+      if (err?.code) appendHealth(`Hata kodu: ${err.code}`);
+      if (err?.message) appendHealth(`Mesaj: ${err.message}`);
       setHealthStatus("HATA: Health check başarısız.");
     } finally {
-      setHealthDetails(steps.join("\n"));
       setHealthRunning(false);
     }
   }
@@ -544,7 +558,7 @@ export default function ProfilePage() {
                 const ts = new Date().toISOString();
                 setLastClickAt(ts);
                 setHealthStatus("Tıklandı, health check başlıyor...");
-                setHealthDetails(`Başlangıç: ${ts}`);
+                setHealthDetails("");
                 runHealthCheck();
               }}
               disabled={healthRunning}
