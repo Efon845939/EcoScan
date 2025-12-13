@@ -37,34 +37,12 @@ export default function ProfilePage() {
   const { user: firebaseUser, isUserLoading } = useUser();
 
   const [profile, setProfile] = useState<Profile>(defaultProfile);
+  const [originalEmail, setOriginalEmail] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [status, setStatus] = useState<string>("Değişiklik yapılmadı.");
-
-  // Health check state
-  const [healthStatus, setHealthStatus] = useState<string | null>(null);
-  const [healthDetails, setHealthDetails] = useState<string | null>(null);
-  const [healthRunning, setHealthRunning] = useState(false);
-  const [storageTestEnabled, setStorageTestEnabled] = useState(false);
-
-  // Ek debug state
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
-  const [clickPing, setClickPing] = useState(0);
-  const [lastClickAt, setLastClickAt] = useState<string>("");
-
-  const [saveDebug, setSaveDebug] = useState<string>("");
-  const [saveCount, setSaveCount] = useState(0);
-
   const [emailVerified, setEmailVerified] = useState<boolean>(false);
   const [verifySending, setVerifySending] = useState(false);
-
-  function appendSave(line: string) {
-    setSaveDebug((prev) => (prev ? prev + "\n" + line : line));
-  }
-  
-  function appendHealth(line: string) {
-    setHealthDetails((prev) => (prev ? prev + "\n" + line : line));
-  }
 
   useEffect(() => {
     if (!isUserLoading && !firebaseUser) {
@@ -85,12 +63,15 @@ export default function ProfilePage() {
         if (userDocSnap.exists()) {
           userProfileData = userDocSnap.data();
         }
+        
+        const initialEmail = (firebaseUser.email || "").trim().toLowerCase();
+        setOriginalEmail(initialEmail);
 
         setProfile({
           username: userProfileData.username ?? firebaseUser.email?.split('@')[0] ?? "",
           displayName:
             userProfileData.displayName ?? firebaseUser.displayName ?? "",
-          email: firebaseUser.email || "",
+          email: initialEmail,
           about: userProfileData.about ?? "",
           photoURL:
             userProfileData.photoURL ?? firebaseUser.photoURL ?? null,
@@ -102,6 +83,8 @@ export default function ProfilePage() {
     }
   }, [firebaseUser, firestore, auth.currentUser]);
 
+  const emailChanged = profile.email.trim().toLowerCase() !== originalEmail.trim().toLowerCase();
+
   function handleChange(field: keyof Profile, value: string) {
     setProfile((prev) => ({ ...prev, [field]: value }));
     setStatus("Değişiklik var, henüz kaydedilmedi.");
@@ -110,24 +93,15 @@ export default function ProfilePage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    const ts = new Date().toISOString();
-    setSaveCount((n) => n + 1);
-    setSaveDebug("");
-    appendSave(`✅ submit geldi (#${saveCount + 1}) @ ${ts}`);
-
     if (!firebaseUser) {
-      appendSave("⛔ firebaseUser yok (login değil).");
       setStatus("HATA: Giriş yapmamışsın, profil kaydedilemedi.");
       return;
     }
 
     setSaving(true);
     setStatus("Kaydediliyor...");
-    const t0 = performance.now();
 
     try {
-      // 1) Firestore write (SADECE displayName ve about güncellenecek)
-      appendSave("➡️ ADIM 1: Firestore setDoc(users/{uid}) başlıyor...");
       const userProfileRef = doc(firestore, "users", firebaseUser.uid);
 
       const dataToSave = {
@@ -137,44 +111,22 @@ export default function ProfilePage() {
       };
 
       await setDoc(userProfileRef, dataToSave, { merge: true });
-      appendSave("✅ ADIM 1: Firestore write OK.");
       
-      appendSave("➡️ ADIM 1.5: Firestore read-back (hemen geri oku)...");
-      const afterSnap = await getDoc(userProfileRef);
-      appendSave(`✅ ADIM 1.5: read-back OK (exists=${afterSnap.exists() ? "yes" : "no"})`);
-
-      if (afterSnap.exists()) {
-        const d: any = afterSnap.data();
-        appendSave(`↩️ read-back displayName: ${String(d.displayName ?? "")}`);
-        appendSave(`↩️ read-back username: ${String(d.username ?? "")}`);
-      }
-      
-       setProfile((p) => ({
+      setProfile((p) => ({
         ...p,
         displayName: dataToSave.displayName,
         about: dataToSave.about,
       }));
 
-      // 2) Auth updateProfile
-      appendSave("➡️ ADIM 2: Auth updateProfile başlıyor...");
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, {
           displayName: profile.displayName.trim() || undefined,
         });
-        appendSave("✅ ADIM 2: Auth updateProfile OK.");
-        appendSave(`↩️ auth.currentUser.displayName: ${auth.currentUser?.displayName ?? ""}`);
-      } else {
-        appendSave("⚠️ ADIM 2: auth.currentUser yok, updateProfile atlandı.");
       }
 
-      const ms = Math.round(performance.now() - t0);
-      appendSave(`✅ BİTTİ: Toplam süre ~${ms}ms`);
       setStatus("Profil kaydedildi.");
     } catch (err: any) {
       console.error("PROFILE_SAVE_ERROR", err);
-      appendSave("⛔ HATA: catch'e düştü.");
-      if (err?.code) appendSave(`error code: ${err.code}`);
-      if (err?.message) appendSave(`error msg: ${err.message}`);
       setStatus("HATA: Profil kaydedilirken bir sorun oluştu.");
     } finally {
       setSaving(false);
@@ -223,8 +175,12 @@ export default function ProfilePage() {
       setStatus("HATA: E-posta güncellemek için giriş yapmalısın.");
       return;
     }
+
+    if (!emailChanged) {
+        setStatus("E-posta değişmedi, güncelleme yapılmadı.");
+        return;
+    }
     
-    // Check if the user's current email is verified
     if (!auth.currentUser.emailVerified) {
       setStatus("HATA: E-postanı değiştirmeden önce mevcut e-posta adresini doğrulamalısın.");
       return;
@@ -240,10 +196,8 @@ export default function ProfilePage() {
     setStatus("E-posta güncelleniyor...");
   
     try {
-      // 1) Auth e-posta güncelle
       await updateEmail(auth.currentUser, newEmail);
   
-      // 2) Firestore'da da email alanını güncelle (profil dokümanı tutarlılık için)
       const userProfileRef = doc(firestore, "users", auth.currentUser.uid);
       await setDoc(
         userProfileRef,
@@ -251,9 +205,9 @@ export default function ProfilePage() {
         { merge: true }
       );
   
+      setOriginalEmail(newEmail);
       setStatus("E-posta güncellendi. Yeni e-postanı doğrulaman gerekebilir.");
-    } catch (err: any)
-     {
+    } catch (err: any) {
       console.error("EMAIL_UPDATE_ERROR", err);
   
       if (err?.code === "auth/requires-recent-login") {
@@ -288,25 +242,16 @@ export default function ProfilePage() {
   
     setVerifySending(true);
     setStatus("Doğrulama e-postası gönderiliyor...");
-    setHealthDetails(""); // debug paneline yazdırmak istersen
   
     try {
-      // Auth state güncel olsun
       await auth.currentUser.reload();
-  
-      // actionCodeSettings istemiyorsan düz gönder
       await sendEmailVerification(auth.currentUser);
   
       setStatus("Doğrulama e-postası gönderildi. Spam/Promotions da kontrol et.");
     } catch (err: any) {
       console.error("SEND_VERIFY_EMAIL_ERROR (raw):", err);
-  
       const code = err?.code || "unknown";
-      const msg = err?.message || String(err);
-  
-      // ekrana net bas
       setStatus(`HATA: Doğrulama maili gönderilemedi (${code}).`);
-      setHealthDetails(`SEND_VERIFY_EMAIL_ERROR\ncode: ${code}\nmessage: ${msg}`);
     } finally {
       setVerifySending(false);
     }
@@ -331,136 +276,6 @@ export default function ProfilePage() {
       console.error("EMAIL_VERIFIED_REFRESH_ERROR", err);
       setStatus("HATA: Doğrulama durumu güncellenemedi.");
     }
-  }
-
-  function uiPing() {
-    const ts = new Date().toISOString();
-    setClickPing((n) => n + 1);
-    setLastClickAt(ts);
-    setHealthStatus("UI Ping: Buton tıklandı ✅");
-    setHealthDetails(`Ping #${clickPing + 1}\nZaman: ${ts}`);
-  }
-
-  async function runHealthCheck() {
-    setHealthRunning(true);
-    setHealthStatus("Health check çalışıyor...");
-    setHealthDetails(null);
-  
-    const steps: string[] = [];
-  
-    try {
-      steps.push("=== GENEL DURUM ===");
-  
-      if (!auth || !firestore) {
-        steps.push("HATA: useFirebase içinden auth veya firestore gelmedi.");
-        setHealthStatus("HATA: Firebase context eksik.");
-        return;
-      }
-  
-      const projectId =
-        // @ts-ignore
-        (auth.app && auth.app.options && auth.app.options.projectId) ||
-        "BULUNAMADI";
-      const appName = auth.app ? auth.app.name : "BULUNAMADI";
-  
-      steps.push(`App adı: ${appName}`);
-      steps.push(`Proje ID (config'ten): ${projectId}`);
-  
-      if (!firebaseUser) {
-        steps.push("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
-        setHealthStatus("HATA: Giriş yapmamışsın.");
-        return;
-      }
-  
-      steps.push("=== KULLANICI ===");
-      steps.push(`UID: ${firebaseUser.uid}`);
-      steps.push(`Email: ${firebaseUser.email ?? "yok"}`);
-  
-      // ADIM 1: users read
-      steps.push("=== ADIM 1: users dokümanı READ testi ===");
-      const userDocRef = doc(firestore, "users", firebaseUser.uid);
-      const snap = await getDoc(userDocRef);
-      steps.push(
-        `users/${firebaseUser.uid} dokümanı: ${snap.exists() ? "VAR" : "YOK"}`
-      );
-  
-      // ADIM 2: users write (merge)
-      steps.push("=== ADIM 2: users dokümanı WRITE testi ===");
-      await setDoc(
-        userDocRef,
-        {
-          lastHealthCheckAt: new Date(),
-          lastHealthCheckSource: "profile-page",
-        },
-        { merge: true }
-      );
-      steps.push("users/{uid} içine lastHealthCheckAt yazıldı.");
-  
-      // ADIM 3: Storage upload (opsiyonel)
-      if (storageTestEnabled) {
-        appendHealth("=== ADIM 3: Storage upload testi ===");
-        try {
-          const storage = getStorage();
-          const testRef = ref(
-            storage,
-            `dev_test/${firebaseUser.uid}-healthcheck.txt`
-          );
-          const blob = new Blob(
-            [`health-check ${new Date().toISOString()}`],
-            { type: "text/plain" }
-          );
-          await uploadBytes(testRef, blob);
-          appendHealth("Storage upload BAŞARILI.");
-        } catch (storageErr: any) {
-          appendHealth("Storage upload BAŞARISIZ.");
-          if (storageErr?.code) appendHealth(`Storage hata kodu: ${storageErr.code}`);
-          if (storageErr?.message) appendHealth(`Storage mesaj: ${storageErr.message}`);
-        }
-      } else {
-        appendHealth("=== ADIM 3: Storage upload testi ===");
-        appendHealth("Atlandı (toggle kapalı).");
-      }
-  
-      setHealthStatus("Health check tamamlandı.");
-    } catch (err: any) {
-      console.error("HEALTH_CHECK_ERROR", err);
-      steps.push("=== HATA ===");
-      if (err?.code) steps.push(`Hata kodu: ${err.code}`);
-      if (err?.message) steps.push(`Mesaj: ${err.message}`);
-      setHealthStatus("HATA: Health check başarısız.");
-    } finally {
-      setHealthDetails(steps.join("\n"));
-      setHealthRunning(false);
-    }
-  }
-
-
-  function showDebugInfo() {
-    const lines: string[] = [];
-
-    lines.push("=== DEBUG BİLGİLERİ ===");
-
-    if (!auth || !firestore) {
-      lines.push("auth veya firestore yok (useFirebase bozuk).");
-    } else {
-      const projectId =
-        // @ts-ignore
-        (auth.app && auth.app.options && auth.app.options.projectId) ||
-        "BULUNAMADI";
-      const appName = auth.app ? auth.app.name : "BULUNAMADI";
-
-      lines.push(`App adı: ${appName}`);
-      lines.push(`Project ID: ${projectId}`);
-    }
-
-    if (firebaseUser) {
-      lines.push(`UID: ${firebaseUser.uid}`);
-      lines.push(`Email: ${firebaseUser.email ?? "YOK"}`);
-    } else {
-      lines.push("Kullanıcı: YOK (login değil).");
-    }
-
-    setDebugInfo(lines.join("\n"));
   }
 
   if (isUserLoading) {
@@ -654,18 +469,26 @@ export default function ProfilePage() {
                     Durumu yenile
                   </button>
                 </div>
-                <p className="mt-1 text-[11px] text-gray-500">
-                  Not: E-posta değiştirmek için bazı durumlarda yeniden giriş yapman gerekebilir.
-                </p>
+                <div className="mt-2">
+                    <button
+                        type="button"
+                        onClick={handleEmailUpdate}
+                        disabled={!emailChanged || saving || avatarUploading}
+                        className="inline-flex items-center justify-center rounded-lg bg-white text-emerald-700 border border-emerald-200 text-xs font-medium px-3 py-2 hover:bg-emerald-50 disabled:opacity-60 disabled:cursor-not-allowed transition"
+                        >
+                        E-postayı güncelle
+                    </button>
+                    {!emailChanged ? (
+                        <p className="mt-1 text-[11px] text-gray-500">
+                            E-postayı değiştirmeden güncelleme yapılamaz.
+                        </p>
+                    ) : (
+                         <p className="mt-1 text-[11px] text-gray-500">
+                            Not: E-posta değiştirmek için bazı durumlarda yeniden giriş yapman gerekebilir.
+                        </p>
+                    )}
+                </div>
               </div>
-              <button
-                  type="button"
-                  onClick={handleEmailUpdate}
-                  disabled={saving || avatarUploading}
-                  className="inline-flex items-center justify-center rounded-lg bg-white text-emerald-700 border border-emerald-200 text-xs font-medium px-3 py-2 hover:bg-emerald-50 disabled:opacity-60 disabled:cursor-not-allowed transition"
-                >
-                  E-postayı güncelle
-                </button>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -684,122 +507,20 @@ export default function ProfilePage() {
                 {status}
               </div>
 
-              {saveDebug && (
-                <div className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
-                  <div className="text-xs font-medium text-purple-900 mb-1">
-                    Save Debug
-                  </div>
-                  <pre className="whitespace-pre-wrap break-words text-[11px] text-purple-800 max-h-48 overflow-auto">
-                    {saveDebug}
-                  </pre>
-                </div>
-              )}
-
               <button
                 type="submit"
                 disabled={saving || avatarUploading}
                 className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-sm font-medium px-4 py-2.5 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
               >
-                {saving ? (
+                {saving && !emailChanged ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                {saving ? "Kaydediliyor..." : "Profili kaydet"}
+                {saving && !emailChanged ? "Kaydediliyor..." : "Profili kaydet"}
               </button>
             </form>
           </section>
         </div>
-
-        {/* Geliştirici / Health Check bölümü */}
-        <section className="bg-white/90 border border-emerald-100 rounded-2xl shadow-sm p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-gray-900">
-            Geliştirici testleri / Health Check
-          </h2>
-          <p className="text-xs text-gray-500">
-            Butonlar çalışmıyorsa veya Firebase bağlantısını test etmek
-            istiyorsan buradan temel kontrolleri yapabilirsin.
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={uiPing}
-              className="inline-flex items-center justify-center rounded-lg bg-black text-white text-xs font-medium px-3 py-2 hover:opacity-90 transition"
-            >
-              UI Ping Test
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                // tıklama kesin görünsün diye anında UI güncelle
-                const ts = new Date().toISOString();
-                setLastClickAt(ts);
-                setHealthStatus("Tıklandı, health check başlıyor...");
-                setHealthDetails(`Başlangıç: ${ts}`);
-                runHealthCheck();
-              }}
-              disabled={healthRunning}
-              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-xs font-medium px-3 py-2 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
-            >
-              {healthRunning ? (
-                <>
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                  Health check çalışıyor...
-                </>
-              ) : (
-                "Health check çalıştır"
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={showDebugInfo}
-              className="inline-flex items-center justify-center rounded-lg bg-white text-emerald-700 border border-emerald-200 text-xs font-medium px-3 py-2 hover:bg-emerald-50 transition"
-            >
-              Debug bilgilerini göster
-            </button>
-          </div>
-          
-          <div className="pl-1">
-            <label className="flex items-center gap-2 text-xs text-gray-700">
-              <input
-                type="checkbox"
-                checked={storageTestEnabled}
-                onChange={(e) => setStorageTestEnabled(e.target.checked)}
-              />
-              Storage testini de çalıştır (yavaş olabilir)
-            </label>
-          </div>
-          
-          <div className="text-[11px] text-gray-500">
-            Ping sayısı: {clickPing} | Son tıklama: {lastClickAt || "-"} | Running: {String(healthRunning)}
-          </div>
-
-          <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-            <div className="text-xs font-medium text-gray-800">
-              {healthStatus || "Henüz test çalıştırılmadı."}
-            </div>
-            {healthDetails && (
-              <pre className="mt-2 whitespace-pre-wrap break-words text-[11px] text-gray-600 max-h-40 overflow-auto">
-                {healthDetails}
-              </pre>
-            )}
-          </div>
-
-          {debugInfo && (
-            <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
-              <div className="text-xs font-medium text-blue-900 mb-1">
-                Debug
-              </div>
-              <pre className="whitespace-pre-wrap break-words text-[11px] text-blue-800 max-h-40 overflow-auto">
-                {debugInfo}
-              </pre>
-            </div>
-          )}
-        </section>
       </div>
     </div>
   );
 }
-
-    
