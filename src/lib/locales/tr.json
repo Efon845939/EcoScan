@@ -1,128 +1,126 @@
-const tr = {
-    header_title: "EcoScan",
-    header_points: "puan",
+{
+    "header_title": "EcoScan",
+    "header_points": "puan",
 
-    loading_profile: "Profil yükleniyor...",
-    loading_material: "Malzeme tanımlanıyor...",
-    loading_barcode: "Barkodla tanımlanıyor...",
-    loading_disposal: "Atık doğrulanıyor...",
-    loading_action: "İşlem doğrulanıyor...",
-    loading_receipt: "Karbon ayak izi analiz ediliyor...",
+    "loading_profile": "Profil yükleniyor...",
+    "loading_material": "Malzeme tanımlanıyor...",
+    "loading_barcode": "Barkodla tanımlanıyor...",
+    "loading_disposal": "Atık doğrulanıyor...",
+    "loading_action": "İşlem doğrulanıyor...",
+    "loading_receipt": "Karbon ayak izi analiz ediliyor...",
 
-    scan_card_title: "Tara & Kazan",
-    scan_card_description: "Ürünleri tara, doğru şekilde at ve puan kazan.",
-    scan_card_scan_button: "Ürün Tara",
-    scan_card_rewards_link: "Ödülleri Gör",
+    "scan_card_title": "Tara & Kazan",
+    "scan_card_description": "Ürünleri tara, doğru şekilde at ve puan kazan.",
+    "scan_card_scan_button": "Ürün Tara",
+    "scan_card_rewards_link": "Ödülleri Gör",
 
-    camera_scan_item_title: "Ürün Tara",
-    camera_scan_item_description: "Kamerayı ürüne doğrult.",
-    camera_verify_disposal_title: "Atığı Doğrula",
-    camera_verify_disposal_description: "Atığı nasıl attığını göster.",
-    camera_capture_button: "Çek",
-    camera_back_button: "Geri",
+    "camera_scan_item_title": "Ürün Tara",
+    "camera_scan_item_description": "Kamerayı ürüne doğrult.",
+    "camera_verify_disposal_title": "Atığı Doğrula",
+    "camera_verify_disposal_description": "Atığı nasıl attığını göster.",
+    "camera_capture_button": "Çek",
+    "camera_back_button": "Geri",
 
-    confirm_card_title: "Tespit Edilen: {{material}}",
-    confirm_card_description: "Malzemeyi onayla ve devam et.",
-    confirm_card_confidence: "Güven: %{{confidence}}",
-    confirm_card_verify_button: "Atığı Doğrula",
-    confirm_card_scan_another_button: "Başka Ürün Tara",
+    "confirm_card_title": "Tespit Edilen: {{material}}",
+    "confirm_card_description": "Malzemeyi onayla ve devam et.",
+    "confirm_card_confidence": "Güven: %{{confidence}}",
+    "confirm_card_verify_button": "Atığı Doğrula",
+    "confirm_card_scan_another_button": "Başka Ürün Tara",
 
-    disposed_card_title: "Tebrikler!",
-    disposed_card_description: "Puanlar hesabına eklendi.",
-    disposed_card_scan_another_button: "Tekrar Tara",
-    disposed_card_rewards_link: "Ödüllere Git",
+    "disposed_card_title": "Tebrikler!",
+    "disposed_card_description": "Puanlar hesabına eklendi.",
+    "disposed_card_scan_another_button": "Tekrar Tara",
+    "disposed_card_rewards_link": "Ödüllere Git",
 
-    rewards_title: "Ödüllerin",
+    "rewards_title": "Ödüllerin",
 
-    settings_title: "Ayarlar",
-    settings_description: "Uygulama tercihlerini yönet.",
-    settings_region_label: "Bölge",
-    settings_language_label: "Dil",
-    settings_close_button: "Kapat",
+    "settings_title": "Ayarlar",
+    "settings_description": "Uygulama tercihlerini yönet.",
+    "settings_region_label": "Bölge",
+    "settings_language_label": "Dil",
+    "settings_close_button": "Kapat",
 
-    guide_title: "Kılavuz",
-    guide_description: "EcoScan nasıl çalışır, nasıl puan kazanılır.",
-    guide_recycling_title: "Geri Dönüşüm Temelleri",
-    guide_recycling_description: "Doğru atık atarak puan kazan.",
-    guide_material_header: "Malzeme",
-    guide_points_header: "Puan",
-    guide_survey_title: "Karbon Ayak İzi Anketi",
-    guide_survey_description: "Etkini azalt, puan kazan.",
-    guide_verification_title: "Doğrulama",
-    guide_verification_description: "Eylemler nasıl doğrulanır.",
-    guide_howto_title: "Nasıl Çalışır",
+    "guide_title": "Kılavuz",
+    "guide_description": "EcoScan nasıl çalışır, nasıl puan kazanılır.",
+    "guide_recycling_title": "Geri Dönüşüm Temelleri",
+    "guide_recycling_description": "Doğru atık atarak puan kazan.",
+    "guide_material_header": "Malzeme",
+    "guide_points_header": "Puan",
+    "guide_survey_title": "Karbon Ayak İzi Anketi",
+    "guide_survey_description": "Etkini azalt, puan kazan.",
+    "guide_verification_title": "Doğrulama",
+    "guide_verification_description": "Eylemler nasıl doğrulanır.",
+    "guide_howto_title": "Nasıl Çalışır",
 
-    survey_title: "Karbon Ayak İzi Anketi",
-    survey_description: "Karbon ayak izini tahmin etmek için birkaç soru.",
-    survey_calculate_button: "Ayak İzini Hesapla",
+    "survey_title": "Karbon Ayak İzi Anketi",
+    "survey_description": "Karbon ayak izini tahmin etmek için birkaç soru.",
+    "survey_calculate_button": "Ayak İzini Hesapla",
 
-    survey_q1: "Genelde nasıl ulaşım sağlıyorsun?",
-    survey_q1_options: {
-        car: "Araba",
-        public: "Toplu Taşıma",
-        bike: "Bisiklet",
-        walk: "Yürüyüş",
+    "survey_q1": "Genelde nasıl ulaşım sağlıyorsun?",
+    "survey_q1_options": {
+        "car": "Araba",
+        "public": "Toplu Taşıma",
+        "bike": "Bisiklet",
+        "walk": "Yürüyüş"
     },
 
-    survey_q2: "Beslenme şeklini seç",
-    survey_q2_options: {
-        meat: "Et ağırlıklı",
-        mixed: "Karışık",
-        vegetarian: "Vejetaryen",
-        vegan: "Vegan",
+    "survey_q2": "Beslenme şeklini seç",
+    "survey_q2_options": {
+        "meat": "Et ağırlıklı",
+        "mixed": "Karışık",
+        "vegetarian": "Vejetaryen",
+        "vegan": "Vegan"
     },
 
-    survey_q3: "Ev enerji kullanımını açıkla",
-    survey_q3_placeholder: "Elektrik, doğalgaz, güneş vb.",
-    survey_q3_no_energy: "Bilmiyorum / Belirtmek istemiyorum",
+    "survey_q3": "Ev enerji kullanımını açıkla",
+    "survey_q3_placeholder": "Elektrik, doğalgaz, güneş vb.",
+    "survey_q3_no_energy": "Bilmiyorum / Belirtmek istemiyorum",
 
-    survey_q4: "En sık ne içersin?",
-    survey_q4_options: {
-        bottled: "Şişe içecekler",
-        tap: "Musluk suyu",
-        mixed: "İkisi de",
+    "survey_q4": "En sık ne içersin?",
+    "survey_q4_options": {
+        "bottled": "Şişe içecekler",
+        "tap": "Musluk suyu",
+        "mixed": "İkisi de"
     },
 
-    /* 🔥 NEW QUESTIONS */
-
-    survey_q5: "Uçakla ne sıklıkla seyahat ediyorsun?",
-    survey_q5_placeholder: "Bir sıklık seç",
-    survey_q5_options: {
-        none: "Hiç / 0 uçuş",
-        rare: "Nadiren (yılda 1–2)",
-        some: "Bazen (yılda 3–5)",
-        often: "Sık (yılda 6+)",
+    "survey_q5": "Uçakla ne sıklıkla seyahat ediyorsun?",
+    "survey_q5_placeholder": "Bir sıklık seç",
+    "survey_q5_options": {
+        "none": "Hiç / 0 uçuş",
+        "rare": "Nadiren (yılda 1–2)",
+        "some": "Bazen (yılda 3–5)",
+        "often": "Sık (yılda 6+)"
     },
 
-    survey_q6: "Evde kaç kişi yaşıyor?",
-    survey_q6_placeholder: "Örn: 3",
-    survey_q6_hint: "Enerji kullanımını kişi başına daha doğru hesaplamak için.",
+    "survey_q6": "Evde kaç kişi yaşıyor?",
+    "survey_q6_placeholder": "Örn: 3",
+    "survey_q6_hint": "Enerji kullanımını kişi başına daha doğru hesaplamak için.",
 
-    survey_q7: "Ev & soğutma",
-    survey_q7_type: "Konut tipi",
-    survey_q7_type_placeholder: "Konut tipi seç",
-    survey_q7_type_options: {
-        apartment: "Apartman",
-        house: "Müstakil Ev",
-        shared: "Paylaşımlı Ev",
-        dorm: "Yurt",
+    "survey_q7": "Ev & soğutma",
+    "survey_q7_type": "Konut tipi",
+    "survey_q7_type_placeholder": "Konut tipi seç",
+    "survey_q7_type_options": {
+        "apartment": "Apartman",
+        "house": "Müstakil Ev",
+        "shared": "Paylaşımlı Ev",
+        "dorm": "Yurt"
     },
-    survey_q7_size: "Ev büyüklüğü",
-    survey_q7_size_placeholder: "Bir boyut seç",
-    survey_q7_size_options: {
-        small: "Küçük",
-        medium: "Orta",
-        large: "Büyük",
+
+    "survey_q7_size": "Ev büyüklüğü",
+    "survey_q7_size_placeholder": "Bir boyut seç",
+    "survey_q7_size_options": {
+        "small": "Küçük",
+        "medium": "Orta",
+        "large": "Büyük"
     },
-    survey_q7_ac: "Klima/ısıtmayı sık kullanıyorum",
 
-    survey_q8: "Atık alışkanlıkları",
-    survey_q8_recycle: "Düzenli geri dönüşüm yapıyorum",
-    survey_q8_compost: "Organik atıkları kompost yapıyorum",
+    "survey_q7_ac": "Klima/ısıtmayı sık kullanıyorum",
 
-    survey_q9: "Ek notlar (isteğe bağlı)",
-    survey_q9_placeholder: "Örn: sık online alışveriş, teslimatlar, elektronik",
-    survey_q9_hint: "İsteğe bağlı bilgiler AI önerilerini iyileştirir.",
-};
+    "survey_q8": "Atık alışkanlıkları",
+    "survey_q8_recycle": "Düzenli geri dönüşüm yapıyorum",
+    "survey_q8_compost": "Organik atıkları kompost yapıyorum",
 
-export default tr;
+    "survey_q9": "Ek notlar (isteğe bağlı)",
+    "survey_q9_placeholder": "Örn: sık online alışveriş, teslimatlar, elektronik",
+    "survey_q9_hint": "İsteğe bağlı bilgiler AI önerilerini iyileştirir."
+}
