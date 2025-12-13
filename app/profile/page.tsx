@@ -1,3 +1,4 @@
+
 // app/profile/page.tsx
 "use client";
 
@@ -80,7 +81,7 @@ export default function ProfilePage() {
         }
 
         setProfile({
-          username: userProfileData.username ?? "",
+          username: userProfileData.username ?? firebaseUser.email?.split('@')[0] ?? "",
           displayName:
             userProfileData.displayName ?? firebaseUser.displayName ?? "",
           email: firebaseUser.email || "",
@@ -118,16 +119,13 @@ export default function ProfilePage() {
     const t0 = performance.now();
 
     try {
-      // 1) Firestore write
+      // 1) Firestore write (SADECE displayName ve about güncellenecek)
       appendSave("➡️ ADIM 1: Firestore setDoc(users/{uid}) başlıyor...");
       const userProfileRef = doc(firestore, "users", firebaseUser.uid);
 
       const dataToSave = {
-        username: profile.username.trim(),
         displayName: profile.displayName.trim(),
         about: profile.about.trim(),
-        email: profile.email,
-        photoURL: profile.photoURL ?? null,
         updatedAt: new Date(),
       };
 
@@ -142,25 +140,19 @@ export default function ProfilePage() {
         const d: any = afterSnap.data();
         appendSave(`↩️ read-back displayName: ${String(d.displayName ?? "")}`);
         appendSave(`↩️ read-back username: ${String(d.username ?? "")}`);
-        appendSave(`↩️ read-back about: ${String(d.about ?? "")}`);
       }
       
-      // Update local state immediately
        setProfile((p) => ({
         ...p,
-        username: dataToSave.username,
         displayName: dataToSave.displayName,
         about: dataToSave.about,
-        photoURL: dataToSave.photoURL,
       }));
 
-
-      // 2) Auth updateProfile (opsiyonel ama deniyoruz)
+      // 2) Auth updateProfile
       appendSave("➡️ ADIM 2: Auth updateProfile başlıyor...");
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, {
           displayName: profile.displayName.trim() || undefined,
-          photoURL: profile.photoURL || undefined,
         });
         appendSave("✅ ADIM 2: Auth updateProfile OK.");
         appendSave(`↩️ auth.currentUser.displayName: ${auth.currentUser?.displayName ?? ""}`);
@@ -232,6 +224,10 @@ export default function ProfilePage() {
     setHealthStatus("Health check çalışıyor...");
     setHealthDetails("");
 
+    function appendHealth(line: string) {
+      setHealthDetails(prev => (prev ? prev + "\n" + line : line));
+    }
+
     appendHealth("=== GENEL DURUM ===");
 
     if (!auth || !firestore) {
@@ -259,18 +255,15 @@ export default function ProfilePage() {
     appendHealth(`Email: ${firebaseUser.email ?? "yok"}`);
 
     try {
-      // ADIM 1: users read
       appendHealth("=== ADIM 1: users dokümanı READ testi ===");
       const userDocRef = doc(firestore, "users", firebaseUser.uid);
       const snap = await getDoc(userDocRef);
       appendHealth(`users/${firebaseUser.uid} dokümanı: ${snap.exists() ? "VAR" : "YOK"}`);
 
-      // ADIM 2: users write (merge)
       appendHealth("=== ADIM 2: users dokümanı WRITE testi ===");
       await setDoc(userDocRef, { lastHealthCheckAt: new Date(), lastHealthCheckSource: "profile-page" }, { merge: true });
       appendHealth("users/{uid} içine lastHealthCheckAt yazıldı.");
       
-      // ADIM 3: Storage upload (opsiyonel)
       if (storageTestEnabled) {
         appendHealth("=== ADIM 3: Storage upload testi ===");
         try {
@@ -447,35 +440,30 @@ export default function ProfilePage() {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Kullanıcı adı
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.username}
-                    onChange={(e) =>
-                      handleChange("username", e.target.value)
-                    }
-                    placeholder="örn. eco_kahraman"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Görünen ad
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.displayName}
-                    onChange={(e) =>
-                      handleChange("displayName", e.target.value)
-                    }
-                    placeholder="Profilde gözükecek isim"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Kullanıcı adı (değiştirilemez)
+                </label>
+                <input
+                  type="text"
+                  value={profile.username}
+                  readOnly
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Görünen ad
+                </label>
+                <input
+                  type="text"
+                  value={profile.displayName}
+                  onChange={(e) =>
+                    handleChange("displayName", e.target.value)
+                  }
+                  placeholder="Profilde gözükecek isim"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
               </div>
 
               <div>
@@ -554,7 +542,6 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => {
-                // tıklama kesin görünsün diye anında UI güncelle
                 const ts = new Date().toISOString();
                 setLastClickAt(ts);
                 setHealthStatus("Tıklandı, health check başlıyor...");

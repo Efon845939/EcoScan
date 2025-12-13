@@ -143,11 +143,15 @@ export default function LoginPage() {
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
+        
+        // Use the form's username as the primary displayName in Auth
         await updateProfile(user, { displayName: username });
+
+        // In Firestore, save both the user-chosen displayName and a derived, stable username
         await setDoc(doc(firestore, "users", user.uid), {
           uid: user.uid,
-          username: username,
-          displayName: username,
+          username: email.split('@')[0], // Derived from email, stable
+          displayName: username, // User-chosen, can be changed in profile
           email: email,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
@@ -255,13 +259,13 @@ export default function LoginPage() {
             <>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kullanıcı adı
+                  Görünen İsim
                 </label>
                 <input
                   type="text"
                   value={signupForm.username}
                   onChange={(e) => handleSignupChange("username", e.target.value)}
-                  placeholder="örn. eco_kahraman"
+                  placeholder="örn. Eko Kahraman"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 />
               </div>
