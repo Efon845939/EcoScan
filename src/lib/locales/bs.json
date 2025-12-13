@@ -1,49 +1,80 @@
-
 {
-  "header_title": "EcoScan Nagrade",
+  "auth": {
+    "fields": {
+      "email": "Email",
+      "password": "Lozinka",
+      "username": "Korisničko ime"
+    },
+    "login": {
+      "cta": "Prijavi se",
+      "subtitle": "Pratite svoje poene i karbonski otisak.",
+      "tab": "Prijava",
+      "title": "Prijavite se na svoj EcoScan nalog"
+    },
+    "placeholders": {
+      "email": "vi@example.com",
+      "password": "Unesite vašu lozinku",
+      "username": "Vaše korisničko ime"
+    },
+    "signup": {
+      "cta": "Registruj se",
+      "subtitle": "Postavite svoj profil i počnite zarađivati nagrade.",
+      "tab": "Registracija",
+      "title": "Kreirajte novi EcoScan nalog"
+    }
+  },
+  "camera_back_button": "Nazad",
+  "camera_capture_button": "Snimi",
+  "common": {
+    "cancel": "Otkaži",
+    "save": "Sačuvaj"
+  },
   "header_points": "Poeni",
-  "scan_card_title": "Spremni za zeleni put?",
+  "header_title": "EcoScan Nagrade",
   "scan_card_description": "Odaberite akciju da zaradite poene i pratite svoj uticaj.",
-  "scan_card_scan_button": "Skeniraj ambalažu proizvoda",
   "scan_card_footprint_button": "Vidi svoj karbonski otisak",
   "scan_card_footprint_cooldown": "Sutrašnji karbonski otisak za:",
   "scan_card_rewards_link": "Prikaži moje nagrade",
-  "camera_back_button": "Nazad",
-  "camera_capture_button": "Snimi",
-  "settings_title": "Postavke",
+  "scan_card_scan_button": "Skeniraj ambalažu proizvoda",
+  "scan_card_title": "Spremni za zeleni put?",
+  "settings_close_button": "Zatvori",
   "settings_description": "Upravljajte postavkama i preferencijama vaše aplikacije.",
   "settings_guide_button": "Vodič za aplikaciju i pravila",
-  "settings_region_label": "Regija",
   "settings_language_label": "Jezik",
-  "settings_close_button": "Zatvori",
-  "auth": {
-    "login": {
-      "tab": "Prijava",
-      "title": "Prijavite se na svoj EcoScan nalog",
-      "subtitle": "Pratite svoje poene i karbonski otisak.",
-      "cta": "Prijavi se"
-    },
-    "signup": {
-      "tab": "Registracija",
-      "title": "Kreirajte novi EcoScan nalog",
-      "subtitle": "Postavite svoj profil i počnite zarađivati nagrade.",
-      "cta": "Registruj se"
-    },
-    "fields": {
-      "username": "Korisničko ime",
-      "email": "Email",
-      "password": "Lozinka"
-    },
-    "placeholders": {
-      "username": "Vaše korisničko ime",
-      "email": "vi@example.com",
-      "password": "Unesite vašu lozinku"
-    }
+  "settings_region_label": "Regija",
+  "settings_title": "Postavke",
+  "survey_q5": "Koliko često letiš avionom (posao ili privatno)?",
+  "survey_q5_options": {
+    "none": "Nikad / 0 letova",
+    "often": "Često (6+ letova/god.)",
+    "rare": "Rijetko (1–2 leta/god.)",
+    "some": "Ponekad (3–5 letova/god.)"
   },
-  "common": {
-    "save": "Sačuvaj",
-    "cancel": "Otkaži"
-  }
+  "survey_q5_placeholder": "Odaberi učestalost",
+  "survey_q6": "Koliko osoba živi u tvom domaćinstvu?",
+  "survey_q6_hint": "Pomaže da se potrošnja energije procijeni po osobi.",
+  "survey_q6_placeholder": "npr. 3",
+  "survey_q7": "Dom i hlađenje/grijanje",
+  "survey_q7_ac": "Često koristim klimu/grijanje",
+  "survey_q7_size": "Veličina doma",
+  "survey_q7_size_options": {
+    "large": "Veliki",
+    "medium": "Srednji",
+    "small": "Mali"
+  },
+  "survey_q7_size_placeholder": "Odaberi veličinu",
+  "survey_q7_type": "Tip doma",
+  "survey_q7_type_options": {
+    "apartment": "Stan",
+    "dorm": "Studentski dom",
+    "house": "Kuća",
+    "shared": "Dijeljeni dom"
+  },
+  "survey_q7_type_placeholder": "Odaberi tip",
+  "survey_q8": "Navike otpada",
+  "survey_q8_compost": "Kompostiram organski otpad (kada je moguće)",
+  "survey_q8_recycle": "Redovno recikliram",
+  "survey_q9": "Dodatne napomene (opcionalno)",
+  "survey_q9_hint": "Opcionalni kontekst poboljšava preporuke AI-a.",
+  "survey_q9_placeholder": "Npr.: puno online kupovine, česte dostave, nova elektronika itd."
 }
-
-    

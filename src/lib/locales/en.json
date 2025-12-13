@@ -1,127 +1,305 @@
 {
-    "header_title": "EcoScan",
-    "header_points": "points",
-
-    "loading_profile": "Loading profile...",
-    "loading_material": "Identifying material...",
-    "loading_barcode": "Identifying with barcode...",
-    "loading_disposal": "Verifying disposal...",
-    "loading_action": "Verifying your action...",
-    "loading_receipt": "Analyzing your footprint...",
-
-    "scan_card_title": "Scan & Earn",
-    "scan_card_description": "Scan items, dispose correctly, and earn points.",
-    "scan_card_scan_button": "Scan Item",
-    "scan_card_rewards_link": "View Rewards",
-    "scan_card_footprint_button": "Carbon Footprint",
-
-    "camera_scan_item_title": "Scan Item",
-    "camera_scan_item_description": "Point your camera at the item.",
-    "camera_verify_disposal_title": "Verify Disposal",
-    "camera_verify_disposal_description": "Show how you disposed of the item.",
-    "camera_capture_button": "Capture",
-    "camera_back_button": "Back",
-
-    "confirm_card_title": "Detected: {{material}}",
-    "confirm_card_description": "Confirm the material and continue.",
-    "confirm_card_confidence": "Confidence: {{confidence}}%",
-    "confirm_card_verify_button": "Verify Disposal",
-    "confirm_card_scan_another_button": "Scan Another",
-
-    "disposed_card_title": "Well Done!",
-    "disposed_card_description": "Points have been added to your account.",
-    "disposed_card_scan_another_button": "Scan Another",
-    "disposed_card_rewards_link": "Go to Rewards",
-
-    "rewards_title": "Your Rewards",
-
-    "settings_title": "Settings",
-    "settings_description": "Manage app preferences.",
-    "settings_region_label": "Region",
-    "settings_language_label": "Language",
-    "settings_close_button": "Close",
-
-    "guide_title": "Guidelines",
-    "guide_description": "How EcoScan works and how to earn points.",
-    "guide_recycling_title": "Recycling Basics",
-    "guide_recycling_description": "Dispose items correctly to earn rewards.",
-    "guide_material_header": "Material",
-    "guide_points_header": "Points",
-    "guide_survey_title": "Carbon Footprint Survey",
-    "guide_survey_description": "Reduce your impact and earn points.",
-    "guide_verification_title": "Verification",
-    "guide_verification_description": "How we verify your actions.",
-    "guide_howto_title": "How It Works",
-
-    "survey_title": "Carbon Footprint Survey",
-    "survey_description": "Answer a few questions to estimate your carbon footprint.",
-    "survey_calculate_button": "Calculate Footprint",
-
-    "survey_q1": "How do you usually commute?",
-    "survey_q1_options": {
-        "car": "Car",
-        "public": "Public Transport",
-        "bike": "Bicycle",
-        "walk": "Walking"
+  "analysis_bad_title": "High impact — needs improvement",
+  "analysis_good_title": "Great choices today",
+  "analysis_mid_title": "Decent, but room to improve",
+  "auth": {
+    "countries": {
+      "de": "Germany",
+      "kw": "Kuwait",
+      "tr": "Turkey",
+      "us": "United States"
     },
-
-    "survey_q2": "What best describes your diet?",
-    "survey_q2_options": {
-        "meat": "Meat-heavy",
-        "mixed": "Mixed",
-        "vegetarian": "Vegetarian",
-        "vegan": "Vegan"
+    "error": {
+      "unknown": "Something went wrong. Please try again."
     },
-
-    "survey_q3": "Describe your home energy usage",
-    "survey_q3_placeholder": "Electricity, gas, solar, etc.",
-    "survey_q3_no_energy": "I don’t know / Prefer not to say",
-
-    "survey_q4": "What do you drink most often?",
-    "survey_q4_options": {
-        "bottled": "Bottled drinks",
-        "tap": "Tap water",
-        "mixed": "Both"
+    "fields": {
+      "country": "Country",
+      "email": "Email",
+      "password": "Password",
+      "phone": "Phone",
+      "username": "Username"
     },
-
-    "survey_q5": "How often do you fly (personal or work)?",
-    "survey_q5_placeholder": "Select a frequency",
-    "survey_q5_options": {
-        "none": "Never / 0 flights",
-        "rare": "Rarely (1–2 flights/year)",
-        "some": "Sometimes (3–5 flights/year)",
-        "often": "Often (6+ flights/year)"
+    "login": {
+      "cta": "Sign in",
+      "subtitle": "Track your points and carbon footprint.",
+      "tab": "Sign in",
+      "title": "Sign in to your EcoScan account"
     },
-
-    "survey_q6": "How many people live in your household?",
-    "survey_q6_placeholder": "e.g. 3",
-    "survey_q6_hint": "Helps normalize energy usage per person.",
-
-    "survey_q7": "Home & cooling",
-    "survey_q7_type": "Home type",
-    "survey_q7_type_placeholder": "Select home type",
-    "survey_q7_type_options": {
-        "apartment": "Apartment",
-        "house": "House",
-        "shared": "Shared home",
-        "dorm": "Dormitory"
+    "placeholders": {
+      "email": "you@example.com",
+      "password": "Enter your password",
+      "phone": "+1 555 000 0000",
+      "username": "Your username"
     },
-
-    "survey_q7_size": "Home size",
-    "survey_q7_size_placeholder": "Select size",
-    "survey_q7_size_options": {
-        "small": "Small",
-        "medium": "Medium",
-        "large": "Large"
+    "signup": {
+      "cta": "Sign up",
+      "subtitle": "Set up your profile and start earning rewards.",
+      "tab": "Sign up",
+      "title": "Create a new EcoScan account"
+    }
+  },
+  "back_to_lobby": "Back to Lobby",
+  "camera_back_button": "Back",
+  "camera_capture_button": "Capture",
+  "camera_not_found_description": "Could not access camera. Please check permissions or upload a file.",
+  "camera_not_found_title": "Camera Not Found",
+  "camera_scan_item_description": "Position the item's packaging in the frame.",
+  "camera_scan_item_title": "Scan Your Item",
+  "camera_scan_receipt_description": "Position the entire receipt in the frame.",
+  "camera_scan_receipt_title": "Scan Your Receipt",
+  "camera_upload_button": "Upload File",
+  "camera_verify_action_description": "Take a photo of yourself performing one of the recommended sustainable actions.",
+  "camera_verify_action_title": "Verify Your Action",
+  "camera_verify_disposal_description": "Take a photo of yourself placing the item in the correct recycling bin.",
+  "camera_verify_disposal_title": "Verify Your Disposal",
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "confirm_card_confidence": "Confidence: {confidence}%",
+  "confirm_card_description": "Next, please take a photo of you disposing the item in the correct bin to verify.",
+  "confirm_card_scan_another_button": "Scan Another Item",
+  "confirm_card_title": "Material Identified: {material}",
+  "confirm_card_verify_button": "Verify Disposal",
+  "default_analysis_bad": "Your CO₂ footprint seems high. We can bring this down with a few targeted moves today.",
+  "default_analysis_good": "Your choices today resulted in a low impact. Keep up these habits and your points will grow quickly.",
+  "default_analysis_mid": "You're at an average impact level. Small changes can make a big difference.",
+  "disposed_card_description": "Thank you for helping the environment!",
+  "disposed_card_rewards_link": "Check out rewards",
+  "disposed_card_scan_another_button": "Scan Another Item",
+  "disposed_card_title": "Disposal Verified!",
+  "go_to_verify": "Go to Verification Center",
+  "guide_description": "Learn how to use the app and play fair.",
+  "guide_howto_footprint_steps": [
+    "From the main menu, tap the 'See Your Carbon Footprint' button and complete the daily survey.",
+    "Get your analysis and your base points, which are added to your total immediately.",
+    "Tap the 'Go to Verification Center' button on the results screen.",
+    "Submit live photo proof of your activities (e.g., bus ride, vegetarian meal).",
+    "If your action is verified, your base points will be multiplied by <span style='color:hsl(var(--primary))'>3x</span>!"
+  ],
+  "guide_howto_footprint_title": "How to Use the Carbon Survey:",
+  "guide_howto_recycle_steps": [
+    "From the main menu, tap the 'Scan Product Packaging' button.",
+    "Use your camera to scan the item's packaging. Our AI will identify the material.",
+    "Tap the 'Verify Disposal' button. This will open your camera again.",
+    "Take a clear photo of yourself (or your hand) placing the item into a recycling bin.",
+    "Our AI will verify your action. Points are awarded instantly on successful verification!"
+  ],
+  "guide_howto_recycle_title": "How to Recycle & Earn:",
+  "guide_howto_title": "How-To Guides",
+  "guide_howto_verification_steps": [
+    "Navigate to the Verification Center from the survey results or the settings menu.",
+    "Choose the category you want to verify (e.g., Transport, Meal, Drink, Energy).",
+    "For Meal and Drink, you can submit a receipt OR a live photo of the item.",
+    "For Transport and other actions, a live photo of the action is required.",
+    "For monthly energy, capture your electricity or water bill.",
+    "Tap 'Capture & Submit' to take a live photo. Gallery uploads are disabled to ensure fairness."
+  ],
+  "guide_howto_verification_title": "How to Use the Verification Center:",
+  "guide_material_header": "Material",
+  "guide_points_disclaimer": "<b>Disclaimer:</b> Point values for recycling and survey actions are illustrative and may be adjusted over time based on new environmental data or sponsor requirements.",
+  "guide_points_header": "Points",
+  "guide_recycling_description": "Earn points by scanning an item and verifying your disposal with a photo. Points are awarded based on the environmental impact of the material.",
+  "guide_recycling_title": "Recycling Points",
+  "guide_survey_description": "Complete a daily survey to get points. Verify with a receipt for a massive bonus!",
+  "guide_survey_footer": "The system calculates a 'base point' value from your survey which is awarded immediately. Verifying with a receipt multiplies this base value.",
+  "guide_survey_items_list": [
+    "<b>High Footprint Penalty:</b> If your footprint is over the regional max, you lose between <span style='color:hsl(var(--destructive))'>-1 to -10 points</span>, depending on the severity.",
+    "<b>Base Reward:</b> You get the full <span style='color:hsl(var(--primary))'>base points</span> for your score immediately (e.g., a good score might get you <span style='color:hsl(var(--primary))'>+30</span> points).",
+    "<b>Receipt Verification Bonus:</b> Verifying with a receipt gives you a <b style='color:hsl(var(--primary))'>3x bonus</b> on your base points (e.g., 10 base points becomes <span style='color:hsl(var(--primary))'>+30</span>!).",
+    "<b>Second Chance Bonus:</b> Reverse a penalty and earn the <span style='color:hsl(var(--primary))'>points you lost + 10 bonus points</span> by taking a verified sustainable action."
+  ],
+  "guide_survey_title": "Carbon Footprint Survey",
+  "guide_title": "App Guide & Rules",
+  "guide_verification_description": "To keep the community fair and rewards meaningful, all point-earning actions require verification. Attempts to manipulate the system will result in point penalties.",
+  "guide_verification_footer": "Our AI moderation system verifies each submission. Penalties are applied automatically.",
+  "guide_verification_items_list": [
+    "<b>Live Photos Only:</b> All verifications must be live photos taken through the app. Gallery uploads and screenshots are disabled.",
+    "<b>Recycling:</b> A photo of you (or your hand) placing the scanned item in the correct bin.",
+    "<b>Carbon Actions:</b> A photo of your sustainable action (e.g., your bus ticket, your bike, your home-cooked meal).",
+    "<b>Duplicate Photo Penalty:</b> Submitting the same photo multiple times will result in a <span style='color:hsl(var(--destructive))'>-50 point</span> penalty.",
+    "<b>Fraud Penalty:</b> Submitting clearly fake or AI-generated images will result in a <span style='color:hsl(var(--destructive))'>-200 point</span> penalty and may lead to account suspension."
+  ],
+  "guide_verification_title": "Verification Center & Fair Play",
+  "header_points": "Points",
+  "header_title": "EcoScan",
+  "improvements_high": [
+    "Don't use the car today if possible; switch to public transport.",
+    "Set the house 1–2°C warmer/cooler; restrict AC use.",
+    "Reduce bottled drinks and coffee/milk beverages."
+  ],
+  "improvements_low": [
+    "Take public transport one step further: replace 1 trip with a walk/bike.",
+    "Opt for tap water/tea; reduce bottled drinks.",
+    "Turn off devices at the wall socket in the evening."
+  ],
+  "improvements_medium": [
+    "Skip red meat today; opt for white meat or plant-based.",
+    "Leave the car for short distances; add a 20–30 minute walk.",
+    "Limit lighting to LEDs; turn off unnecessary lights."
+  ],
+  "loading_action": "Verifying your action...",
+  "loading_barcode": "Re-identifying material with barcode...",
+  "loading_disposal": "Verifying your disposal...",
+  "loading_material": "Identifying material...",
+  "loading_profile": "Loading your profile...",
+  "loading_receipt": "Processing your survey...",
+  "low_confidence_description": "Our AI isn't confident about this item. Can you provide the barcode number to help us identify it correctly?",
+  "low_confidence_submit_button": "Submit Barcode",
+  "low_confidence_title": "Not quite sure...",
+  "materials": {
+    "aluminum": "Aluminum",
+    "battery": "Battery",
+    "cardboard": "Cardboard",
+    "glass": "Glass",
+    "metal": "Metal",
+    "paper": "Paper",
+    "plastic": "Plastic",
+    "unrecyclable": "Unrecyclable"
+  },
+  "metaphor_high": "Like a heavy day of driving and AC use combined.",
+  "metaphor_low": "That's like the CO₂ absorbed by 2 mature trees in a year.",
+  "metaphor_medium": "Equivalent to a heavy day of home energy use.",
+  "metaphor_medium_low": "Similar to a short city drive (≈100–150 km).",
+  "metaphor_very_high": "This is a high-impact level from heavy transport and energy consumption.",
+  "recovery_actions": [
+    "Verify a meal receipt with a live photo to get a point bonus.",
+    "Submit extra proof by photographing a drink or its receipt.",
+    "Take a short walk/bike ride and verify it with a photo."
+  ],
+  "rewards": {
+    "clothes_10_off": {
+      "partner": "Eco Threads",
+      "title": "$10 Off Clothes"
     },
-
-    "survey_q7_ac": "I use AC/heating frequently",
-
-    "survey_q8": "Waste habits",
-    "survey_q8_recycle": "I recycle regularly",
-    "survey_q8_compost": "I compost organic waste",
-
-    "survey_q9": "Extra notes (optional)",
-    "survey_q9_placeholder": "e.g. frequent online shopping, deliveries, electronics",
-    "survey_q9_hint": "Optional details help the AI give better recommendations."
+    "free_coffee": {
+      "partner": "The Daily Grind",
+      "title": "Free Coffee"
+    },
+    "groceries_5_off": {
+      "partner": "Green Grocer",
+      "title": "$5 Off Groceries"
+    },
+    "movie_ticket": {
+      "partner": "Cineplex Green",
+      "title": "Free Movie Ticket"
+    },
+    "shoes_15_off": {
+      "partner": "Sustainable Soles",
+      "title": "$15 Off Shoes"
+    }
+  },
+  "rewards_description": "Use your points to get discounts at our partner stores.",
+  "rewards_redeem_button": "Redeem",
+  "rewards_title": "Redeem Your Points",
+  "scan_card_description": "Scan product packaging to learn how to recycle correctly.",
+  "scan_card_footprint_button": "See Your Carbon Footprint",
+  "scan_card_footprint_cooldown": "Tomorrow's Carbon Footprint in:",
+  "scan_card_rewards_link": "View My Rewards",
+  "scan_card_scan_button": "Scan Product Packaging",
+  "scan_card_title": "Ready to Go Green?",
+  "settings_close_button": "Close",
+  "settings_description": "Manage your application settings and preferences.",
+  "settings_guide_button": "App Guide & Rules",
+  "settings_language_label": "Language",
+  "settings_region_label": "Region",
+  "settings_title": "Settings",
+  "survey_base_points_description": "You earned <b style='color:hsl(var(--primary))'>{points} base points</b> for your score today. Verify with a receipt to get a <b style='color:hsl(var(--primary))'>x{x} bonus</b>!",
+  "survey_base_points_title": "Base Points Awarded!",
+  "survey_bonus_title": "Earn More Points Today",
+  "survey_calculate_button": "Calculate My Footprint",
+  "survey_description": "Answer a few questions to get an estimate of your carbon footprint for today.",
+  "survey_penalty_description": "Your footprint exceeded the regional bound. A <span style='color:hsl(var(--destructive))'>{points} point penalty</span> has been applied.",
+  "survey_penalty_title": "High Footprint Penalty",
+  "survey_q1": "How did you get around today?",
+  "survey_q1_options": {
+    "car_gasoline": "Car (Gasoline)",
+    "ev": "Electric Vehicle",
+    "public_transport": "Bus or Train",
+    "walk_bike": "Bike or Walk"
+  },
+  "survey_q2": "What was your diet like today?",
+  "survey_q2_options": {
+    "carb_based": "Carb-based / High-carb",
+    "red_meat": "Red meat heavy",
+    "vegetarian_vegan": "Vegetarian / Vegan",
+    "white_meat_fish": "White meat / Fish"
+  },
+  "survey_q3": "How was your energy use at home?",
+  "survey_q3_no_energy": "I did not use electricity at home today",
+  "survey_q3_placeholder": "e.g., Used the AC, kept lights on, all lights and AC on...",
+  "survey_q4": "What did you primarily drink today?",
+  "survey_q4_options": {
+    "drink_alcohol": "Alcoholic beverages",
+    "drink_bottled": "Bottled water / Soda / Juice",
+    "drink_coffee_milk": "Coffee with milk or dairy drinks",
+    "drink_water_tea": "Tap water / Plant-based"
+  },
+  "survey_q5": "How often do you fly (personal or work)?",
+  "survey_q5_options": {
+    "none": "Never / 0 flights",
+    "often": "Often (6+ flights/year)",
+    "rare": "Rarely (1–2 flights/year)",
+    "some": "Sometimes (3–5 flights/year)"
+  },
+  "survey_q5_placeholder": "Select a frequency",
+  "survey_q6": "How many people live in your household?",
+  "survey_q6_hint": "Helps normalize home energy use per person.",
+  "survey_q6_placeholder": "e.g., 3",
+  "survey_q7": "Home & cooling",
+  "survey_q7_ac": "I use AC/heating often (most days)",
+  "survey_q7_size": "Home size",
+  "survey_q7_size_options": {
+    "large": "Large",
+    "medium": "Medium",
+    "small": "Small"
+  },
+  "survey_q7_size_placeholder": "Select size",
+  "survey_q7_type": "Home type",
+  "survey_q7_type_options": {
+    "apartment": "Apartment",
+    "dorm": "Dormitory / student housing",
+    "house": "House",
+    "shared": "Shared home"
+  },
+  "survey_q7_type_placeholder": "Select home type",
+  "survey_q8": "Waste habits",
+  "survey_q8_compost": "I compost organic waste (when possible)",
+  "survey_q8_recycle": "I recycle regularly",
+  "survey_q9": "Extra notes (optional)",
+  "survey_q9_hint": "Optional context improves the AI recommendations.",
+  "survey_q9_placeholder": "Example: lots of online shopping, frequent deliveries, new electronics, etc.",
+  "survey_range_hint": "Region range: min {min}, avg {avg}, max {max} kg",
+  "survey_recommendations_title": "3 ways to improve",
+  "survey_recovery_title": "Earn Back Points Today",
+  "survey_results_estimated": "Estimated Footprint:",
+  "survey_results_title": "Your Daily Footprint Results",
+  "survey_title": "Your Daily Footprint",
+  "take_second_chance_button": "Take Second Chance",
+  "toast_action_verified_description": "Penalty reversed! You've earned a total of {points} points.",
+  "toast_action_verified_title": "Action Verified!",
+  "toast_bonus_applied_description": "You've earned a massive {points} point bonus for verifying your footprint!",
+  "toast_bonus_applied_title": "Bonus Applied!",
+  "toast_identification_failed_description": "Could not identify the material. Please try again.",
+  "toast_identification_failed_title": "Identification Failed",
+  "toast_invalid_receipt_description": "This does not appear to be a valid receipt. Please try again with a clear photo.",
+  "toast_invalid_receipt_title": "Invalid Receipt",
+  "toast_language_updated_description": "Language has been set.",
+  "toast_language_updated_title": "Language Updated",
+  "toast_not_enough_points_description": "You need {points} points to redeem this reward.",
+  "toast_not_enough_points_title": "Not enough points",
+  "toast_receipt_failed_description": "Could not read the receipt. Please try again with a clearer image.",
+  "toast_receipt_failed_title": "Receipt Processing Failed",
+  "toast_region_updated_description": "Your region has been set to {region}.",
+  "toast_region_updated_title": "Region Updated",
+  "toast_reward_confirm_cancel": "Cancel",
+  "toast_reward_confirm_description": "Are you sure you want to spend {cost} points to redeem '{title}'?",
+  "toast_reward_confirm_title": "Confirm Redemption",
+  "toast_reward_redeemed_description": "You've successfully redeemed '{title}'.",
+  "toast_reward_redeemed_title": "Reward Redeemed!",
+  "toast_verification_complete_description": "You've earned {points} points for recycling.",
+  "toast_verification_complete_title": "Verification Complete!",
+  "toast_verification_error_description": "An unexpected error occurred during verification. Please try again.",
+  "toast_verification_error_title": "Verification Error",
+  "toast_verification_failed_title": "Verification Failed"
 }

@@ -1,49 +1,80 @@
-
 {
-  "header_title": "EcoScan 奖励",
+  "auth": {
+    "fields": {
+      "email": "电子邮件",
+      "password": "密码",
+      "username": "用户名"
+    },
+    "login": {
+      "cta": "登录",
+      "subtitle": "跟踪您的积分和碳足迹。",
+      "tab": "登录",
+      "title": "登录您的 EcoScan 帐户"
+    },
+    "placeholders": {
+      "email": "you@example.com",
+      "password": "输入您的密码",
+      "username": "您的用户名"
+    },
+    "signup": {
+      "cta": "注册",
+      "subtitle": "设置您的个人资料并开始赚取奖励。",
+      "tab": "注册",
+      "title": "创建一个新的 EcoScan 帐户"
+    }
+  },
+  "camera_back_button": "返回",
+  "camera_capture_button": "捕获",
+  "common": {
+    "cancel": "取消",
+    "save": "保存"
+  },
   "header_points": "积分",
-  "scan_card_title": "准备好走向绿色了吗？",
+  "header_title": "EcoScan 奖励",
   "scan_card_description": "选择一个行动来赚取积分并跟踪您的影响。",
-  "scan_card_scan_button": "扫描产品包装",
   "scan_card_footprint_button": "查看您的碳足迹",
   "scan_card_footprint_cooldown": "明天的碳足迹倒计时：",
   "scan_card_rewards_link": "查看我的奖励",
-  "camera_back_button": "返回",
-  "camera_capture_button": "捕获",
-  "settings_title": "设置",
+  "scan_card_scan_button": "扫描产品包装",
+  "scan_card_title": "准备好走向绿色了吗？",
+  "settings_close_button": "关闭",
   "settings_description": "管理您的应用程序设置和首选项。",
   "settings_guide_button": "应用指南和规则",
-  "settings_region_label": "地区",
   "settings_language_label": "语言",
-  "settings_close_button": "关闭",
-  "auth": {
-    "login": {
-      "tab": "登录",
-      "title": "登录您的 EcoScan 帐户",
-      "subtitle": "跟踪您的积分和碳足迹。",
-      "cta": "登录"
-    },
-    "signup": {
-      "tab": "注册",
-      "title": "创建一个新的 EcoScan 帐户",
-      "subtitle": "设置您的个人资料并开始赚取奖励。",
-      "cta": "注册"
-    },
-    "fields": {
-      "username": "用户名",
-      "email": "电子邮件",
-      "password": "密码"
-    },
-    "placeholders": {
-      "username": "您的用户名",
-      "email": "you@example.com",
-      "password": "输入您的密码"
-    }
+  "settings_region_label": "地区",
+  "settings_title": "设置",
+  "survey_q5": "你乘坐飞机的频率（工作/个人）？",
+  "survey_q5_options": {
+    "none": "从不 / 0 次",
+    "often": "经常（每年 6 次以上）",
+    "rare": "很少（每年 1–2 次）",
+    "some": "有时（每年 3–5 次）"
   },
-  "common": {
-    "save": "保存",
-    "cancel": "取消"
-  }
+  "survey_q5_placeholder": "选择频率",
+  "survey_q6": "你的家庭有几个人同住？",
+  "survey_q6_hint": "用于按人均更准确地估算家庭能源使用。",
+  "survey_q6_placeholder": "例如：3",
+  "survey_q7": "住房与制冷/供暖",
+  "survey_q7_ac": "我经常使用空调/供暖",
+  "survey_q7_size": "住房大小",
+  "survey_q7_size_options": {
+    "large": "大",
+    "medium": "中",
+    "small": "小"
+  },
+  "survey_q7_size_placeholder": "选择大小",
+  "survey_q7_type": "住房类型",
+  "survey_q7_type_options": {
+    "apartment": "公寓",
+    "dorm": "宿舍",
+    "house": "独栋/住宅",
+    "shared": "合租"
+  },
+  "survey_q7_type_placeholder": "选择类型",
+  "survey_q8": "垃圾习惯",
+  "survey_q8_compost": "我会堆肥（尽可能）",
+  "survey_q8_recycle": "我经常回收",
+  "survey_q9": "补充说明（可选）",
+  "survey_q9_hint": "可选信息可帮助 AI 给出更好的建议。",
+  "survey_q9_placeholder": "例如：网购很多、频繁配送、新电子产品等"
 }
-
-    

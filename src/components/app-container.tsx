@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   Sparkles,
   Award,
+  BookCopy,
   Languages,
   Globe,
   ShieldCheck,
@@ -100,6 +101,7 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
   );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
   const [region, setRegion] = useState('Dubai, UAE');
+  const [profileChecked, setProfileChecked] = useState(false);
 
   useEffect(() => {
     const savedRegion = localStorage.getItem('app-region');
@@ -107,6 +109,18 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
       setRegion(savedRegion);
     }
   }, []);
+
+  // Ensure we only create a default profile AFTER we've received the first snapshot
+  // (prevents overwriting points with totalPoints: 0 on navigation / remount).
+  useEffect(() => {
+    if (!userProfileRef) {
+      setProfileChecked(false);
+      return;
+    }
+    if (isProfileLoading) return;
+    setProfileChecked(true);
+  }, [userProfileRef, isProfileLoading]);
+
 
   const handleRegionChange = (newRegion: string) => {
     setRegion(newRegion);
@@ -166,7 +180,7 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
       return;
     }
   
-    if (user && !userProfile) {
+    if (user && profileChecked && userProfile === null) {
       const newProfile = {
         uid: user.uid,
         email: user.email || '',
@@ -576,6 +590,10 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
+               <Button variant="outline" className="justify-start" onClick={() => { setStep('guide'); setShowSettingsModal(false); }}>
+                  <BookCopy className="mr-2" />
+                  {t('settings_guide_button')}
+               </Button>
                <Button variant="outline" className="justify-start" onClick={() => { setStep('verify'); setShowSettingsModal(false); }}>
                   <ShieldCheck className="mr-2" />
                   Verification Center

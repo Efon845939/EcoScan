@@ -1,127 +1,308 @@
 {
-    "header_title": "EcoScan",
-    "header_points": "puan",
-
-    "loading_profile": "Profil yükleniyor...",
-    "loading_material": "Malzeme tanımlanıyor...",
-    "loading_barcode": "Barkodla tanımlanıyor...",
-    "loading_disposal": "Atık doğrulanıyor...",
-    "loading_action": "İşlem doğrulanıyor...",
-    "loading_receipt": "Karbon ayak izi analiz ediliyor...",
-
-    "scan_card_title": "Tara & Kazan",
-    "scan_card_description": "Ürünleri tara, doğru şekilde at ve puan kazan.",
-    "scan_card_scan_button": "Ürün Tara",
-    "scan_card_rewards_link": "Ödülleri Gör",
-    "scan_card_footprint_button": "Karbon Ayak İzi",
-
-    "camera_scan_item_title": "Ürün Tara",
-    "camera_scan_item_description": "Kamerayı ürüne doğrult.",
-    "camera_verify_disposal_title": "Atığı Doğrula",
-    "camera_verify_disposal_description": "Atığı nasıl attığını göster.",
-    "camera_capture_button": "Çek",
-    "camera_back_button": "Geri",
-
-    "confirm_card_title": "Tespit Edilen: {{material}}",
-    "confirm_card_description": "Malzemeyi onayla ve devam et.",
-    "confirm_card_confidence": "Güven: %{{confidence}}",
-    "confirm_card_verify_button": "Atığı Doğrula",
-    "confirm_card_scan_another_button": "Başka Ürün Tara",
-
-    "disposed_card_title": "Tebrikler!",
-    "disposed_card_description": "Puanlar hesabına eklendi.",
-    "disposed_card_scan_another_button": "Tekrar Tara",
-    "disposed_card_rewards_link": "Ödüllere Git",
-
-    "rewards_title": "Ödüllerin",
-
-    "settings_title": "Ayarlar",
-    "settings_description": "Uygulama tercihlerini yönet.",
-    "settings_region_label": "Bölge",
-    "settings_language_label": "Dil",
-    "settings_close_button": "Kapat",
-
-    "guide_title": "Kılavuz",
-    "guide_description": "EcoScan nasıl çalışır, nasıl puan kazanılır.",
-    "guide_recycling_title": "Geri Dönüşüm Temelleri",
-    "guide_recycling_description": "Doğru atık atarak puan kazan.",
-    "guide_material_header": "Malzeme",
-    "guide_points_header": "Puan",
-    "guide_survey_title": "Karbon Ayak İzi Anketi",
-    "guide_survey_description": "Etkini azalt, puan kazan.",
-    "guide_verification_title": "Doğrulama",
-    "guide_verification_description": "Eylemler nasıl doğrulanır.",
-    "guide_howto_title": "Nasıl Çalışır",
-
-    "survey_title": "Karbon Ayak İzi Anketi",
-    "survey_description": "Karbon ayak izini tahmin etmek için birkaç soru.",
-    "survey_calculate_button": "Ayak İzini Hesapla",
-
-    "survey_q1": "Genelde nasıl ulaşım sağlıyorsun?",
-    "survey_q1_options": {
-        "car": "Araba",
-        "public": "Toplu Taşıma",
-        "bike": "Bisiklet",
-        "walk": "Yürüyüş"
+  "analysis_bad_title": "Yüksek etki — iyileştirme gerekiyor",
+  "analysis_good_title": "Bugün harika seçimler",
+  "analysis_mid_title": "İyi, ama geliştirilebilir",
+  "auth": {
+    "countries": {
+      "de": "Almanya",
+      "kw": "Kuveyt",
+      "tr": "Türkiye",
+      "us": "Amerika"
     },
-
-    "survey_q2": "Beslenme şeklini seç",
-    "survey_q2_options": {
-        "meat": "Et ağırlıklı",
-        "mixed": "Karışık",
-        "vegetarian": "Vejetaryen",
-        "vegan": "Vegan"
+    "error": {
+      "unknown": "Bir hata oluştu. Lütfen tekrar dene."
     },
-
-    "survey_q3": "Ev enerji kullanımını açıkla",
-    "survey_q3_placeholder": "Elektrik, doğalgaz, güneş vb.",
-    "survey_q3_no_energy": "Bilmiyorum / Belirtmek istemiyorum",
-
-    "survey_q4": "En sık ne içersin?",
-    "survey_q4_options": {
-        "bottled": "Şişe içecekler",
-        "tap": "Musluk suyu",
-        "mixed": "İkisi de"
+    "fields": {
+      "country": "Ülke",
+      "email": "E-posta",
+      "password": "Şifre",
+      "phone": "Telefon",
+      "username": "Kullanıcı adı"
     },
-
-    "survey_q5": "Uçakla ne sıklıkla seyahat ediyorsun?",
-    "survey_q5_placeholder": "Bir sıklık seç",
-    "survey_q5_options": {
-        "none": "Hiç / 0 uçuş",
-        "rare": "Nadiren (yılda 1–2)",
-        "some": "Bazen (yılda 3–5)",
-        "often": "Sık (yılda 6+)"
+    "login": {
+      "cta": "Giriş yap",
+      "subtitle": "Puanlarını ve karbon ayak izini buradan takip et.",
+      "tab": "Giriş yap",
+      "title": "EcoScan hesabına giriş yap"
     },
-
-    "survey_q6": "Evde kaç kişi yaşıyor?",
-    "survey_q6_placeholder": "Örn: 3",
-    "survey_q6_hint": "Enerji kullanımını kişi başına daha doğru hesaplamak için.",
-
-    "survey_q7": "Ev & soğutma",
-    "survey_q7_type": "Konut tipi",
-    "survey_q7_type_placeholder": "Konut tipi seç",
-    "survey_q7_type_options": {
-        "apartment": "Apartman",
-        "house": "Müstakil Ev",
-        "shared": "Paylaşımlı Ev",
-        "dorm": "Yurt"
+    "placeholders": {
+      "email": "ornek@mail.com",
+      "password": "Şifreni gir",
+      "phone": "+90 5xx xxx xx xx",
+      "username": "Kullanıcı adın"
     },
-
-    "survey_q7_size": "Ev büyüklüğü",
-    "survey_q7_size_placeholder": "Bir boyut seç",
-    "survey_q7_size_options": {
-        "small": "Küçük",
-        "medium": "Orta",
-        "large": "Büyük"
+    "signup": {
+      "cta": "Kayıt ol",
+      "subtitle": "Profilini oluştur, puan kazanmaya başla.",
+      "tab": "Kayıt ol",
+      "title": "Yeni EcoScan hesabı oluştur"
+    }
+  },
+  "back_to_lobby": "Lobiye Dön",
+  "camera_back_button": "Geri",
+  "camera_capture_button": "Çek",
+  "camera_not_found_description": "Kameraya erişilemedi. Lütfen izinleri kontrol edin veya bir dosya yükleyin.",
+  "camera_not_found_title": "Kamera Bulunamadı",
+  "camera_scan_item_description": "Öğenin ambalajını çerçeveye yerleştirin.",
+  "camera_scan_item_title": "Öğenizi Tarayın",
+  "camera_scan_receipt_description": "Fişin tamamını çerçeveye yerleştirin.",
+  "camera_scan_receipt_title": "Fişinizi Tarayın",
+  "camera_upload_button": "Dosya Yükle",
+  "camera_verify_action_description": "Önerilen sürdürülebilir eylemlerden birini gerçekleştirirken kendinizin bir fotoğrafını çekin.",
+  "camera_verify_action_title": "Eyleminizi Doğrulayın",
+  "camera_verify_disposal_description": "Öğeyi doğru geri dönüşüm kutusuna atarken kendinizin bir fotoğrafını çekin.",
+  "camera_verify_disposal_title": "Atığınızı Doğrulayın",
+  "common": {
+    "cancel": "İptal",
+    "save": "Kaydet"
+  },
+  "confirm_card_confidence": "Güven: %{confidence}",
+  "confirm_card_description": "Şimdi, doğrulamak ve puan kazanmak için lütfen öğeyi doğru kutuya atarken bir fotoğrafınızı çekin.",
+  "confirm_card_scan_another_button": "Başka Bir Öğe Tara",
+  "confirm_card_title": "Malzeme Tanımlandı: {material}",
+  "confirm_card_verify_button": "Atığı Doğrula",
+  "default_analysis_bad": "CO₂ ayak iziniz yüksek görünüyor. Bunu bugün birkaç hedefli hamle ile aşağı çekebiliriz.",
+  "default_analysis_good": "Bugünkü seçimleriniz düşük bir etkiyle sonuçlandı. Bu alışkanlıkları sürdürürseniz puanlarınız hızla artacaktır.",
+  "default_analysis_mid": "Ortalama bir etki seviyesindesiniz. Küçük değişiklikler büyük bir fark yaratabilir.",
+  "disposed_card_description": "Çevreye yardım ettiğiniz için teşekkür ederiz! Puanlarınız hesabınıza eklendi.",
+  "disposed_card_rewards_link": "Ödüllere göz at",
+  "disposed_card_scan_another_button": "Başka Bir Öğe Tara",
+  "disposed_card_title": "Atık Doğrulandı!",
+  "go_to_verify": "Doğrulama Merkezine Git",
+  "guide_description": "Puan kazanmayı, ödülleri kullanmayı ve adil oynamayı öğrenin.",
+  "guide_howto_footprint_steps": [
+    "Ana menüden 'Karbon Ayak İzinizi Görün' butonuna dokunun ve günlük anketi tamamlayın.",
+    "Analizinizi ve temel puanlarınızı alın, bunlar hemen toplamınıza eklenir.",
+    "Sonuçlar ekranındaki 'Doğrulama Merkezine Git' düğmesine dokunun.",
+    "Etkinliklerinizin canlı fotoğraf kanıtlarını gönderin (ör. otobüs yolculuğu, vejetaryen yemek).",
+    "Eyleminiz doğrulanırsa, temel puanlarınız <span style='color:hsl(var(--primary))'>3x</span> ile çarpılacaktır!"
+  ],
+  "guide_howto_footprint_title": "Karbon Anketini Nasıl Kullanılır:",
+  "guide_howto_recycle_steps": [
+    "Ana menüden 'Ürün Ambalajını Tara' butonuna dokunun.",
+    "Kamerayla ambalajı tarayın. Yapay zekamız malzemeyi tanımlar.",
+    "'Atığı Doğrula' butonuna dokunun. Kamera tekrar açılır.",
+    "Öğeyi geri dönüşüm kutusuna attığınız net bir fotoğraf çekin.",
+    "Doğrulama başarılı olursa puanlar anında verilir!"
+  ],
+  "guide_howto_recycle_title": "Nasıl Geri Dönüşüm Yapılır ve Kazanılır:",
+  "guide_howto_title": "Nasıl Yapılır Kılavuzları",
+  "guide_howto_verification_steps": [
+    "Anket sonuçlarından veya ayarlar menüsünden Doğrulama Merkezi'ne gidin.",
+    "Doğrulamak istediğiniz kategoriyi seçin (ör. Ulaşım, Yemek, İçecek, Enerji).",
+    "Yemek ve İçecek için bir fiş VEYA öğenin canlı bir fotoğrafını gönderebilirsiniz.",
+    "Ulaşım ve diğer eylemler için eylemin canlı bir fotoğrafı gereklidir.",
+    "Aylık enerji için elektrik veya su faturanızı çekin.",
+    "Canlı fotoğraf çekmek için 'Çek ve Gönder'e dokunun. Adilliği sağlamak için galeri yüklemeleri devre dışı bırakılmıştır."
+  ],
+  "guide_howto_verification_title": "Doğrulama Merkezi Nasıl Kullanılır:",
+  "guide_material_header": "Malzeme",
+  "guide_points_disclaimer": "<b>Uyarı:</b> Geri dönüşüm ve anket eylemleri için verilen puan değerleri örnek niteliğindedir ve yeni çevresel verilere veya sponsor gereksinimlerine göre zamanla ayarlanabilir.",
+  "guide_points_header": "Puan",
+  "guide_recycling_description": "Bir öğeyi tarayarak ve atığınızı bir fotoğrafla doğrulayarak puan kazanın. Puanlar, malzemenin çevresel etkisine göre verilir.",
+  "guide_recycling_title": "Geri Dönüşüm Puanları",
+  "guide_survey_description": "Puan kazanmak için günlük bir anketi tamamlayın. Büyük bir bonus için bir fişle doğrulayın!",
+  "guide_survey_footer": "Sistem, anketinizden derhal verilen bir 'temel puan' değeri hesaplar. Bir fişle doğrulamak, bu temel değeri çarpar.",
+  "guide_survey_items_list": [
+    "<b>Yüksek Ayak İzi Cezası:</b> Ayak iziniz bölgesel maksimumun üzerindeyse, şiddetine bağlı olarak <span style='color:hsl(var(--destructive))'>-1 ila -10 puan</span> arasında kaybedersiniz.",
+    "<b>Temel Ödül:</b> Puanınız için tam <span style='color:hsl(var(--primary))'>temel puanları</span> hemen alırsınız (örneğin, iyi bir puan size <span style='color:hsl(var(--primary))'>+30</span> puan kazandırabilir).",
+    "<b>Fiş Doğrulama Bonusu:</b> Bir fişle doğrulamak, temel puanlarınızda size <b style='color:hsl(var(--primary))'>3x bonus</b> verir (örneğin, 10 temel puan <span style='color:hsl(var(--primary))'>+30</span> olur!).",
+    "<b>İkinci Şans Bonusu:</b> Bir cezayı tersine çevirin ve doğrulanmış sürdürülebilir bir eylem gerçekleştirerek <span style='color:hsl(var(--primary))'>kaybettiğiniz puanları + 10 bonus puan</span> kazanın."
+  ],
+  "guide_survey_title": "Karbon Ayak İzi Anketi",
+  "guide_title": "Uygulama Rehberi ve Kurallar",
+  "guide_verification_description": "Topluluğu adil tutmak ve ödülleri anlamlı kılmak için, puan kazandıran tüm eylemlerin doğrulanması gerekir. Sistemi manipüle etme girişimleri puan cezalarıyla sonuçlanacaktır.",
+  "guide_verification_footer": "Yapay zeka denetim sistemimiz her gönderimi doğrular. Cezalar otomatik olarak uygulanır.",
+  "guide_verification_items_list": [
+    "<b>Sadece Canlı Fotoğraflar:</b> Tüm doğrulamalar, uygulama üzerinden çekilen canlı fotoğraflar olmalıdır. Galeri yüklemeleri ve ekran görüntüleri devre dışı bırakılmıştır.",
+    "<b>Geri Dönüşüm:</b> Taranan öğeyi doğru kutuya koyarken sizin (veya elinizin) bir fotoğrafı.",
+    "<b>Karbon Eylemleri:</b> Sürdürülebilir eyleminizin bir fotoğrafı (ör. otobüs biletiniz, bisikletiniz, ev yapımı yemeğiniz).",
+    "<b>Yinelenen Fotoğraf Cezası:</b> Aynı fotoğrafı birden çok kez göndermek <span style='color:hsl(var(--destructive))'>-50 puan</span> cezasıyla sonuçlanacaktır.",
+    "<b>Sahtekarlık Cezası:</b> Açıkça sahte veya yapay zeka tarafından oluşturulmuş görüntüler göndermek <span style='color:hsl(var(--destructive))'>-200 puan</span> cezasıyla sonuçlanacak ve hesap askıya alınmasına neden olabilir."
+  ],
+  "guide_verification_title": "Doğrulama Merkezi ve Adil Oyun",
+  "header_points": "Puan",
+  "header_title": "EcoScan Ödülleri",
+  "improvements_high": [
+    "Mümkünse bugün araba kullanmayın; toplu taşımaya geçin.",
+    "Evi 1-2°C daha sıcak/soğuk ayarlayın; klima kullanımını kısıtlayın.",
+    "Şişelenmiş içecekleri ve kahve/sütlü içecekleri azaltın."
+  ],
+  "improvements_low": [
+    "Toplu taşımayı bir adım öteye taşıyın: 1 yolculuğu yürüyüş/bisiklet ile değiştirin.",
+    "Musluk suyu/çay tercih edin; şişelenmiş içecekleri azaltın.",
+    "Akşamları cihazları prizden çekin."
+  ],
+  "improvements_medium": [
+    "Bugün kırmızı eti atlayın; beyaz et veya bitki bazlı tercih edin.",
+    "Kısa mesafeler için arabayı bırakın; 20-30 dakikalık bir yürüyüş ekleyin.",
+    "Aydınlatmayı LED'lerle sınırlayın; gereksiz ışıkları kapatın."
+  ],
+  "loading_action": "Eyleminiz doğrulanıyor...",
+  "loading_barcode": "Barkod ile malzeme yeniden tanımlanıyor...",
+  "loading_disposal": "Atığınız doğrulanıyor...",
+  "loading_material": "Malzeme tanımlanıyor...",
+  "loading_profile": "Profiliniz yükleniyor...",
+  "loading_receipt": "Anketiniz işleniyor...",
+  "low_confidence_description": "Yapay zekamız bu öğeden emin değil. Doğru tanımlamamıza yardımcı olmak için barkod numarasını verebilir misiniz?",
+  "low_confidence_submit_button": "Barkodu Gönder",
+  "low_confidence_title": "Pek emin olamadık...",
+  "materials": {
+    "aluminum": "Alüminyum",
+    "battery": "Pil",
+    "cardboard": "Karton",
+    "glass": "Cam",
+    "metal": "Metal",
+    "paper": "Kağıt",
+    "plastic": "Plastik",
+    "unrecyclable": "Geri Dönüştürülemez"
+  },
+  "metaphor_high": "Yoğun bir sürüş ve klima kullanımının birleştiği bir gün gibi.",
+  "metaphor_low": "Bu, 2 yetişkin ağacın bir yılda emdiği CO₂ gibi.",
+  "metaphor_medium": "Evde yoğun bir enerji kullanım gününe eşdeğer.",
+  "metaphor_medium_low": "Kısa bir şehir içi araba yolculuğuna (≈100–150 km) benzer.",
+  "metaphor_very_high": "Bu, yoğun ulaşım ve enerji tüketiminden kaynaklanan yüksek etkili bir seviyedir.",
+  "recovery_actions": [
+    "Puan bonusu almak için bir yemek fişini canlı fotoğrafla doğrulayın.",
+    "Bir içeceği veya fişini fotoğraflayarak ekstra kanıt gönderin.",
+    "Kısa bir yürüyüş/bisiklet turu yapın ve bir fotoğrafla doğrulayın."
+  ],
+  "rewards": {
+    "clothes_10_off": {
+      "partner": "Eko-Moda",
+      "title": "Kıyafette 10$ İndirim"
     },
-
-    "survey_q7_ac": "Klima/ısıtmayı sık kullanıyorum",
-
-    "survey_q8": "Atık alışkanlıkları",
-    "survey_q8_recycle": "Düzenli geri dönüşüm yapıyorum",
-    "survey_q8_compost": "Organik atıkları kompost yapıyorum",
-
-    "survey_q9": "Ek notlar (isteğe bağlı)",
-    "survey_q9_placeholder": "Örn: sık online alışveriş, teslimatlar, elektronik",
-    "survey_q9_hint": "İsteğe bağlı bilgiler AI önerilerini iyileştirir."
+    "free_coffee": {
+      "partner": "Günlük Mola",
+      "title": "Ücretsiz Kahve"
+    },
+    "groceries_5_off": {
+      "partner": "Yeşil Bakkal",
+      "title": "Market Alışverişinde 5$ İndirim"
+    },
+    "movie_ticket": {
+      "partner": "Yeşil Sinema",
+      "title": "Ücretsiz Sinema Bileti"
+    },
+    "shoes_15_off": {
+      "partner": "Sürdürülebilir Adımlar",
+      "title": "Ayakkabıda 15$ İndirim"
+    }
+  },
+  "rewards_description": "Puanlarınızı ortak mağazalarımızda indirim almak için kullanın.",
+  "rewards_redeem_button": "Kullan",
+  "rewards_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız.",
+  "rewards_redeemed_title": "Ödül Kullanıldı!",
+  "rewards_title": "Puanlarınızı Kullanın",
+  "scan_card_description": "Puan kazanmak ve etkinizi takip etmek için bir eylem seçin.",
+  "scan_card_footprint_button": "Karbon Ayak İzinizi Görün",
+  "scan_card_footprint_cooldown": "Yarınki Karbon Ayak İzi için kalan süre:",
+  "scan_card_login_for_rewards": "Ödül kazanmak için giriş yapın",
+  "scan_card_rewards_link": "Ödüllerimi Görüntüle",
+  "scan_card_scan_button": "Ürün Ambalajını Tara",
+  "scan_card_title": "Yeşil Bir Geleceğe Hazır mısın?",
+  "settings_close_button": "Kapat",
+  "settings_description": "Uygulama ayarlarınızı ve tercihlerinizi yönetin.",
+  "settings_guide_button": "Uygulama Rehberi ve Kurallar",
+  "settings_language_label": "Dil",
+  "settings_region_label": "Bölge",
+  "settings_title": "Ayarlar",
+  "survey_base_points_description": "Bugünkü skorun için <b style='color:hsl(var(--primary))'>{points} temel puan</b> kazandın. Fişle doğrulayarak <b style='color:hsl(var(--primary))'>x{x} bonus</b> kazan!",
+  "survey_base_points_title": "Temel Puan Kazandın!",
+  "survey_bonus_title": "Bugün Daha Fazla Puan Kazan",
+  "survey_calculate_button": "Ayak İzimi Hesapla",
+  "survey_description": "Bugünkü karbon ayak izinizin bir tahminini almak için birkaç soruyu yanıtlayın.",
+  "survey_penalty_description": "Ayak iziniz bölgesel sınırı aştı. <span style='color:hsl(var(--destructive))'>{points} puanlık bir ceza</span> uygulandı.",
+  "survey_penalty_title": "Yüksek Ayak İzi Cezası",
+  "survey_q1": "Bugün nasıl dolaştınız?",
+  "survey_q1_options": {
+    "car_gasoline": "Araba (Benzinli)",
+    "ev": "Elektrikli Araç",
+    "public_transport": "Otobüs veya Tren",
+    "walk_bike": "Bisiklet veya Yürüyüş"
+  },
+  "survey_q2": "Bugün diyetiniz nasıldı?",
+  "survey_q2_options": {
+    "carb_based": "Karbonhidrat ağırlıklı",
+    "red_meat": "Kırmızı et ağırlıklı",
+    "vegetarian_vegan": "Vejetaryen / Vegan",
+    "white_meat_fish": "Beyaz et / Balık"
+  },
+  "survey_q3": "Evdeki enerji kullanımınız nasıldı?",
+  "survey_q3_no_energy": "Bugün evde elektrik kullanmadım",
+  "survey_q3_placeholder": "Örn: Klima kullandım, ışıkları açık bıraktım, tüm ışıklar ve klima açık...",
+  "survey_q4": "Bugün ağırlıklı olarak ne içtiniz?",
+  "survey_q4_options": {
+    "drink_alcohol": "Alkollü içecekler",
+    "drink_bottled": "Şişelenmiş su / Gazoz / Meyve suyu",
+    "drink_coffee_milk": "Sütlü kahve veya sütlü içecekler",
+    "drink_water_tea": "Musluk suyu / Bitki bazlı"
+  },
+  "survey_q5": "Uçakla ne sıklıkla seyahat ediyorsun? (iş/özel)",
+  "survey_q5_options": {
+    "none": "Hiç / 0 uçuş",
+    "often": "Sık (yılda 6+)",
+    "rare": "Nadiren (yılda 1–2)",
+    "some": "Bazen (yılda 3–5)"
+  },
+  "survey_q5_placeholder": "Bir seçenek seç",
+  "survey_q6": "Evde kaç kişi yaşıyor?",
+  "survey_q6_hint": "Ev enerji kullanımını kişi başına daha doğru yorumlamak için.",
+  "survey_q6_placeholder": "Örn: 3",
+  "survey_q7": "Ev & soğutma/ısıtma",
+  "survey_q7_ac": "Klima/ısıtmayı sık kullanıyorum (çoğu gün)",
+  "survey_q7_size": "Ev büyüklüğü",
+  "survey_q7_size_options": {
+    "large": "Büyük",
+    "medium": "Orta",
+    "small": "Küçük"
+  },
+  "survey_q7_size_placeholder": "Bir boyut seç",
+  "survey_q7_type": "Konut tipi",
+  "survey_q7_type_options": {
+    "apartment": "Apartman",
+    "dorm": "Yurt / Öğrenci konutu",
+    "house": "Müstakil / Ev",
+    "shared": "Paylaşımlı ev"
+  },
+  "survey_q7_type_placeholder": "Konut tipini seç",
+  "survey_q8": "Atık alışkanlıkları",
+  "survey_q8_compost": "Organik atığı kompost yapıyorum (mümkünse)",
+  "survey_q8_recycle": "Düzenli geri dönüşüm yapıyorum",
+  "survey_q9": "Ek notlar (isteğe bağlı)",
+  "survey_q9_hint": "İsteğe bağlı. AI önerilerini daha iyi kişiselleştirir.",
+  "survey_q9_placeholder": "Örn: çok online alışveriş, sık teslimat, yeni elektronik vb.",
+  "survey_range_hint": "Bölge aralığı: min {min}, ort {avg}, maks {max} kg",
+  "survey_recommendations_title": "İyileştirmek için 3 yol",
+  "survey_recovery_title": "Bugün Puanlarını Geri Kazan",
+  "survey_results_estimated": "Tahmini Ayak İzi:",
+  "survey_results_title": "Günlük Ayak İzi Sonuçları",
+  "survey_title": "Günlük Ayak İziniz",
+  "take_second_chance_button": "İkinci Şansı Değerlendir",
+  "toast_action_verified_description": "Ceza geri alındı! Toplamda {points} puan kazandınız.",
+  "toast_action_verified_title": "Eylem Doğrulandı!",
+  "toast_bonus_applied_description": "Ayak izinizi doğruladığınız için devasa bir {points} puan bonusu kazandınız!",
+  "toast_bonus_applied_title": "Bonus Uygulandı!",
+  "toast_identification_failed_description": "Malzeme tanımlanamadı. Lütfen tekrar deneyin.",
+  "toast_identification_failed_title": "Tanımlama Başarısız",
+  "toast_invalid_receipt_description": "Bu geçerli bir fiş gibi görünmüyor. Lütfen net bir fotoğrafla tekrar deneyin.",
+  "toast_invalid_receipt_title": "Geçersiz Fiş",
+  "toast_language_updated_description": "Dil ayarlandı.",
+  "toast_language_updated_title": "Dil Güncellendi",
+  "toast_not_enough_points_description": "Bu ödülü kullanmak için {points} puana ihtiyacınız var.",
+  "toast_not_enough_points_title": "Yeterli puan yok",
+  "toast_receipt_failed_description": "Fiş okunamadı. Lütfen daha net bir resimle tekrar deneyin.",
+  "toast_receipt_failed_title": "Fiş İşleme Başarısız",
+  "toast_region_updated_description": "Bölgeniz {region} olarak ayarlandı.",
+  "toast_region_updated_title": "Bölge Güncellendi",
+  "toast_reward_confirm_cancel": "İptal",
+  "toast_reward_confirm_description": "'{title}' için {cost} puan harcamak istediğinizden emin misiniz?",
+  "toast_reward_confirm_title": "Kullanımı Onayla",
+  "toast_reward_redeemed_description": "\"{title}\" ödülünü başarıyla kullandınız.",
+  "toast_reward_redeemed_title": "Ödül Kullanıldı!",
+  "toast_verification_complete_description": "Geri dönüşüm için {points} puan kazandınız.",
+  "toast_verification_complete_title": "Doğrulama Tamamlandı!",
+  "toast_verification_error_description": "Doğrulama sırasında beklenmedik bir hata oluştu. Lütfen tekrar deneyin.",
+  "toast_verification_error_title": "Doğrulama Hatası",
+  "toast_verification_failed_title": "Doğrulama Başarısız"
 }

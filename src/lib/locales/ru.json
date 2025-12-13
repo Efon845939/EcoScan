@@ -1,49 +1,80 @@
-
 {
-  "header_title": "Награды EcoScan",
+  "auth": {
+    "fields": {
+      "email": "Электронная почта",
+      "password": "Пароль",
+      "username": "Имя пользователя"
+    },
+    "login": {
+      "cta": "Войти",
+      "subtitle": "Отслеживайте свои очки и углеродный след.",
+      "tab": "Войти",
+      "title": "Войдите в свой аккаунт EcoScan"
+    },
+    "placeholders": {
+      "email": "vy@example.com",
+      "password": "Введите ваш пароль",
+      "username": "Ваше имя пользователя"
+    },
+    "signup": {
+      "cta": "Зарегистрироваться",
+      "subtitle": "Настройте свой профиль и начните зарабатывать награды.",
+      "tab": "Зарегистрироваться",
+      "title": "Создать новый аккаунт EcoScan"
+    }
+  },
+  "camera_back_button": "Назад",
+  "camera_capture_button": "Снять",
+  "common": {
+    "cancel": "Отмена",
+    "save": "Сохранить"
+  },
   "header_points": "Очки",
-  "scan_card_title": "Готовы к зеленому пути?",
+  "header_title": "Награды EcoScan",
   "scan_card_description": "Выберите действие, чтобы заработать очки и отслеживать свое влияние.",
-  "scan_card_scan_button": "Сканировать упаковку продукта",
   "scan_card_footprint_button": "Посмотреть свой углеродный след",
   "scan_card_footprint_cooldown": "Завтрашний углеродный след через:",
   "scan_card_rewards_link": "Посмотреть мои награды",
-  "camera_back_button": "Назад",
-  "camera_capture_button": "Снять",
-  "settings_title": "Настройки",
+  "scan_card_scan_button": "Сканировать упаковку продукта",
+  "scan_card_title": "Готовы к зеленому пути?",
+  "settings_close_button": "Закрыть",
   "settings_description": "Управляйте настройками и предпочтениями вашего приложения.",
   "settings_guide_button": "Руководство по приложению и правила",
-  "settings_region_label": "Регион",
   "settings_language_label": "Язык",
-  "settings_close_button": "Закрыть",
-  "auth": {
-    "login": {
-      "tab": "Войти",
-      "title": "Войдите в свой аккаунт EcoScan",
-      "subtitle": "Отслеживайте свои очки и углеродный след.",
-      "cta": "Войти"
-    },
-    "signup": {
-      "tab": "Зарегистрироваться",
-      "title": "Создать новый аккаунт EcoScan",
-      "subtitle": "Настройте свой профиль и начните зарабатывать награды.",
-      "cta": "Зарегистрироваться"
-    },
-    "fields": {
-      "username": "Имя пользователя",
-      "email": "Электронная почта",
-      "password": "Пароль"
-    },
-    "placeholders": {
-      "username": "Ваше имя пользователя",
-      "email": "vy@example.com",
-      "password": "Введите ваш пароль"
-    }
+  "settings_region_label": "Регион",
+  "settings_title": "Настройки",
+  "survey_q5": "Как часто вы летаете (лично или по работе)?",
+  "survey_q5_options": {
+    "none": "Никогда / 0 перелётов",
+    "often": "Часто (6+ в год)",
+    "rare": "Редко (1–2 в год)",
+    "some": "Иногда (3–5 в год)"
   },
-  "common": {
-    "save": "Сохранить",
-    "cancel": "Отмена"
-  }
+  "survey_q5_placeholder": "Выберите частоту",
+  "survey_q6": "Сколько людей живёт в вашем доме?",
+  "survey_q6_hint": "Помогает оценить потребление энергии на человека.",
+  "survey_q6_placeholder": "например, 3",
+  "survey_q7": "Жильё и охлаждение/отопление",
+  "survey_q7_ac": "Часто использую кондиционер/отопление",
+  "survey_q7_size": "Размер жилья",
+  "survey_q7_size_options": {
+    "large": "Большое",
+    "medium": "Среднее",
+    "small": "Маленькое"
+  },
+  "survey_q7_size_placeholder": "Выберите размер",
+  "survey_q7_type": "Тип жилья",
+  "survey_q7_type_options": {
+    "apartment": "Квартира",
+    "dorm": "Общежитие",
+    "house": "Дом",
+    "shared": "Совместное жильё"
+  },
+  "survey_q7_type_placeholder": "Выберите тип",
+  "survey_q8": "Привычки по отходам",
+  "survey_q8_compost": "Компостирую органические отходы (когда возможно)",
+  "survey_q8_recycle": "Регулярно сортирую/сдаю на переработку",
+  "survey_q9": "Дополнительные заметки (необязательно)",
+  "survey_q9_hint": "Доп. контекст помогает ИИ дать лучшие рекомендации.",
+  "survey_q9_placeholder": "Напр.: много онлайн‑покупок, частые доставки, новая электроника и т.д."
 }
-
-    
