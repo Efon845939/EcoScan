@@ -51,6 +51,13 @@ export default function ProfilePage() {
   const [clickPing, setClickPing] = useState(0);
   const [lastClickAt, setLastClickAt] = useState<string>("");
 
+  const [saveDebug, setSaveDebug] = useState<string>("");
+  const [saveCount, setSaveCount] = useState(0);
+
+  function appendSave(line: string) {
+    setSaveDebug((prev) => (prev ? prev + "\n" + line : line));
+  }
+
   useEffect(() => {
     if (!isUserLoading && !firebaseUser) {
       router.replace("/auth/login");
@@ -90,16 +97,27 @@ export default function ProfilePage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!firebaseUser || !auth.currentUser) {
+
+    const ts = new Date().toISOString();
+    setSaveCount((n) => n + 1);
+    setSaveDebug("");
+    appendSave(`✅ submit geldi (#${saveCount + 1}) @ ${ts}`);
+
+    if (!firebaseUser) {
+      appendSave("⛔ firebaseUser yok (login değil).");
       setStatus("HATA: Giriş yapmamışsın, profil kaydedilemedi.");
       return;
     }
 
     setSaving(true);
     setStatus("Kaydediliyor...");
+    const t0 = performance.now();
 
     try {
+      // 1) Firestore write
+      appendSave("➡️ ADIM 1: Firestore setDoc(users/{uid}) başlıyor...");
       const userProfileRef = doc(firestore, "users", firebaseUser.uid);
+
       const dataToSave = {
         username: profile.username.trim(),
         displayName: profile.displayName.trim(),
@@ -110,16 +128,29 @@ export default function ProfilePage() {
       };
 
       await setDoc(userProfileRef, dataToSave, { merge: true });
+      appendSave("✅ ADIM 1: Firestore write OK.");
 
-      await updateProfile(auth.currentUser, {
-        displayName: profile.displayName.trim() || undefined,
-        photoURL: profile.photoURL || undefined,
-      });
+      // 2) Auth updateProfile (opsiyonel ama deniyoruz)
+      appendSave("➡️ ADIM 2: Auth updateProfile başlıyor...");
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, {
+          displayName: profile.displayName.trim() || undefined,
+          photoURL: profile.photoURL || undefined,
+        });
+        appendSave("✅ ADIM 2: Auth updateProfile OK.");
+      } else {
+        appendSave("⚠️ ADIM 2: auth.currentUser yok, updateProfile atlandı.");
+      }
 
+      const ms = Math.round(performance.now() - t0);
+      appendSave(`✅ BİTTİ: Toplam süre ~${ms}ms`);
       setStatus("Profil kaydedildi.");
     } catch (err: any) {
       console.error("PROFILE_SAVE_ERROR", err);
-      setStatus(`HATA: Profil kaydedilirken bir sorun oluştu.`);
+      appendSave("⛔ HATA: catch'e düştü.");
+      if (err?.code) appendSave(`error code: ${err.code}`);
+      if (err?.message) appendSave(`error msg: ${err.message}`);
+      setStatus("HATA: Profil kaydedilirken bir sorun oluştu.");
     } finally {
       setSaving(false);
     }
@@ -461,6 +492,17 @@ export default function ProfilePage() {
               <div className="text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 min-h-[36px] flex items-center">
                 {status}
               </div>
+
+              {saveDebug && (
+                <div className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
+                  <div className="text-xs font-medium text-purple-900 mb-1">
+                    Save Debug
+                  </div>
+                  <pre className="whitespace-pre-wrap break-words text-[11px] text-purple-800 max-h-48 overflow-auto">
+                    {saveDebug}
+                  </pre>
+                </div>
+              )}
 
               <button
                 type="submit"
