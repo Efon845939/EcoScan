@@ -90,7 +90,7 @@ export default function ProfilePage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!firebaseUser) {
+    if (!firebaseUser || !auth.currentUser) {
       setStatus("HATA: Giriş yapmamışsın, profil kaydedilemedi.");
       return;
     }
@@ -111,13 +111,10 @@ export default function ProfilePage() {
 
       await setDoc(userProfileRef, dataToSave, { merge: true });
 
-      if(auth.currentUser) {
-        await updateProfile(auth.currentUser, {
-          displayName: profile.displayName.trim() || undefined,
-          photoURL: profile.photoURL || undefined,
-        });
-      }
-
+      await updateProfile(auth.currentUser, {
+        displayName: profile.displayName.trim() || undefined,
+        photoURL: profile.photoURL || undefined,
+      });
 
       setStatus("Profil kaydedildi.");
     } catch (err: any) {
@@ -179,81 +176,78 @@ export default function ProfilePage() {
     setHealthDetails(null);
 
     const steps: string[] = [];
-    const appendHealth = (line: string) => steps.push(line);
 
     try {
-      appendHealth("=== GENEL DURUM ===");
+      steps.push("=== GENEL DURUM ===");
 
       if (!auth || !firestore) {
-        appendHealth("HATA: useFirebase içinden auth veya firestore gelmedi.");
+        steps.push("HATA: useFirebase içinden auth veya firestore gelmedi.");
         setHealthStatus("HATA: Firebase context eksik.");
-        return;
-      }
-
-      const projectId =
-        // @ts-ignore
-        (auth.app && auth.app.options && auth.app.options.projectId) ||
-        "BULUNAMADI";
-      const appName = auth.app ? auth.app.name : "BULUNAMADI";
-
-      appendHealth(`App adı: ${appName}`);
-      appendHealth(`Proje ID (config'ten): ${projectId}`);
-
-      if (!firebaseUser) {
-        appendHealth("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
-        setHealthStatus("HATA: Giriş yapmamışsın.");
-        return;
-      }
-
-      appendHealth("=== KULLANICI ===");
-      appendHealth(`UID: ${firebaseUser.uid}`);
-      appendHealth(`Email: ${firebaseUser.email ?? "yok"}`);
-
-      // ADIM 1: users read
-      appendHealth("=== ADIM 1: users dokümanı READ testi ===");
-      const userDocRef = doc(firestore, "users", firebaseUser.uid);
-      const snap = await getDoc(userDocRef);
-      appendHealth(
-        `users/${firebaseUser.uid} dokümanı: ${snap.exists() ? "VAR" : "YOK"}`
-      );
-
-      // ADIM 2: users write (merge)
-      appendHealth("=== ADIM 2: users dokümanı WRITE testi ===");
-      await setDoc(
-        userDocRef,
-        {
-          lastHealthCheckAt: new Date(),
-          lastHealthCheckSource: "profile-page",
-        },
-        { merge: true }
-      );
-      appendHealth("users/{uid} içine lastHealthCheckAt yazıldı.");
-
-      // ADIM 3: Storage upload (opsiyonel)
-      if (storageTestEnabled) {
-        appendHealth("=== ADIM 3: Storage upload testi ===");
-        try {
-          const storage = getStorage();
-          const testRef = ref(storage, `dev_test/${firebaseUser.uid}-healthcheck.txt`);
-          const blob = new Blob([`health-check ${new Date().toISOString()}`], { type: "text/plain" });
-          await uploadBytes(testRef, blob);
-          appendHealth("Storage upload BAŞARILI.");
-        } catch (storageErr: any) {
-          appendHealth("Storage upload BAŞARISIZ.");
-          if (storageErr?.code) appendHealth(`Storage hata kodu: ${storageErr.code}`);
-          if (storageErr?.message) appendHealth(`Storage mesaj: ${storageErr.message}`);
-        }
       } else {
-        appendHealth("=== ADIM 3: Storage upload testi ===");
-        appendHealth("Atlandı (toggle kapalı).");
-      }
+        const projectId =
+          // @ts-ignore
+          (auth.app && auth.app.options && auth.app.options.projectId) ||
+          "BULUNAMADI";
+        const appName = auth.app ? auth.app.name : "BULUNAMADI";
 
-      setHealthStatus("Health check tamamlandı.");
+        steps.push(`App adı: ${appName}`);
+        steps.push(`Proje ID (config'ten): ${projectId}`);
+
+        if (!firebaseUser) {
+          steps.push("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
+          setHealthStatus("HATA: Giriş yapmamışsın.");
+        } else {
+          steps.push("=== KULLANICI ===");
+          steps.push(`UID: ${firebaseUser.uid}`);
+          steps.push(`Email: ${firebaseUser.email ?? "yok"}`);
+
+          // ADIM 1: users read
+          steps.push("=== ADIM 1: users dokümanı READ testi ===");
+          const userDocRef = doc(firestore, "users", firebaseUser.uid);
+          const snap = await getDoc(userDocRef);
+          steps.push(
+            `users/${firebaseUser.uid} dokümanı: ${snap.exists() ? "VAR" : "YOK"}`
+          );
+
+          // ADIM 2: users write (merge)
+          steps.push("=== ADIM 2: users dokümanı WRITE testi ===");
+          await setDoc(
+            userDocRef,
+            {
+              lastHealthCheckAt: new Date(),
+              lastHealthCheckSource: "profile-page",
+            },
+            { merge: true }
+          );
+          steps.push("users/{uid} içine lastHealthCheckAt yazıldı.");
+
+          // ADIM 3: Storage upload (opsiyonel)
+          if (storageTestEnabled) {
+            steps.push("=== ADIM 3: Storage upload testi ===");
+            try {
+              const storage = getStorage();
+              const testRef = ref(storage, `dev_test/${firebaseUser.uid}-healthcheck.txt`);
+              const blob = new Blob([`health-check ${new Date().toISOString()}`], { type: "text/plain" });
+              await uploadBytes(testRef, blob);
+              steps.push("Storage upload BAŞARILI.");
+            } catch (storageErr: any) {
+              steps.push("Storage upload BAŞARISIZ.");
+              if (storageErr?.code) steps.push(`Storage hata kodu: ${storageErr.code}`);
+              if (storageErr?.message) steps.push(`Storage mesaj: ${storageErr.message}`);
+            }
+          } else {
+            steps.push("=== ADIM 3: Storage upload testi ===");
+            steps.push("Atlandı (toggle kapalı).");
+          }
+
+          setHealthStatus("Health check tamamlandı.");
+        }
+      }
     } catch (err: any) {
       console.error("HEALTH_CHECK_ERROR", err);
-      appendHealth("=== HATA ===");
-      if (err?.code) appendHealth(`Hata kodu: ${err.code}`);
-      if (err?.message) appendHealth(`Mesaj: ${err.message}`);
+      steps.push("=== HATA ===");
+      if (err?.code) steps.push(`Hata kodu: ${err.code}`);
+      if (err?.message) steps.push(`Mesaj: ${err.message}`);
       setHealthStatus("HATA: Health check başarısız.");
     } finally {
       setHealthDetails(steps.join("\n"));
