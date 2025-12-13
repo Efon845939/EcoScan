@@ -1,10 +1,9 @@
-
 // app/profile/page.tsx
 "use client";
 
 import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { updateProfile } from "firebase/auth";
+import { updateProfile, updateEmail } from "firebase/auth";
 import {
   getStorage,
   ref,
@@ -208,6 +207,55 @@ export default function ProfilePage() {
       setStatus("HATA: Profil fotoğrafı yüklenemedi.");
     } finally {
       setAvatarUploading(false);
+    }
+  }
+
+  async function handleEmailUpdate() {
+    if (!auth?.currentUser) {
+      setStatus("HATA: E-posta güncellemek için giriş yapmalısın.");
+      return;
+    }
+  
+    const newEmail = profile.email.trim().toLowerCase();
+    if (!newEmail || !newEmail.includes("@")) {
+      setStatus("HATA: Geçerli bir e-posta gir.");
+      return;
+    }
+  
+    setSaving(true);
+    setStatus("E-posta güncelleniyor...");
+  
+    try {
+      // 1) Auth e-posta güncelle
+      await updateEmail(auth.currentUser, newEmail);
+  
+      // 2) Firestore'da da email alanını güncelle (profil dokümanı tutarlılık için)
+      const userProfileRef = doc(firestore, "users", auth.currentUser.uid);
+      await setDoc(
+        userProfileRef,
+        { email: newEmail, updatedAt: new Date() },
+        { merge: true }
+      );
+  
+      setStatus("E-posta güncellendi.");
+    } catch (err: any) {
+      console.error("EMAIL_UPDATE_ERROR", err);
+  
+      // En yaygın tokat:
+      if (err?.code === "auth/requires-recent-login") {
+        setStatus(
+          "HATA: Güvenlik nedeniyle e-posta değiştirmek için yeniden giriş yapmalısın (requires-recent-login). Çıkış yapıp tekrar giriş yap, sonra tekrar dene."
+        );
+        return;
+      }
+  
+      if (err?.code) {
+        setStatus(`HATA: E-posta güncellenemedi (${err.code}).`);
+      } else {
+        setStatus("HATA: E-posta güncellenemedi.");
+      }
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -468,15 +516,26 @@ export default function ProfilePage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  E-posta (değiştirilemez)
+                  E-posta
                 </label>
                 <input
                   type="email"
                   value={profile.email}
-                  readOnly
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 />
+                <p className="mt-1 text-[11px] text-gray-500">
+                  Not: E-posta değiştirmek için bazı durumlarda yeniden giriş yapman gerekebilir.
+                </p>
               </div>
+              <button
+                  type="button"
+                  onClick={handleEmailUpdate}
+                  disabled={saving || avatarUploading}
+                  className="inline-flex items-center justify-center rounded-lg bg-white text-emerald-700 border border-emerald-200 text-xs font-medium px-3 py-2 hover:bg-emerald-50 disabled:opacity-60 disabled:cursor-not-allowed transition"
+                >
+                  E-postayı güncelle
+                </button>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
