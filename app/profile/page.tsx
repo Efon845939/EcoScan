@@ -166,12 +166,12 @@ export default function ProfilePage() {
     setHealthRunning(true);
     setHealthStatus("Health check çalışıyor...");
     setHealthDetails(null);
-  
+
     try {
       const steps: string[] = [];
-  
+
       steps.push("=== GENEL DURUM ===");
-  
+
       if (!auth || !firestore) {
         steps.push("HATA: useFirebase içinden auth veya firestore gelmedi.");
         setHealthStatus("HATA: Firebase context eksik.");
@@ -179,16 +179,16 @@ export default function ProfilePage() {
         setHealthRunning(false);
         return;
       }
-  
+
       const projectId =
         // @ts-ignore
         (auth.app && auth.app.options && auth.app.options.projectId) ||
         "BULUNAMADI";
       const appName = auth.app ? auth.app.name : "BULUNAMADI";
-  
+
       steps.push(`App adı: ${appName}`);
       steps.push(`Proje ID (config'ten): ${projectId}`);
-  
+
       if (!firebaseUser) {
         steps.push("HATA: Giriş yapılmamış. Health check için kullanıcı yok.");
         setHealthStatus("HATA: Giriş yapmamışsın.");
@@ -196,79 +196,65 @@ export default function ProfilePage() {
         setHealthRunning(false);
         return;
       }
-  
+
       steps.push("=== KULLANICI ===");
       steps.push(`UID: ${firebaseUser.uid}`);
       steps.push(`Email: ${firebaseUser.email ?? "yok"}`);
-  
+
       // 1) USERS READ TEST
-      steps.push("=== ADIM 1: users dokümanı read testi ===");
+      steps.push("=== ADIM 1: users dokümanı READ testi ===");
       try {
         const userDocRef = doc(firestore, "users", firebaseUser.uid);
         const snap = await getDoc(userDocRef);
-  
+
         steps.push(
           `users/${firebaseUser.uid} dokümanı: ${
             snap.exists() ? "VAR" : "YOK"
-          }. (read İZİN VERİLDİ)`
+          }. (READ İZİN VERİLDİ)`
         );
       } catch (err: any) {
         steps.push("HATA: users/{uid} dokümanı okunurken izin hatası.");
         if (err.code) steps.push(`Hata kodu: ${err.code}`);
         if (err.message) steps.push(`Mesaj: ${err.message}`);
-        if (err.code === "permission-denied") {
-          steps.push(
-            "YORUM: Firestore rules, users/{uid} için READ izni vermiyor."
-          );
-          steps.push(
-            "- match /users/{userId} kuralında request.auth.uid == userId şartını kontrol et."
-          );
-        }
         setHealthStatus("Health check: users READ aşamasında hata.");
         setHealthDetails(steps.join("\n"));
         setHealthRunning(false);
         return;
       }
-  
-      // 2) DEV_TEST WRITE TEST
-      steps.push("=== ADIM 2: dev_test dokümanı write testi ===");
+
+      // 2) USERS WRITE TEST (healthCheck alanı)
+      steps.push("=== ADIM 2: users dokümanı WRITE testi (healthCheck alanı) ===");
       try {
+        const userDocRef = doc(firestore, "users", firebaseUser.uid);
         await setDoc(
-          doc(firestore, "dev_test", firebaseUser.uid),
+          userDocRef,
           {
-            checkedAt: new Date(),
-            source: "profile-health-check",
+            lastHealthCheckAt: new Date(),
+            lastHealthCheckSource: "profile-page",
           },
           { merge: true }
         );
-        steps.push("dev_test yazma BAŞARILI. (write İZİN VERİLDİ)");
+        steps.push(
+          "users/{uid} içine lastHealthCheckAt yazıldı. (WRITE İZİN VERİLDİ)"
+        );
       } catch (err: any) {
-        steps.push("HATA: dev_test yazılamadı (WRITE reddedildi).");
+        steps.push("HATA: users/{uid} dokümanına yazarken izin hatası.");
         if (err.code) steps.push(`Hata kodu: ${err.code}`);
         if (err.message) steps.push(`Mesaj: ${err.message}`);
         if (err.code === "permission-denied") {
           steps.push(
-            "YORUM: Firestore rules, dev_test/{uid} için WRITE izni vermiyor."
+            "YORUM: Firestore rules, users/{uid} için WRITE izni vermiyor."
           );
           steps.push(
-            "- Rules içinde *aktif* olan dosyada şu bloğun olduğundan emin ol:"
-          );
-          steps.push("  match /dev_test/{userId} {");
-          steps.push("    allow read, write: if request.auth != null && request.auth.uid == userId;");
-          steps.push("  }");
-          steps.push(
-            "- Ve en altta `match /{path=**} { allow read, write: if false; }` varsa, dev_test bloğunun *üstünde* olduğundan emin ol."
-          );
-          steps.push(
-            "- Ayrıca gerçekten bu projeye bağlı mısın? projectId eşleşiyor mu kontrol et."
+            "- match /users/{userId} kuralında request.auth.uid == userId şartını kontrol et."
           );
         }
-        setHealthStatus("Health check: dev_test WRITE aşamasında hata.");
+        setHealthStatus("Health check: users WRITE aşamasında hata.");
         setHealthDetails(steps.join("\n"));
         setHealthRunning(false);
         return;
       }
-  
+
       // 3) STORAGE TESTİ (opsiyonel)
       steps.push("=== ADIM 3: Storage upload testi ===");
       try {
@@ -292,7 +278,7 @@ export default function ProfilePage() {
           steps.push(`Storage mesaj: ${storageErr.message}`);
         }
       }
-  
+
       setHealthStatus("Health check tamamen bitti.");
       setHealthDetails(steps.join("\n"));
     } catch (err: any) {
