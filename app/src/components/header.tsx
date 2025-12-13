@@ -87,3 +87,5 @@ export function Header({ points, onNavigate, onShowSettings }: HeaderProps) {
     </header>
   );
 }
+
+    
