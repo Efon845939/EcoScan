@@ -1,3 +1,4 @@
+
 // app/profile/page.tsx
 "use client";
 
@@ -215,6 +216,12 @@ export default function ProfilePage() {
       setStatus("HATA: E-posta güncellemek için giriş yapmalısın.");
       return;
     }
+    
+    // Check if the user's current email is verified
+    if (!auth.currentUser.emailVerified) {
+      setStatus("HATA: E-postanı değiştirmeden önce mevcut e-posta adresini doğrulamalısın.");
+      return;
+    }
   
     const newEmail = profile.email.trim().toLowerCase();
     if (!newEmail || !newEmail.includes("@")) {
@@ -237,14 +244,21 @@ export default function ProfilePage() {
         { merge: true }
       );
   
-      setStatus("E-posta güncellendi.");
-    } catch (err: any) {
+      setStatus("E-posta güncellendi. Yeni e-postanı doğrulaman gerekebilir.");
+    } catch (err: any)
+     {
       console.error("EMAIL_UPDATE_ERROR", err);
   
-      // En yaygın tokat:
       if (err?.code === "auth/requires-recent-login") {
         setStatus(
-          "HATA: Güvenlik nedeniyle e-posta değiştirmek için yeniden giriş yapmalısın (requires-recent-login). Çıkış yapıp tekrar giriş yap, sonra tekrar dene."
+          "HATA: Güvenlik nedeniyle e-posta değiştirmek için yeniden giriş yapmalısın. Çıkış yapıp tekrar giriş yap, sonra tekrar dene."
+        );
+        return;
+      }
+      
+      if (err?.code === "auth/operation-not-allowed") {
+        setStatus(
+          "HATA: E-postanı değiştirebilmek için önce mevcut e-posta adresini doğrulamalısın."
         );
         return;
       }
@@ -670,3 +684,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
