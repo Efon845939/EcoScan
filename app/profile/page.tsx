@@ -288,19 +288,25 @@ export default function ProfilePage() {
   
     setVerifySending(true);
     setStatus("Doğrulama e-postası gönderiliyor...");
+    setHealthDetails(""); // debug paneline yazdırmak istersen
   
     try {
-      await sendEmailVerification(auth.currentUser);
-      setStatus("Doğrulama e-postası gönderildi. Gelen kutusunu kontrol et.");
-    } catch (err: any) {
-      console.error("SEND_VERIFY_EMAIL_ERROR", err);
+      // Auth state güncel olsun
+      await auth.currentUser.reload();
   
-      // Rate limit vs olabilir
-      if (err?.code) {
-        setStatus(`HATA: Doğrulama maili gönderilemedi (${err.code}).`);
-      } else {
-        setStatus("HATA: Doğrulama maili gönderilemedi.");
-      }
+      // actionCodeSettings istemiyorsan düz gönder
+      await sendEmailVerification(auth.currentUser);
+  
+      setStatus("Doğrulama e-postası gönderildi. Spam/Promotions da kontrol et.");
+    } catch (err: any) {
+      console.error("SEND_VERIFY_EMAIL_ERROR (raw):", err);
+  
+      const code = err?.code || "unknown";
+      const msg = err?.message || String(err);
+  
+      // ekrana net bas
+      setStatus(`HATA: Doğrulama maili gönderilemedi (${code}).`);
+      setHealthDetails(`SEND_VERIFY_EMAIL_ERROR\ncode: ${code}\nmessage: ${msg}`);
     } finally {
       setVerifySending(false);
     }
@@ -391,8 +397,8 @@ export default function ProfilePage() {
       steps.push("users/{uid} içine lastHealthCheckAt yazıldı.");
   
       // ADIM 3: Storage upload (opsiyonel)
-      steps.push("=== ADIM 3: Storage upload testi ===");
       if (storageTestEnabled) {
+        appendHealth("=== ADIM 3: Storage upload testi ===");
         try {
           const storage = getStorage();
           const testRef = ref(
@@ -404,14 +410,15 @@ export default function ProfilePage() {
             { type: "text/plain" }
           );
           await uploadBytes(testRef, blob);
-          steps.push("Storage upload BAŞARILI.");
+          appendHealth("Storage upload BAŞARILI.");
         } catch (storageErr: any) {
-          steps.push("Storage upload BAŞARISIZ.");
-          if (storageErr?.code) steps.push(`Storage hata kodu: ${storageErr.code}`);
-          if (storageErr?.message) steps.push(`Storage mesaj: ${storageErr.message}`);
+          appendHealth("Storage upload BAŞARISIZ.");
+          if (storageErr?.code) appendHealth(`Storage hata kodu: ${storageErr.code}`);
+          if (storageErr?.message) appendHealth(`Storage mesaj: ${storageErr.message}`);
         }
       } else {
-        steps.push("Atlandı (toggle kapalı).");
+        appendHealth("=== ADIM 3: Storage upload testi ===");
+        appendHealth("Atlandı (toggle kapalı).");
       }
   
       setHealthStatus("Health check tamamlandı.");
@@ -794,3 +801,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
