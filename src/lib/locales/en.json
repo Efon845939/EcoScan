@@ -13,6 +13,7 @@
     "scan_card_description": "Scan items, dispose correctly, and earn points.",
     "scan_card_scan_button": "Scan Item",
     "scan_card_rewards_link": "View Rewards",
+    "scan_card_footprint_button": "Carbon Footprint",
 
     "camera_scan_item_title": "Scan Item",
     "camera_scan_item_description": "Point your camera at the item.",
