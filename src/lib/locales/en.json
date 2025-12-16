@@ -384,5 +384,19 @@
   "login_submitting_signup": "Signing up...",
   "login_button_login": "Sign in",
   "login_button_signup": "Sign up",
-  "settings_verification_center": "Verification Center"
+  "settings_verification_center": "Verification Center",
+  "profile_header": "Profile",
+  "profile_page_subtitle": "Manage your account details",
+  "profile_back_lobby": "Back to lobby",
+  "profile_edit_title": "Edit profile",
+  "profile_edit_desc": "Update your personal information",
+  "profile_username_immutable": "Username cannot be changed",
+  "profile_username_label": "Username",
+  "profile_email_verified_badge": "Email verified",
+  "profile_refresh_status": "Refresh status",
+  "profile_email_no_change_hint": "Email cannot be changed here",
+  "profile_about_label": "About",
+  "profile_about_placeholder": "Tell us about yourself",
+  "profile_status_no_changes": "No changes",
+  "profile_save_button": "Save changes"
 }

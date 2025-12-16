@@ -326,5 +326,19 @@
   "login_submitting_signup": "جارٍ إنشاء الحساب...",
   "login_button_login": "تسجيل الدخول",
   "login_button_signup": "إنشاء حساب",
-  "settings_verification_center": "مركز التحقق"
+  "settings_verification_center": "مركز التحقق",
+  "profile_header": "الملف الشخصي",
+  "profile_page_subtitle": "إدارة بيانات حسابك",
+  "profile_back_lobby": "العودة إلى الردهة",
+  "profile_edit_title": "تعديل الملف الشخصي",
+  "profile_edit_desc": "حدّث معلوماتك الشخصية",
+  "profile_username_immutable": "لا يمكن تغيير اسم المستخدم",
+  "profile_username_label": "اسم المستخدم",
+  "profile_email_verified_badge": "تم التحقق من البريد الإلكتروني",
+  "profile_refresh_status": "تحديث الحالة",
+  "profile_email_no_change_hint": "لا يمكن تغيير البريد الإلكتروني هنا",
+  "profile_about_label": "نبذة عني",
+  "profile_about_placeholder": "اكتب وصفًا قصيرًا عن نفسك",
+  "profile_status_no_changes": "لا توجد تغييرات",
+  "profile_save_button": "حفظ التغييرات"
 }

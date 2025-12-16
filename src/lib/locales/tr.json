@@ -387,5 +387,19 @@
   "login_submitting_signup": "Kayıt yapılıyor...",
   "login_button_login": "Giriş yap",
   "login_button_signup": "Kaydol",
-  "settings_verification_center": "Doğrulama Merkezi"
+  "settings_verification_center": "Doğrulama Merkezi",
+  "profile_header": "Profil",
+  "profile_page_subtitle": "Hesap bilgilerini yönet",
+  "profile_back_lobby": "Lobiye dön",
+  "profile_edit_title": "Profili düzenle",
+  "profile_edit_desc": "Kişisel bilgilerini güncelle",
+  "profile_username_immutable": "Kullanıcı adı değiştirilemez",
+  "profile_username_label": "Kullanıcı adı",
+  "profile_email_verified_badge": "E-posta doğrulandı",
+  "profile_refresh_status": "Durumu yenile",
+  "profile_email_no_change_hint": "E-posta burada değiştirilemez",
+  "profile_about_label": "Hakkımda",
+  "profile_about_placeholder": "Kendin hakkında kısa bir açıklama yaz",
+  "profile_status_no_changes": "Değişiklik yok",
+  "profile_save_button": "Değişiklikleri kaydet"
 }

@@ -135,5 +135,19 @@
   "login_submitting_signup": "正在注册...",
   "login_button_login": "登录",
   "login_button_signup": "注册",
-  "settings_verification_center": "验证中心"
+  "settings_verification_center": "验证中心",
+  "profile_header": "个人资料",
+  "profile_page_subtitle": "管理你的账户信息",
+  "profile_back_lobby": "返回大厅",
+  "profile_edit_title": "编辑资料",
+  "profile_edit_desc": "更新你的个人信息",
+  "profile_username_immutable": "用户名无法更改",
+  "profile_username_label": "用户名",
+  "profile_email_verified_badge": "邮箱已验证",
+  "profile_refresh_status": "刷新状态",
+  "profile_email_no_change_hint": "这里无法更改邮箱",
+  "profile_about_label": "关于我",
+  "profile_about_placeholder": "简要介绍一下你自己",
+  "profile_status_no_changes": "没有更改",
+  "profile_save_button": "保存更改"
 }

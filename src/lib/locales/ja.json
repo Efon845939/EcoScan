@@ -323,5 +323,19 @@
   "login_submitting_signup": "登録中...",
   "login_button_login": "サインイン",
   "login_button_signup": "登録",
-  "settings_verification_center": "認証センター"
+  "settings_verification_center": "認証センター",
+  "profile_header": "プロフィール",
+  "profile_page_subtitle": "アカウント情報を管理します",
+  "profile_back_lobby": "ロビーに戻る",
+  "profile_edit_title": "プロフィールを編集",
+  "profile_edit_desc": "個人情報を更新します",
+  "profile_username_immutable": "ユーザー名は変更できません",
+  "profile_username_label": "ユーザー名",
+  "profile_email_verified_badge": "メール確認済み",
+  "profile_refresh_status": "状態を更新",
+  "profile_email_no_change_hint": "ここではメールを変更できません",
+  "profile_about_label": "自己紹介",
+  "profile_about_placeholder": "自己紹介を短く書いてください",
+  "profile_status_no_changes": "変更はありません",
+  "profile_save_button": "変更を保存"
 }

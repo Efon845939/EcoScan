@@ -135,5 +135,19 @@
   "login_submitting_signup": "Регистрация...",
   "login_button_login": "Войти",
   "login_button_signup": "Зарегистрироваться",
-  "settings_verification_center": "Центр проверки"
+  "settings_verification_center": "Центр проверки",
+  "profile_header": "Профиль",
+  "profile_page_subtitle": "Управляйте данными аккаунта",
+  "profile_back_lobby": "Назад в лобби",
+  "profile_edit_title": "Редактировать профиль",
+  "profile_edit_desc": "Обновите личную информацию",
+  "profile_username_immutable": "Имя пользователя нельзя изменить",
+  "profile_username_label": "Имя пользователя",
+  "profile_email_verified_badge": "Email подтверждён",
+  "profile_refresh_status": "Обновить статус",
+  "profile_email_no_change_hint": "Email нельзя изменить здесь",
+  "profile_about_label": "О себе",
+  "profile_about_placeholder": "Коротко расскажите о себе",
+  "profile_status_no_changes": "Нет изменений",
+  "profile_save_button": "Сохранить изменения"
 }

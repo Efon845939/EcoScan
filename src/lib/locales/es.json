@@ -326,5 +326,19 @@
   "login_submitting_signup": "Registrando...",
   "login_button_login": "Iniciar sesión",
   "login_button_signup": "Registrarse",
-  "settings_verification_center": "Centro de verificación"
+  "settings_verification_center": "Centro de verificación",
+  "profile_header": "Perfil",
+  "profile_page_subtitle": "Gestiona los datos de tu cuenta",
+  "profile_back_lobby": "Volver al lobby",
+  "profile_edit_title": "Editar perfil",
+  "profile_edit_desc": "Actualiza tu información personal",
+  "profile_username_immutable": "El nombre de usuario no se puede cambiar",
+  "profile_username_label": "Nombre de usuario",
+  "profile_email_verified_badge": "Correo verificado",
+  "profile_refresh_status": "Actualizar estado",
+  "profile_email_no_change_hint": "El correo no se puede cambiar aquí",
+  "profile_about_label": "Acerca de",
+  "profile_about_placeholder": "Escribe una breve descripción sobre ti",
+  "profile_status_no_changes": "Sin cambios",
+  "profile_save_button": "Guardar cambios"
 }

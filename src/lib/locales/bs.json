@@ -135,5 +135,19 @@
   "login_submitting_signup": "Registracija...",
   "login_button_login": "Prijava",
   "login_button_signup": "Registracija",
-  "settings_verification_center": "Centar za verifikaciju"
+  "settings_verification_center": "Centar za verifikaciju",
+  "profile_header": "Profil",
+  "profile_page_subtitle": "Uredi podatke o nalogu",
+  "profile_back_lobby": "Nazad u lobby",
+  "profile_edit_title": "Uredi profil",
+  "profile_edit_desc": "Ažuriraj lične podatke",
+  "profile_username_immutable": "Korisničko ime se ne može mijenjati",
+  "profile_username_label": "Korisničko ime",
+  "profile_email_verified_badge": "Email je verificiran",
+  "profile_refresh_status": "Osvježi status",
+  "profile_email_no_change_hint": "Email se ovdje ne može promijeniti",
+  "profile_about_label": "O meni",
+  "profile_about_placeholder": "Napiši kratki opis o sebi",
+  "profile_status_no_changes": "Nema izmjena",
+  "profile_save_button": "Spremi izmjene"
 }
