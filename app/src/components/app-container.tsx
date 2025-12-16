@@ -719,7 +719,7 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step }) {
                 }}
               >
                 <ShieldCheck className="mr-2" />
-                Verification Center
+                {t('settings_verification_center')}
               </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label

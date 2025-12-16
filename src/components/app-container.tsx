@@ -596,7 +596,7 @@ function AppContainer({ initialStep = 'scan' }: { initialStep?: Step}) {
                </Button>
                <Button variant="outline" className="justify-start" onClick={() => { setStep('verify'); setShowSettingsModal(false); }}>
                   <ShieldCheck className="mr-2" />
-                  Verification Center
+                  {t('settings_verification_center')}
                </Button>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="region" className="text-right flex items-center gap-2 justify-end">
