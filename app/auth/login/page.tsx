@@ -1,8 +1,7 @@
-
 // app/auth/login/page.tsx
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -14,11 +13,12 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useFirebase } from "@/firebase";
+import { useTranslation } from "@/hooks/use-translation";
 
 type Mode = "login" | "signup";
 
 type LoginFormState = {
-  identifier: string; // e-posta veya kullanıcı adı
+  identifier: string; // email (şimdilik)
   password: string;
 };
 
@@ -28,13 +28,35 @@ type SignupFormState = {
   password: string;
 };
 
-function isValidEmail(email: string): boolean {
-  return /\S+@\S+\.\S+/.test(email);
+function isValidEmail(value: string) {
+  // basit kontrol, yeterli
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+const SUPPORTED_LANGS = [
+  { code: "en", label: "EN" },
+  { code: "tr", label: "TR" },
+  { code: "de", label: "DE" },
+  { code: "es", label: "ES" },
+  { code: "ru", label: "RU" },
+  { code: "ar", label: "AR" },
+  { code: "ja", label: "JA" },
+  { code: "zh", label: "ZH" },
+  { code: "bs", label: "BS" },
+] as const;
+
+type LangCode = (typeof SUPPORTED_LANGS)[number]["code"];
+
+function getStoredLang(): LangCode {
+  if (typeof window === "undefined") return "en";
+  const v = window.localStorage.getItem("app-language") || "en";
+  return (SUPPORTED_LANGS.some((x) => x.code === v) ? v : "en") as LangCode;
 }
 
 export default function LoginPage() {
   const router = useRouter();
   const { auth, firestore } = useFirebase();
+  const { t, language, setLanguage } = useTranslation();
 
   const [mode, setMode] = useState<Mode>("login");
   const [loginForm, setLoginForm] = useState<LoginFormState>({
@@ -46,276 +68,324 @@ export default function LoginPage() {
     email: "",
     password: "",
   });
-  const [status, setStatus] = useState<string>("Form hazır, henüz gönderilmedi.");
+  const [status, setStatus] = useState<string>(t("login_status_ready"));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isLogin = mode === "login";
+  // İlk açılışta dili localStorage’dan al (yoksa en)
+  useEffect(() => {
+    const stored = getStoredLang();
+    if (stored && stored !== language) {
+      setLanguage(stored);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  function switchMode(nextMode: Mode) {
-    if (nextMode === mode) return;
-    setMode(nextMode);
-    setStatus("Form hazır, henüz gönderilmedi.");
-  }
+  useEffect(() => {
+    // dil değişince status string’i de çeviriden gelsin
+    setStatus(t("login_status_ready"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
 
-  function handleLoginChange(field: keyof LoginFormState, value: string) {
-    setLoginForm((prev) => ({ ...prev, [field]: value }));
-    setStatus("Değişiklik yapıldı, henüz gönderilmedi.");
-  }
+  const onChangeLang = (next: LangCode) => {
+    setLanguage(next);
+    // useTranslation zaten localStorage'a yazar, ama garanti olsun:
+    try {
+      window.localStorage.setItem("app-language", next);
+    } catch {}
+  };
 
-  function handleSignupChange(field: keyof SignupFormState, value: string) {
-    setSignupForm((prev) => ({ ...prev, [field]: value }));
-    setStatus("Değişiklik yapıldı, henüz gönderilmedi.");
+  function onInputChange() {
+    setStatus(t("login_status_changed"));
   }
 
   async function handleForgotPassword() {
+    if (!auth) {
+      setStatus(t("login_error_no_auth"));
+      return;
+    }
     const email = loginForm.identifier.trim();
 
     if (!email || !isValidEmail(email)) {
-      setStatus("HATA: Şifreni sıfırlamak için geçerli bir e-posta gir.");
+      setStatus(t("login_forgot_password_invalid_email"));
       return;
     }
 
     try {
       await sendPasswordResetEmail(auth, email);
-      setStatus("Şifre sıfırlama bağlantısı e-posta adresine gönderildi.");
+      setStatus(t("login_forgot_password_sent"));
     } catch (err: any) {
-      setStatus("HATA: Şifre sıfırlama e-postası gönderilemedi. Daha sonra tekrar dene.");
+      const e = err as AuthError;
+      setStatus(`${t("common_error")}: ${e?.message ?? "Unknown error"}`);
     }
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setStatus("");
+    if (!auth || !firestore) {
+      setStatus(t("login_error_no_auth"));
+      return;
+    }
+
     setIsSubmitting(true);
 
-    if (isLogin) {
-      const { identifier, password } = loginForm;
-      if (!identifier.trim() || !password.trim()) {
-        setStatus("HATA: E-posta ve şifre zorunludur.");
+    if (mode === "login") {
+      const identifier = loginForm.identifier.trim();
+      const password = loginForm.password;
+
+      if (!identifier || !isValidEmail(identifier)) {
+        setStatus(t("login_error_email_invalid"));
         setIsSubmitting(false);
         return;
       }
       if (password.length < 6) {
-        setStatus("HATA: Şifre en az 6 karakter olmalı.");
+        setStatus(t("login_error_password_short"));
         setIsSubmitting(false);
         return;
       }
 
       try {
         await signInWithEmailAndPassword(auth, identifier, password);
-        setStatus("Giriş başarılı. Ana sayfaya yönlendiriliyorsun...");
-        setTimeout(() => router.push("/"), 500);
+        setStatus(t("login_login_success"));
+        setTimeout(() => router.push("/"), 400);
       } catch (err: any) {
-        const e = err as AuthError;
-        let msg = "Bilinmeyen bir hata oluştu. Lütfen tekrar dene.";
-
-        if (
-          e?.code === "auth/invalid-credential" ||
-          e?.code === "auth/wrong-password" ||
-          e?.code === "auth/user-not-found"
-        ) {
-          msg = "E-posta veya şifre hatalı.";
-        } else if (e?.code === "auth/too-many-requests") {
-          msg = "Çok fazla başarısız deneme yaptın. Bir süre sonra tekrar dene.";
-        }
-        setStatus(`HATA: ${msg}`);
+        const e2 = err as AuthError;
+        setStatus(`${t("login_error_login_failed")}: ${e2?.message ?? ""}`.trim());
       } finally {
         setIsSubmitting(false);
       }
-    } else { // Signup
-      const { username, email, password } = signupForm;
-      if (!username.trim() || !email.trim() || !password.trim()) {
-        setStatus("HATA: Kullanıcı adı, e-posta ve şifre zorunludur.");
-        setIsSubmitting(false);
-        return;
-      }
-      if (!isValidEmail(email)) {
-        setStatus("HATA: Geçerli bir e-posta adresi gir.");
-        setIsSubmitting(false);
-        return;
-      }
-      if (password.length < 6) {
-        setStatus("HATA: Şifre en az 6 karakter olmalı.");
-        setIsSubmitting(false);
-        return;
-      }
+      return;
+    }
 
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        
-        // Use the form's username as the primary displayName in Auth
-        await updateProfile(user, { displayName: username });
+    // signup
+    const username = signupForm.username.trim();
+    const email = signupForm.email.trim().toLowerCase();
+    const password = signupForm.password;
 
-        // In Firestore, save both the user-chosen displayName and a derived, stable username
-        await setDoc(doc(firestore, "users", user.uid), {
-          uid: user.uid,
-          username: email.split('@')[0], // Derived from email, stable
-          displayName: username, // User-chosen, can be changed in profile
-          email: email,
+    if (!username || username.length < 3) {
+      setStatus(t("login_error_username_short"));
+      setIsSubmitting(false);
+      return;
+    }
+    if (!email || !isValidEmail(email)) {
+      setStatus(t("login_error_email_invalid"));
+      setIsSubmitting(false);
+      return;
+    }
+    if (password.length < 6) {
+      setStatus(t("login_error_password_short"));
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Auth displayName
+      await updateProfile(cred.user, { displayName: username });
+
+      // Firestore user doc
+      await setDoc(
+        doc(firestore, "users", cred.user.uid),
+        {
+          username,
+          displayName: username,
+          email,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-          totalPoints: 0,
-        });
+        },
+        { merge: true }
+      );
 
-        setStatus("Kayıt başarılı. Ana sayfaya yönlendiriliyorsun...");
-        setTimeout(() => router.push("/"), 500);
-      } catch (err: any) {
-        const e = err as AuthError;
-        let msg = "Bilinmeyen bir hata oluştu.";
-        if (e?.code === 'auth/email-already-in-use') {
-            msg = "Bu e-posta adresi zaten kullanımda."
-        }
-        setStatus(`HATA: ${msg}`);
-      } finally {
-        setIsSubmitting(false);
-      }
+      setStatus(t("login_signup_success"));
+      setTimeout(() => router.push("/profile"), 400);
+    } catch (err: any) {
+      const e3 = err as AuthError;
+      setStatus(`${t("login_error_signup_failed")}: ${e3?.message ?? ""}`.trim());
+    } finally {
+      setIsSubmitting(false);
     }
   }
+
+  const activeLang = useMemo(() => (language || "en") as LangCode, [language]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-emerald-100 px-4">
       <div className="w-full max-w-md bg-white/90 backdrop-blur rounded-2xl shadow-xl border border-emerald-100 p-6 sm:p-8">
-        <div className="mb-6 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 mb-3">
-            <Link href="/" className="text-emerald-600 font-bold text-lg leading-none">
-              ER
-            </Link>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
-            EcoScan Rewards
-          </h1>
-          <p className="mt-1 text-sm text-gray-600">
-            {isLogin
-              ? "Giriş yaparak hesabına devam et."
-              : "Kayıt olarak EcoScan Rewards dünyasına katıl."}
-          </p>
-        </div>
+        <div className="mb-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="text-center flex-1">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 mb-3">
+                <Link href="/" className="text-emerald-600 font-bold text-lg leading-none">
+                  ER
+                </Link>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">{t("login_title")}</h1>
+              <p className="text-sm text-gray-600 mt-1">{t("login_subtitle")}</p>
+            </div>
 
-        <div className="mb-4 flex rounded-xl bg-emerald-50 p-1 text-xs font-medium">
-          <button
-            type="button"
-            onClick={() => switchMode("login")}
-            className={`flex-1 py-2 rounded-lg transition ${
-              isLogin
-                ? "bg-white text-emerald-700 shadow-sm"
-                : "bg-transparent text-emerald-600 hover:bg-emerald-100/70"
-            }`}
-          >
-            Giriş yap
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMode("signup")}
-            className={`flex-1 py-2 rounded-lg transition ${
-              !isLogin
-                ? "bg-white text-emerald-700 shadow-sm"
-                : "bg-transparent text-emerald-600 hover:bg-emerald-100/70"
-            }`}
-          >
-            Kaydol
-          </button>
+            {/* Language switcher */}
+            <div className="shrink-0">
+              <label className="block text-xs text-gray-500 mb-1">{t("language_label")}</label>
+              <select
+                value={activeLang}
+                onChange={(e) => onChangeLang(e.target.value as LangCode)}
+                className="text-sm rounded-lg border border-gray-200 bg-white px-2 py-1"
+                aria-label="Language"
+              >
+                {SUPPORTED_LANGS.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-5 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setMode("login")}
+              className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium border transition ${
+                mode === "login"
+                  ? "bg-emerald-600 text-white border-emerald-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              {t("login_mode_login")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("signup")}
+              className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium border transition ${
+                mode === "signup"
+                  ? "bg-emerald-600 text-white border-emerald-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              {t("login_mode_signup")}
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {isLogin ? (
+          {mode === "login" ? (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  E-posta
+                <label className="block text-sm font-medium text-gray-800 mb-1">
+                  {t("login_identifier_label")}
                 </label>
                 <input
-                  type="text"
                   value={loginForm.identifier}
-                  onChange={(e) => handleLoginChange("identifier", e.target.value)}
-                  placeholder="sen@example.com"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onChange={(e) => {
+                    setLoginForm((s) => ({ ...s, identifier: e.target.value }));
+                    onInputChange();
+                  }}
+                  placeholder={t("login_identifier_placeholder")}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  autoComplete="email"
                 />
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Şifre
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleForgotPassword}
-                    className="text-[11px] font-medium text-emerald-600 hover:underline"
-                  >
-                    Şifremi unuttum
-                  </button>
-                </div>
+                <label className="block text-sm font-medium text-gray-800 mb-1">
+                  {t("login_password_label")}
+                </label>
                 <input
                   type="password"
                   value={loginForm.password}
-                  onChange={(e) => handleLoginChange("password", e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onChange={(e) => {
+                    setLoginForm((s) => ({ ...s, password: e.target.value }));
+                    onInputChange();
+                  }}
+                  placeholder={t("login_password_placeholder")}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  autoComplete="current-password"
                 />
               </div>
+
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-emerald-700 hover:text-emerald-800 hover:underline"
+                >
+                  {t("login_forgot_password")}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-xl bg-emerald-600 text-white font-semibold py-3 hover:bg-emerald-700 transition disabled:opacity-60"
+              >
+                {isSubmitting ? t("common_loading") : t("login_submit_login")}
+              </button>
             </>
           ) : (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Görünen İsim
+                <label className="block text-sm font-medium text-gray-800 mb-1">
+                  {t("login_username_label")}
                 </label>
                 <input
-                  type="text"
                   value={signupForm.username}
-                  onChange={(e) => handleSignupChange("username", e.target.value)}
-                  placeholder="örn. Eko Kahraman"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onChange={(e) => {
+                    setSignupForm((s) => ({ ...s, username: e.target.value }));
+                    onInputChange();
+                  }}
+                  placeholder={t("login_username_placeholder")}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  autoComplete="username"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  E-posta
+                <label className="block text-sm font-medium text-gray-800 mb-1">
+                  {t("login_email_label")}
                 </label>
                 <input
-                  type="email"
                   value={signupForm.email}
-                  onChange={(e) => handleSignupChange("email", e.target.value)}
-                  placeholder="sen@example.com"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onChange={(e) => {
+                    setSignupForm((s) => ({ ...s, email: e.target.value }));
+                    onInputChange();
+                  }}
+                  placeholder={t("login_email_placeholder")}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  autoComplete="email"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Şifre
+                <label className="block text-sm font-medium text-gray-800 mb-1">
+                  {t("login_password_label")}
                 </label>
                 <input
                   type="password"
                   value={signupForm.password}
-                  onChange={(e) => handleSignupChange("password", e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onChange={(e) => {
+                    setSignupForm((s) => ({ ...s, password: e.target.value }));
+                    onInputChange();
+                  }}
+                  placeholder={t("login_password_placeholder")}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  autoComplete="new-password"
                 />
               </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-xl bg-emerald-600 text-white font-semibold py-3 hover:bg-emerald-700 transition disabled:opacity-60"
+              >
+                {isSubmitting ? t("common_loading") : t("login_submit_signup")}
+              </button>
             </>
           )}
-
-          <div className="text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 min-h-[36px] flex items-center">
-            {status}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full mt-1 inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-sm font-medium px-4 py-2.5 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
-          >
-            {isSubmitting
-              ? isLogin
-                ? "Giriş yapılıyor..."
-                : "Kayıt yapılıyor..."
-              : isLogin
-              ? "Giriş yap"
-              : "Kaydol"}
-          </button>
         </form>
+
+        <div className="mt-4 rounded-xl border border-gray-200 bg-white px-4 py-3">
+          <p className="text-sm text-gray-700 whitespace-pre-wrap">{status}</p>
+        </div>
       </div>
     </div>
   );

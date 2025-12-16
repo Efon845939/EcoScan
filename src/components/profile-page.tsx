@@ -1,3 +1,4 @@
+// src/components/profile-page.tsx
 'use client';
 
 import {
@@ -13,199 +14,371 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
 import {
-  useFirebase,
-  useUser,
-  useDoc,
-  useMemoFirebase,
-  updateDocumentNonBlocking,
-} from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { signOut, sendEmailVerification, updateProfile } from 'firebase/auth';
-import { useState, useEffect } from 'react';
-import { ChevronLeft, User, LogOut, Award, Loader2, MailCheck, RefreshCcw } from 'lucide-react';
+  updateProfile,
+  updateEmail,
+  sendEmailVerification,
+  signOut,
+  type User,
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+import { useFirebase, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
 
+const SUPPORTED_LANGS = [
+  { code: 'en', label: 'EN' },
+  { code: 'tr', label: 'TR' },
+  { code: 'de', label: 'DE' },
+  { code: 'es', label: 'ES' },
+  { code: 'ru', label: 'RU' },
+  { code: 'ar', label: 'AR' },
+  { code: 'ja', label: 'JA' },
+  { code: 'zh', label: 'ZH' },
+  { code: 'bs', label: 'BS' },
+] as const;
+
+type LangCode = (typeof SUPPORTED_LANGS)[number]['code'];
+
 type ProfilePageProps = {
-  onBack: () => void;
+  onBack?: () => void; // opsiyonel
 };
 
-export function ProfilePageContent({ onBack }: ProfilePageProps) {
+type ProfileState = {
+  displayName: string;
+  email: string;
+  photoURL: string;
+};
+
+export default function ProfilePageContent({ onBack }: ProfilePageProps) {
+  const router = useRouter();
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
 
-  const userProfileRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
-    [firestore, user]
-  );
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+  const [profile, setProfile] = useState<ProfileState>({
+    displayName: '',
+    email: '',
+    photoURL: '',
+  });
 
-  const [displayName, setDisplayName] = useState('');
+  const [originalEmail, setOriginalEmail] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
   const [isRefreshingVerify, setIsRefreshingVerify] = useState(false);
+  const [isSendingVerify, setIsSendingVerify] = useState(false);
+
+  const [isUploading, setIsUploading] = useState(false);
+
+  const activeLang = useMemo(() => ((language || 'en') as LangCode), [language]);
 
   useEffect(() => {
-    if (userProfile?.displayName) setDisplayName(userProfile.displayName);
-    else if (user?.displayName) setDisplayName(user.displayName);
-  }, [userProfile, user]);
+    async function load() {
+      if (!firestore || !user) return;
 
-  const handleSave = async () => {
-    if (!userProfileRef || !user || !auth) return;
-    setIsSaving(true);
-    try {
-      await updateDocumentNonBlocking(userProfileRef, { displayName });
+      try {
+        const snap = await getDoc(doc(firestore, 'users', user.uid));
+        const data = snap.exists() ? (snap.data() as any) : {};
 
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { displayName });
+        const initialEmail = (user.email || '').trim().toLowerCase();
+        setOriginalEmail(initialEmail);
+
+        setProfile({
+          displayName: (data?.displayName ?? user.displayName ?? '').toString(),
+          email: initialEmail,
+          photoURL: (data?.photoURL ?? user.photoURL ?? '').toString(),
+        });
+      } catch (e) {
+        toast({
+          title: t('common_error'),
+          description: t('profile_update_failed'),
+          variant: 'destructive',
+        });
       }
+    }
+
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, firestore]);
+
+  const onChangeLang = (next: LangCode) => {
+    setLanguage(next);
+    try {
+      window.localStorage.setItem('app-language', next);
+    } catch {}
+  };
+
+  async function handleUpload(file: File, firebaseUser: User) {
+    if (!auth || !firestore) return;
+    setIsUploading(true);
+
+    try {
+      const storage = getStorage();
+      const fileRef = ref(storage, `avatars/${firebaseUser.uid}/${file.name}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+
+      // Auth + Firestore
+      await updateProfile(firebaseUser, { photoURL: url });
+      await setDoc(
+        doc(firestore, 'users', firebaseUser.uid),
+        { photoURL: url, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+
+      setProfile((p) => ({ ...p, photoURL: url }));
 
       toast({
         title: t('profile_profile_updated_title'),
         description: t('profile_profile_updated_desc'),
       });
-    } catch (error) {
-      console.error('Error updating profile:', error);
+    } catch (e) {
       toast({
-        variant: 'destructive',
         title: t('common_error'),
         description: t('profile_update_failed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  async function handleSave() {
+    if (!auth || !firestore || !user) return;
+
+    setIsSaving(true);
+
+    try {
+      // displayName
+      const displayName = profile.displayName.trim();
+      await updateProfile(user, { displayName });
+
+      // email (değiştiyse)
+      const email = profile.email.trim().toLowerCase();
+      if (email && email !== originalEmail) {
+        await updateEmail(user, email);
+        setOriginalEmail(email);
+      }
+
+      await setDoc(
+        doc(firestore, 'users', user.uid),
+        {
+          displayName,
+          email: profile.email.trim().toLowerCase(),
+          photoURL: profile.photoURL ?? '',
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      toast({
+        title: t('profile_profile_updated_title'),
+        description: t('profile_profile_updated_desc'),
+      });
+    } catch (e) {
+      toast({
+        title: t('common_error'),
+        description: t('profile_update_failed'),
+        variant: 'destructive',
       });
     } finally {
       setIsSaving(false);
     }
-  };
+  }
 
-  const handleSendVerification = async () => {
-    if (!auth?.currentUser) return;
-    setIsVerifying(true);
-    try {
-      await sendEmailVerification(auth.currentUser);
-      toast({
-        title: t('profile_verify_sent_title'),
-        description: t('profile_verify_sent_desc'),
-      });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: t('common_error'),
-        description: error?.message || t('profile_verify_send_failed'),
-      });
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleRefreshVerify = async () => {
-    if (!auth?.currentUser) return;
+  async function refreshVerification() {
+    if (!user) return;
     setIsRefreshingVerify(true);
     try {
-      await auth.currentUser.reload();
+      await user.reload();
       toast({
         title: t('profile_verify_status_refreshed_title'),
-        description: auth.currentUser.emailVerified
-          ? t('profile_verified_now')
-          : t('profile_not_verified_yet'),
+        description: user.emailVerified ? t('profile_verified_now') : t('profile_not_verified_yet'),
       });
-    } catch (e: any) {
+    } catch (e) {
       toast({
-        variant: 'destructive',
         title: t('common_error'),
-        description: e?.message || t('profile_verify_refresh_failed'),
+        description: t('profile_verify_refresh_failed'),
+        variant: 'destructive',
       });
     } finally {
       setIsRefreshingVerify(false);
     }
-  };
+  }
 
-  const handleSignOut = () => {
-    if (!auth) return;
-    signOut(auth)
-      .then(() => {
-        toast({ title: t('profile_signed_out_title'), description: t('profile_signed_out_desc') });
-      })
-      .catch((error) => {
-        console.error('Sign out error', error);
-        toast({
-          variant: 'destructive',
-          title: t('profile_sign_out_error_title'),
-          description: t('profile_sign_out_error_desc'),
-        });
+  async function resendVerification() {
+    if (!user) return;
+    setIsSendingVerify(true);
+    try {
+      await sendEmailVerification(user);
+      toast({
+        title: t('profile_verify_sent_title'),
+        description: t('profile_verify_sent_desc'),
       });
-  };
+    } catch (e) {
+      toast({
+        title: t('common_error'),
+        description: t('profile_verify_send_failed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingVerify(false);
+    }
+  }
 
-  if (isProfileLoading || isUserLoading) {
-    return <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />;
+  async function handleSignOut() {
+    if (!auth) return;
+    try {
+      await signOut(auth);
+      toast({
+        title: t('profile_signed_out_title'),
+        description: t('profile_signed_out_desc'),
+      });
+      router.push('/');
+    } catch (e) {
+      toast({
+        title: t('profile_sign_out_error_title'),
+        description: t('profile_sign_out_error_desc'),
+        variant: 'destructive',
+      });
+    }
+  }
+
+  if (isUserLoading) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-muted-foreground">{t('common_loading')}</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="p-6 space-y-3">
+        <Alert>
+          <AlertTitle>{t('common_error')}</AlertTitle>
+          <AlertDescription>{t('profile_email_not_available')}</AlertDescription>
+        </Alert>
+        <Button onClick={() => router.push('/auth/login')}>{t('profile_back')}</Button>
+      </div>
+    );
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-lg">
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">{t('profile_title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('profile_desc')}</p>
+        </div>
+
+        {/* Language switcher */}
+        <div className="shrink-0">
+          <Label className="text-xs">{t('language_label')}</Label>
+          <select
+            value={activeLang}
+            onChange={(e) => onChangeLang(e.target.value as LangCode)}
+            className="mt-1 text-sm rounded-md border px-2 py-1 bg-background"
+            aria-label="Language"
+          >
+            {SUPPORTED_LANGS.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <Card>
         <CardHeader>
-          <div className="relative flex items-center justify-center">
-            <Button variant="ghost" size="sm" className="absolute left-0" onClick={onBack}>
-              <ChevronLeft className="mr-2 h-4 w-4" /> {t('profile_back')}
-            </Button>
-            <CardTitle className="font-headline text-2xl flex items-center gap-2">
-              <User />
-              {t('profile_title')}
-            </CardTitle>
-          </div>
-          <CardDescription className="text-center pt-2">{t('profile_desc')}</CardDescription>
+          <CardTitle>{t('profile_total_points')}</CardTitle>
+          <CardDescription>{t('profile_verify_desc')}</CardDescription>
         </CardHeader>
-
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-center space-x-4 rounded-full border bg-card p-4 shadow-sm">
-            <Award className="h-8 w-8 text-yellow-500" />
-            <span className="text-2xl font-bold">{userProfile?.totalPoints ?? 0}</span>
-            <span className="text-base text-muted-foreground">{t('profile_total_points')}</span>
-          </div>
-
-          {user && !user.emailVerified && (
-            <Alert>
-              <MailCheck className="h-4 w-4" />
-              <AlertTitle>{t('profile_verify_title')}</AlertTitle>
-              <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
-                <span>{t('profile_verify_desc')}</span>
-                <div className="flex gap-2">
-                  <Button variant="secondary" size="sm" onClick={handleSendVerification} disabled={isVerifying}>
-                    {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : t('profile_resend')}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleRefreshVerify} disabled={isRefreshingVerify}>
-                    {isRefreshingVerify ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="displayName">{t('profile_display_name')}</Label>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>{t('profile_display_name')}</Label>
             <Input
-              id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              value={profile.displayName}
+              onChange={(e) => setProfile((p) => ({ ...p, displayName: e.target.value }))}
               placeholder={t('profile_display_name_placeholder')}
             />
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label>{t('profile_email')}</Label>
-            <Input value={user?.email ?? t('profile_email_not_available')} disabled />
+            <Input
+              value={profile.email}
+              onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
+            />
           </div>
+
+          <div>
+            <Label>Photo</Label>
+            <div className="flex items-center gap-3">
+              <Input
+                type="file"
+                accept="image/*"
+                disabled={isUploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleUpload(file, user);
+                }}
+              />
+              {isUploading ? (
+                <span className="text-xs text-muted-foreground">{t('common_loading')}</span>
+              ) : null}
+            </div>
+          </div>
+
+          {!user.emailVerified ? (
+            <Alert>
+              <AlertTitle>{t('profile_verify_title')}</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>{t('profile_not_verified_yet')}</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={resendVerification}
+                    disabled={isSendingVerify}
+                  >
+                    {t('profile_resend')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={refreshVerification}
+                    disabled={isRefreshingVerify}
+                  >
+                    {t('profile_verified_now')}
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert>
+              <AlertTitle>{t('profile_verify_title')}</AlertTitle>
+              <AlertDescription>{t('profile_verified_now')}</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
 
-        <CardFooter className="flex flex-col gap-3">
-          <Button className="w-full" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : t('profile_save')}
-          </Button>
+        <CardFooter className="flex flex-wrap gap-2 justify-between">
+          <div className="flex gap-2">
+            <Button onClick={() => (onBack ? onBack() : router.push('/'))}>
+              {t('profile_back')}
+            </Button>
+            <Button variant="outline" onClick={handleSignOut}>
+              {t('profile_sign_out')}
+            </Button>
+          </div>
 
-          <Button variant="destructive" className="w-full" onClick={handleSignOut}>
-            <LogOut className="mr-2" />
-            {t('profile_sign_out')}
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? t('common_loading') : t('profile_save')}
           </Button>
         </CardFooter>
       </Card>
